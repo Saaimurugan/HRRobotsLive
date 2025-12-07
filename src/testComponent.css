@@ -1,0 +1,16 @@
+.MCQOuterWrap {
+  margin-top: 5px;
+  height: 100%;
+  padding: 20px;
+  background-color: #fafafa;
+  border-radius: 6px;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+}
+
+MCQUL{
+  list-style-type: none;
+  padding: 0;
+  list-style: none !important;
+}
