@@ -226,7 +226,14 @@ const CreateTemplate = () => {
               repeatedQuestions.push(q.question);
           }
       });
-      setQuestionSet([...questionSet, ...generatedQuestions]);
+      
+      // Add topic to the beginning of each generated question
+      const questionsWithTopic = generatedQuestions.map(q => ({
+        ...q,
+        question: `${topic}: ${q.question}`
+      }));
+      
+      setQuestionSet([...questionSet, ...questionsWithTopic]);
       setTtname(topic + " - " + level);
     } catch (error) {
       console.error(error);
