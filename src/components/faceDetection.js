@@ -8,6 +8,7 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
   const intervalRef = useRef(null);
   const canvasInstance = useRef(null); // Ref to store the canvas instance
   const waitTimeRef = useRef(0); // Ref to store the current waitTime value
+  const photoIntervalRef = useRef(null); // Ref to store the 5-minute photo capture interval
   const [isLoading, setIsLoading] = useState(false);
   //const [waitTime, setWaitTime] = useState(0);
 /*   const [confidence, setConfidence] = useState(0); */
@@ -127,6 +128,11 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
     capturePhoto();
     setIsLoading(false);
 
+    // Set up 5-minute interval for capturing photos during test
+    photoIntervalRef.current = setInterval(() => {
+      capturePhoto();
+    }, 5 * 60 * 1000); // 5 minutes in milliseconds
+
     // Cleanup the video stream and interval on component unmount
     return () => {
       const stream = videoRef.current?.srcObject;
@@ -138,6 +144,11 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
       // Clear the interval when the component is unmounted
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
+      }
+
+      // Clear the 5-minute photo capture interval
+      if (photoIntervalRef.current) {
+        clearInterval(photoIntervalRef.current);
       }
 
       // Remove event listener
