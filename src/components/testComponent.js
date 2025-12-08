@@ -64,6 +64,7 @@ const TestComponent = ({ testID, userID, candidateName }) => {
         }
       );
       const data = await response.json();
+      //console.log("Fetch question response:", data);
       if (data.statusCode === 200) {
         const question = JSON.parse(data.body).question;
         setQuestions((prevQuestions) => [...prevQuestions, question]);
@@ -76,11 +77,11 @@ const TestComponent = ({ testID, userID, candidateName }) => {
         setMessage(data.body);
         console.error(data.body);
       } else {
-        setMessage("Failed to fetch question: " + data.statusCode + "-" + data.body);
+        setMessage("Failed to fetch question: " + data.statusCode + " - " + JSON.stringify(data.body));
         //console.error("Failed to fetch question", data);
       }
     } catch (error) {
-      setMessage("Failed to fetch question: " + data.statusCode + "-" + data.body);
+      setMessage("Failed to fetch question: " + error.message);
       //console.error("Error fetching question:", error);
     }
   };
@@ -119,7 +120,7 @@ const TestComponent = ({ testID, userID, candidateName }) => {
         console.error("Failed to save answer", data);
       }
     } catch (error) {
-      setMessage("Failed to save answer: " + data.statusCode + "-" + data.body);
+      setMessage("Failed to save answer: " + error.message);
       console.error("Error saving answer:", error);
     }
     finally {
