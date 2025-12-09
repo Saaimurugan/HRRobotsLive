@@ -13,7 +13,7 @@ const ForgotPasswordPage = () => {
        useEffect(() => {
           if (globalValue !== "") {
            // Call the async function
-           console.log(globalValue);
+           //console.log(globalValue);
            setEmail(globalValue);
         }
        }, [globalValue, navigate]);

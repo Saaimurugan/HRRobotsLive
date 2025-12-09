@@ -18,7 +18,8 @@ function SearchResult() {
   useEffect(() => {
     if (globalValue === "") {
       navigate("/login");
-    }//else{console.log(globalValue);}
+    }
+    //else{console.log(globalValue);}
   }, [globalValue, navigate]);
 
   const handleSearch = async () => {
