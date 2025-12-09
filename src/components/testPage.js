@@ -116,6 +116,7 @@ const TestPage = () => {
   const [faceOffFocusCount, setFaceOffFocusCount] = useState(0);
   const [faceOffWarningCount, setFaceOffWarningCount] = useState(0);
   const [faceFocusScore, setFaceFocusScore] = useState(0);
+  const [continuousLowScoreStart, setContinuousLowScoreStart] = useState(null);
   const [cameraPermission, setCameraPermission] = useState(null);
   const [micPermission, setMicPermission] = useState(null);
   const [saveAnswers, setSaveAnswers] = useState([]);
@@ -207,24 +208,36 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
 ]);
 
   useEffect(() => {
-    if (faceFocusScore < 10)
-    {
-        if (faceOffFocusCount >= 2)
-            {
-                setFaceOffWarningCount(prevCount => prevCount + 1); 
-                //(NEXT)updateTestScore(userUniqueID, faceOffWarningCount);
-                setFaceOffFocusCount(0);
-            }
-            else
-            {
-                setFaceOffFocusCount(prevCount => prevCount + 1);
-            }
-        if (faceOffFocusCount===0){setFaceOffFocusCount(1);}
-    }
+    // Use an interval to check face score periodically instead of on every change
+    const checkInterval = setInterval(() => {
+      if (faceFocusScore < 0) {
+        // Face score is low
+        if (continuousLowScoreStart === null) {
+          // Start tracking continuous low score
+          setContinuousLowScoreStart(Date.now());
+        } else {
+          // Check if it's been continuously low for more than 5 seconds
+          const elapsedTime = Date.now() - continuousLowScoreStart;
+          if (elapsedTime >= 5000) {
+            // 5 seconds have passed with continuous low score
+            setFaceOffWarningCount(prevCount => prevCount + 1);
+            setContinuousLowScoreStart(null); // Reset the timer
+            setFaceOffFocusCount(prevCount => prevCount + 1);
+          }
+        }
+      } else {
+        // Face score is good, reset the continuous tracking
+        if (continuousLowScoreStart !== null) {
+          setContinuousLowScoreStart(null);
+        }
+      }
+    }, 500); // Check every 500ms instead of on every faceFocusScore change
+
+    return () => clearInterval(checkInterval);
     // console.log({faceFocusScore});
     // console.log({faceOffFocusCount});
     // console.log({faceOffWarningCount});
-}, [faceFocusScore]);
+}, [faceFocusScore, continuousLowScoreStart]);
 
   const handleFaceScore = (data) =>{
     setFaceFocusScore(data);
@@ -663,7 +676,7 @@ if (userUniqueID != '')
     {/*     {faceOffWarningCount < 10? */} 
     {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
     <>
-        {faceFocusScore===0 || faceOffFocusCount >= 10?
+        {faceOffFocusCount > 0?
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
         :
         <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName}/>
