@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import CameraCapture from './cam.js';
 import WarningMessage from "./warningMessage.js";
 import FaceWarningMessage from "./faceWarningMessage";
@@ -62,7 +62,7 @@ const TestPage = () => {
 
   const [faceRecognition, setFaceRecognition] = useState(false);
   const [toleranceLevel, setToleranceLevel] = useState(0);
-  const [allowedDefaults, setAllowedDefaults] = useState(0);
+  const [allowedDefaults, setAllowedDefaults] = useState(10); // Default to 10 allowed deviations
   
   useEffect(() => {
     // Fetch initial config on component mount, passing templateID as a query param
@@ -83,7 +83,7 @@ const TestPage = () => {
             : {};
           setFaceRecognition(config.faceRecognition === "True");
           setToleranceLevel(Number(config.toleranceLevel) || 0);
-          setAllowedDefaults(Number(config.allowedDefaults) || 0);
+          setAllowedDefaults(Number(config.allowedDefaults) || 10); // Default to 10 if not set
         } else {
           console.error("Error fetching configuration:", data);
         }
@@ -115,8 +115,11 @@ const TestPage = () => {
   const [isFocused, setIsFocused] = useState(true);
   const [faceOffFocusCount, setFaceOffFocusCount] = useState(0);
   const [faceOffWarningCount, setFaceOffWarningCount] = useState(0);
-  const [faceFocusScore, setFaceFocusScore] = useState(0);
+  const [faceFocusScore, setFaceFocusScore] = useState(-1); // -1 means not initialized yet
   const [continuousLowScoreStart, setContinuousLowScoreStart] = useState(null);
+  const [showFaceWarning, setShowFaceWarning] = useState(false);
+  const [faceDetectionInitialized, setFaceDetectionInitialized] = useState(false);
+  const faceFocusScoreRef = useRef(-1); // Ref to track latest score for interval
   const [cameraPermission, setCameraPermission] = useState(null);
   const [micPermission, setMicPermission] = useState(null);
   const [saveAnswers, setSaveAnswers] = useState([]);
@@ -184,17 +187,25 @@ useEffect(() => {
     }
   };
 if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
+  console.log('Termination check:', {
+    isTimeOut,
+    isFullScreen,
+    isFocused,
+    cameraPermission,
+    micPermission,
+    faceOffWarningCount,
+    allowedDefaults
+  });
   if (
     !isTimeOut ||
     !isFullScreen ||
     !isFocused ||
     !cameraPermission ||
     !micPermission ||
-    faceOffWarningCount >= allowedDefaults
+    (allowedDefaults > 0 && faceOffWarningCount >= allowedDefaults)
   ) {
     // Call the API if any of the conditions are not met
-    //console.log("API call triggered");
-    //console.log(isTimeOut, isFullScreen, isFocused, cameraPermission, micPermission, faceOffWarningCount)
+    console.log("API call triggered - Test Terminated!");
     callAPI();
     setIsTerminated(true); // Set the termination state to true 
   }}
@@ -205,39 +216,58 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   cameraPermission,
   micPermission,
   faceOffWarningCount,
+  allowedDefaults,
 ]);
 
   useEffect(() => {
-    // Use an interval to check face score periodically instead of on every change
+    // Keep ref in sync with state
+    faceFocusScoreRef.current = faceFocusScore;
+    
+    // Mark face detection as initialized once we get a valid score (>= 0)
+    if (faceFocusScore >= 0 && !faceDetectionInitialized) {
+      setFaceDetectionInitialized(true);
+    }
+  }, [faceFocusScore, faceDetectionInitialized]);
+
+  useEffect(() => {
+    // Only start checking after face detection is initialized
+    if (!faceDetectionInitialized) return;
+
+    // Use an interval to check face score periodically
     const checkInterval = setInterval(() => {
-      if (faceFocusScore < 0) {
-        // Face score is low
-        if (continuousLowScoreStart === null) {
-          // Start tracking continuous low score
-          setContinuousLowScoreStart(Date.now());
-        } else {
-          // Check if it's been continuously low for more than 5 seconds
-          const elapsedTime = Date.now() - continuousLowScoreStart;
-          if (elapsedTime >= 5000) {
-            // 5 seconds have passed with continuous low score
-            setFaceOffWarningCount(prevCount => prevCount + 1);
-            setContinuousLowScoreStart(null); // Reset the timer
-            setFaceOffFocusCount(prevCount => prevCount + 1);
+      const currentScore = faceFocusScoreRef.current;
+      console.log('Face Score:', currentScore, 'showFaceWarning will be:', currentScore === 0);
+      
+      // Check if face score is 0 (no face detected)
+      if (currentScore === 0) {
+        // No face detected
+        setContinuousLowScoreStart(prev => {
+          if (prev === null) {
+            console.log('No face detected, starting timer');
+            return Date.now();
+          } else {
+            const elapsedTime = Date.now() - prev;
+            console.log('Elapsed time with no face:', elapsedTime, 'ms');
+            if (elapsedTime >= 5000) {
+              console.log('5 seconds passed! Showing warning');
+              setShowFaceWarning(true);
+              setFaceOffWarningCount(c => c + 1);
+              setFaceOffFocusCount(c => c + 1);
+              return null; // Reset timer
+            }
+            return prev;
           }
-        }
+        });
       } else {
-        // Face score is good, reset the continuous tracking
-        if (continuousLowScoreStart !== null) {
-          setContinuousLowScoreStart(null);
-        }
+        // Face is detected (score > 0)
+        console.log('Face detected, hiding warning');
+        setContinuousLowScoreStart(null);
+        setShowFaceWarning(false);
       }
-    }, 500); // Check every 500ms instead of on every faceFocusScore change
+    }, 500); // Check every 500ms
 
     return () => clearInterval(checkInterval);
-    // console.log({faceFocusScore});
-    // console.log({faceOffFocusCount});
-    // console.log({faceOffWarningCount});
-}, [faceFocusScore, continuousLowScoreStart]);
+  }, [faceDetectionInitialized]);
 
   const handleFaceScore = (data) =>{
     setFaceFocusScore(data);
@@ -644,6 +674,9 @@ if (userUniqueID != '')
           }}
         >MIC</span>
         </p>&ensp;
+        <p style={{ fontSize: '12px', color: 'black' }}>
+          Score: {faceFocusScore >= 0 ? faceFocusScore.toFixed(2) : 'Loading...'} | Init: {faceDetectionInitialized ? 'YES' : 'NO'} | Warning: {showFaceWarning ? 'YES' : 'NO'}
+        </p>
         {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
         // {isTimeOut? 
           <FaceTracking 
@@ -676,7 +709,7 @@ if (userUniqueID != '')
     {/*     {faceOffWarningCount < 10? */} 
     {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
     <>
-        {faceOffFocusCount > 0?
+        {showFaceWarning?
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
         :
         <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName}/>
