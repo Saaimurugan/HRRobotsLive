@@ -78,6 +78,13 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
 
     // Handle video play and detect faces
     const handleVideoPlay = () => {
+      // Check if video is ready (has valid dimensions)
+      if (!videoRef.current || !videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+        // Video not ready yet, wait and try again
+        setTimeout(handleVideoPlay, 100);
+        return;
+      }
+      
       if (videoRef.current && !canvasInstance.current) {
         // Create the canvas only if it doesn't exist
         const canvas = faceapi.createCanvasFromMedia(videoRef.current);

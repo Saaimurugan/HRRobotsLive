@@ -120,6 +120,8 @@ const TestPage = () => {
   const [showFaceWarning, setShowFaceWarning] = useState(false);
   const [faceDetectionInitialized, setFaceDetectionInitialized] = useState(false);
   const faceFocusScoreRef = useRef(-1); // Ref to track latest score for interval
+  const lowScoreStartRef = useRef(null); // Ref to track when low score started
+  const warningShownForCurrentPeriodRef = useRef(false); // Track if warning was shown for current no-face period
   const [cameraPermission, setCameraPermission] = useState(null);
   const [micPermission, setMicPermission] = useState(null);
   const [saveAnswers, setSaveAnswers] = useState([]);
@@ -236,33 +238,35 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
     // Use an interval to check face score periodically
     const checkInterval = setInterval(() => {
       const currentScore = faceFocusScoreRef.current;
-      console.log('Face Score:', currentScore, 'showFaceWarning will be:', currentScore === 0);
       
       // Check if face score is 0 (no face detected)
       if (currentScore === 0) {
         // No face detected
-        setContinuousLowScoreStart(prev => {
-          if (prev === null) {
-            console.log('No face detected, starting timer');
-            return Date.now();
-          } else {
-            const elapsedTime = Date.now() - prev;
-            console.log('Elapsed time with no face:', elapsedTime, 'ms');
-            if (elapsedTime >= 5000) {
-              console.log('5 seconds passed! Showing warning');
-              setShowFaceWarning(true);
-              setFaceOffWarningCount(c => c + 1);
-              setFaceOffFocusCount(c => c + 1);
-              return null; // Reset timer
-            }
-            return prev;
+        if (lowScoreStartRef.current === null) {
+          // Start tracking
+          console.log('No face detected, starting timer');
+          lowScoreStartRef.current = Date.now();
+          warningShownForCurrentPeriodRef.current = false;
+        } else if (!warningShownForCurrentPeriodRef.current) {
+          // Check if 5 seconds have passed
+          const elapsedTime = Date.now() - lowScoreStartRef.current;
+          console.log('Elapsed time with no face:', elapsedTime, 'ms');
+          if (elapsedTime >= 5000) {
+            console.log('5 seconds passed! Showing warning');
+            setShowFaceWarning(true);
+            setFaceOffWarningCount(c => c + 1);
+            setFaceOffFocusCount(c => c + 1);
+            warningShownForCurrentPeriodRef.current = true; // Mark that we've shown warning for this period
           }
-        });
+        }
       } else {
         // Face is detected (score > 0)
-        console.log('Face detected, hiding warning');
-        setContinuousLowScoreStart(null);
-        setShowFaceWarning(false);
+        if (lowScoreStartRef.current !== null || warningShownForCurrentPeriodRef.current) {
+          console.log('Face detected, hiding warning');
+          lowScoreStartRef.current = null;
+          warningShownForCurrentPeriodRef.current = false;
+          setShowFaceWarning(false);
+        }
       }
     }, 500); // Check every 500ms
 
