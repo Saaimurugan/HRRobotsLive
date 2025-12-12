@@ -6,6 +6,7 @@
   "main": "src/index.tsx",
   "dependencies": {
     "@tensorflow/tfjs": "^4.22.0",
+    "ajv": "^8.0.0",
     "axios": "^1.7.9",
     "browserify-fs": "^1.0.0",
     "cors": "^2.8.5",
