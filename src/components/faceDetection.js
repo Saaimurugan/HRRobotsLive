@@ -78,6 +78,13 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
 
     // Handle video play and detect faces
     const handleVideoPlay = () => {
+      // Check if video is ready (has valid dimensions)
+      if (!videoRef.current || !videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+        // Video not ready yet, wait and try again
+        setTimeout(handleVideoPlay, 100);
+        return;
+      }
+      
       if (videoRef.current && !canvasInstance.current) {
         // Create the canvas only if it doesn't exist
         const canvas = faceapi.createCanvasFromMedia(videoRef.current);
@@ -98,9 +105,43 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
           const context = canvas.getContext('2d');  // Get the 2D context
           context.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
           //console.log(resizedDetections);
-          // Draw detections and landmarks
-          faceapi.draw.drawDetections(canvas, resizedDetections);
-          faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+          // Draw face landmarks manually with thin, light styling
+          resizedDetections.forEach(detection => {
+            const landmarks = detection.landmarks;
+            const positions = landmarks.positions;
+            
+            context.strokeStyle = 'rgba(173, 216, 230, 0.5)';
+            context.lineWidth = 1;
+            context.fillStyle = 'rgba(173, 216, 230, 0.4)';
+            
+            // Draw small dots for each landmark point
+            positions.forEach(point => {
+              context.beginPath();
+              context.arc(point.x, point.y, 1, 0, 2 * Math.PI);
+              context.fill();
+            });
+            
+            // Draw connecting lines for face outline
+            const jawOutline = landmarks.getJawOutline();
+            const nose = landmarks.getNose();
+            const leftEye = landmarks.getLeftEye();
+            const rightEye = landmarks.getRightEye();
+            const mouth = landmarks.getMouth();
+            
+            const drawPath = (points) => {
+              if (points.length < 2) return;
+              context.beginPath();
+              context.moveTo(points[0].x, points[0].y);
+              points.slice(1).forEach(p => context.lineTo(p.x, p.y));
+              context.stroke();
+            };
+            
+            drawPath(jawOutline);
+            drawPath(nose);
+            drawPath(leftEye);
+            drawPath(rightEye);
+            drawPath(mouth);
+          });
           const confidenceScore = detections.length > 0 ? detections[0].detection.score * 100 : 0;
           handleFaceScore(confidenceScore);
 
