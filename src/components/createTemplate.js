@@ -230,7 +230,7 @@ const CreateTemplate = () => {
       // Add topic to the beginning of each generated question
       const questionsWithTopic = generatedQuestions.map(q => ({
         ...q,
-        question: `${topic}: ${q.question}`
+        question: `${topic}::: ${q.question}`
       }));
       
       setQuestionSet([...questionSet, ...questionsWithTopic]);
