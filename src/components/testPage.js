@@ -189,15 +189,15 @@ useEffect(() => {
     }
   };
 if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
-  console.log('Termination check:', {
-    isTimeOut,
-    isFullScreen,
-    isFocused,
-    cameraPermission,
-    micPermission,
-    faceOffWarningCount,
-    allowedDefaults
-  });
+  // console.log('Termination check:', {
+  //   isTimeOut,
+  //   isFullScreen,
+  //   isFocused,
+  //   cameraPermission,
+  //   micPermission,
+  //   faceOffWarningCount,
+  //   allowedDefaults
+  // });
   if (
     !isTimeOut ||
     !isFullScreen ||
@@ -207,7 +207,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
     (allowedDefaults > 0 && faceOffWarningCount >= allowedDefaults)
   ) {
     // Call the API if any of the conditions are not met
-    console.log("API call triggered - Test Terminated!");
+    //console.log("API call triggered - Test Terminated!");
     callAPI();
     setIsTerminated(true); // Set the termination state to true 
   }}
@@ -244,15 +244,15 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
         // No face detected
         if (lowScoreStartRef.current === null) {
           // Start tracking
-          console.log('No face detected, starting timer');
+          //console.log('No face detected, starting timer');
           lowScoreStartRef.current = Date.now();
           warningShownForCurrentPeriodRef.current = false;
         } else if (!warningShownForCurrentPeriodRef.current) {
           // Check if 5 seconds have passed
           const elapsedTime = Date.now() - lowScoreStartRef.current;
-          console.log('Elapsed time with no face:', elapsedTime, 'ms');
+          //console.log('Elapsed time with no face:', elapsedTime, 'ms');
           if (elapsedTime >= 5000) {
-            console.log('5 seconds passed! Showing warning');
+            //console.log('5 seconds passed! Showing warning');
             setShowFaceWarning(true);
             setFaceOffWarningCount(c => c + 1);
             setFaceOffFocusCount(c => c + 1);
@@ -262,7 +262,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
       } else {
         // Face is detected (score > 0)
         if (lowScoreStartRef.current !== null || warningShownForCurrentPeriodRef.current) {
-          console.log('Face detected, hiding warning');
+          //console.log('Face detected, hiding warning');
           lowScoreStartRef.current = null;
           warningShownForCurrentPeriodRef.current = false;
           setShowFaceWarning(false);
@@ -678,9 +678,9 @@ if (userUniqueID != '')
           }}
         >MIC</span>
         </p>&ensp;
-        <p style={{ fontSize: '12px', color: 'black' }}>
+        {/* <p style={{ fontSize: '12px', color: 'black' }}>
           Score: {faceFocusScore >= 0 ? faceFocusScore.toFixed(2) : 'Loading...'} | Init: {faceDetectionInitialized ? 'YES' : 'NO'} | Warning: {showFaceWarning ? 'YES' : 'NO'}
-        </p>
+        </p> */}
         {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
         // {isTimeOut? 
           <FaceTracking 
