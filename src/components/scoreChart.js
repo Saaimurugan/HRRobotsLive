@@ -59,9 +59,10 @@ const ScoreChart = ({ message }) => {
         {loadingTopics ? (
           <p>Loading topic scores...</p>
         ) : topicScores.length > 0 ? (
+          <>
           <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
             <thead>
-              <tr style={{ backgroundColor: "#2575fc", color: "#fff" }}>
+              <tr style={{ backgroundColor: "#a6c2f3", color: "#222121" }}>
                 <th style={{ padding: "10px", border: "1px solid #ddd" }}>Topic</th>
                 <th style={{ padding: "10px", border: "1px solid #ddd" }}>No of Questions</th>
                 <th style={{ padding: "10px", border: "1px solid #ddd" }}>Attempted</th>
@@ -71,7 +72,7 @@ const ScoreChart = ({ message }) => {
             </thead>
             <tbody>
               {topicScores.map((topic, index) => (
-                <tr key={index} style={{ backgroundColor: index % 2 === 0 ? "#f9f9f9" : "#fff" }}>
+                <tr key={index} style={{ backgroundColor: index % 2 === 0 ? "#a6c2f3" : "#a6c2f3" }}>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>{topic.topic}</td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>{topic.totalQuestions}</td>
                   <td style={{ padding: "10px", border: "1px solid #ddd" }}>{topic.attempted}</td>
@@ -81,6 +82,8 @@ const ScoreChart = ({ message }) => {
               ))}
             </tbody>
           </table>
+          <br/>
+          </>
         ) : null}
       </div>
     </div>
