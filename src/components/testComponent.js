@@ -66,11 +66,11 @@ const TestComponent = ({ testID, userID, candidateName }) => {
       const data = await response.json();
       //console.log("Fetch question response:", data);
       if (data.statusCode === 200) {
-        const question = JSON.parse(data.body).question;
+        const parsedBody = JSON.parse(data.body);
+        const question = parsedBody.new_question;
         setQuestions((prevQuestions) => [...prevQuestions, question]);
-        if (questionCount===0)
-        {
-          setQuestionCount(JSON.parse(data.body).question_count);
+        if (questionCount === 0) {
+          setQuestionCount(parsedBody.question_count);
         }
       }
       else if (data.statusCode === 404) {
