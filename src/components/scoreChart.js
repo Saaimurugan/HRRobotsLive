@@ -7,7 +7,22 @@ const ScoreChart = ({ message }) => {
   const [loadingTopics, setLoadingTopics] = useState(false);
 
   const parsedBody = message;
-  const { totalQuestions, correctAnswers, testID, candidateName, submittedAnswers, templateName, submittedAt } = parsedBody || {};
+  const { testID, candidateName, templateName, submittedAt } = parsedBody || {};
+  
+  // Calculate totals from topic scores when available, otherwise fall back to message data
+  const calculatedTotals = topicScores.length > 0 
+    ? topicScores.reduce((acc, topic) => ({
+        totalQuestions: acc.totalQuestions + (topic.totalQuestions || 0),
+        correctAnswers: acc.correctAnswers + (topic.correct || 0),
+        submittedAnswers: acc.submittedAnswers + (topic.attempted || 0),
+      }), { totalQuestions: 0, correctAnswers: 0, submittedAnswers: 0 })
+    : {
+        totalQuestions: parsedBody?.totalQuestions || 0,
+        correctAnswers: parsedBody?.correctAnswers || 0,
+        submittedAnswers: parsedBody?.submittedAnswers || 0,
+      };
+
+  const { totalQuestions, correctAnswers, submittedAnswers } = calculatedTotals;
   const scorePercent = totalQuestions ? correctAnswers / totalQuestions : 0;
 
   // Format date and time

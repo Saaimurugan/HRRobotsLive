@@ -2,6 +2,34 @@ import React, { useState, useEffect } from "react";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
 import "../TableStyles.css";
 import "../analsticsOnResult.css";
+import "../CreateTemplate.css";
+
+// Toast Component
+const Toast = ({ toasts, removeToast }) => {
+  return (
+    <div className="toast-container">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`toast ${toast.type} ${toast.exiting ? 'toast-exit' : ''}`}>
+          <svg className="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            {toast.type === 'error' && <><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></>}
+            {toast.type === 'success' && <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>}
+            {toast.type === 'warning' && <><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>}
+            {toast.type === 'info' && <><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></>}
+          </svg>
+          <div className="toast-content">
+            <div className="toast-title">{toast.title}</div>
+            <div className="toast-message">{toast.message}</div>
+          </div>
+          <button className="toast-close" onClick={() => removeToast(toast.id)}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSearchChange }) => {
     const [items, setItems] = useState([]);
@@ -20,16 +48,27 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const [isDeleteClicked, setIsDeleteClicked] = useState(false); // State to manage delete button click
     const [hoveredRowIndex, setHoveredRowIndex] = useState(null);
     const [confirmationRowIndex, setConfirmationRowIndex] = useState(null);
-    const [toast, setToast] = useState({ show: false, message: "", type: "" });
+    const [toasts, setToasts] = useState([]);
 
     const pageSize = 10; // Number of items per page
 
-    // Toast function
-    const showToast = (message, type = "error") => {
-        setToast({ show: true, message, type });
+    // Toast functions
+    const showToast = (type, title, message) => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, type, title, message }]);
         setTimeout(() => {
-            setToast({ show: false, message: "", type: "" });
-        }, 3000);
+            setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+            setTimeout(() => {
+                setToasts(prev => prev.filter(t => t.id !== id));
+            }, 300);
+        }, 4000);
+    };
+
+    const removeToast = (id) => {
+        setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+        setTimeout(() => {
+            setToasts(prev => prev.filter(t => t.id !== id));
+        }, 300);
     };
 
     // Handle item click with status check
@@ -37,7 +76,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         if (item.status === "Completed" || item.status === "Complete") {
             onItemClick(item.testID, item);
         } else {
-            showToast("This test is not completed and therefore the report can't be generated.", "error");
+            showToast("error", "Test Incomplete", "This test is not completed and therefore the report can't be generated.");
         }
     };
 
@@ -571,37 +610,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             </div>
 
             {/* Toast notification */}
-            {toast.show && (
-                <div className="banner-popup">
-                    {toast.message}
-                </div>
-                // <div className={`toast toast-${toast.type}`}>
-                //     <div className="toast-content">
-                //         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                //             <circle cx="12" cy="12" r="10" />
-                //             <line x1="15" y1="9" x2="9" y2="15" />
-                //             <line x1="9" y1="9" x2="15" y2="15" />
-                //         </svg>
-                //         <span>{toast.message}</span>
-                //     </div>
-                // </div>
-            )}
-            {/* Toast notification */}
-            {toast.show && (
-                <div className="banner-popup">
-                    {toast.message}
-                </div>
-                // <div className={`toast toast-${toast.type}`}>
-                //     <div className="toast-content">
-                //         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                //             <circle cx="12" cy="12" r="10" />
-                //             <line x1="15" y1="9" x2="9" y2="15" />
-                //             <line x1="9" y1="9" x2="15" y2="15" />
-                //         </svg>
-                //         <span>{toast.message}</span>
-                //     </div>
-                // </div>
-            )}
+            <Toast toasts={toasts} removeToast={removeToast} />
         </div>
     );
 };
