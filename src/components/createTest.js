@@ -409,14 +409,15 @@ const fetchTemplates = async () => {
                   </div>
                 )}
                 {templateState.message && <p>{templateState.message}</p>}
+                <h5>{card.templateName}</h5>
                 {card.AssignedTo &&
                 <>
                   {card.AssignedTo !== globalValue &&
-                  <p style={{marginBottom:"-10px", marginTop:"-10px", }}>Assigned to {card.AssignedTo}</p>
+                  <p style={{marginBottom:"10px", marginTop:"-10px", }}>Assigned to {card.AssignedTo}</p>
                   }
                 </>
                 }
-                <h5>{card.templateName}</h5>
+                
               </>
               </div>
           );
