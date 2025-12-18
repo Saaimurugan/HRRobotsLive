@@ -344,120 +344,180 @@ const fetchTemplates = async () => {
 
       <div className="container" style={{ marginTop: "100px" }}>
         <div className="card">
+          <div className="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" fill="currentColor"/>
+              <path d="M14 2V8H20" fill="currentColor" fillOpacity="0.5"/>
+              <path d="M12 18V12M9 15H15" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          </div>
           <h2>Create JD</h2>          
-          <p>Enables to quickly generate professional, role-specific job description with minimal effort. By leveraging AI, it intelligently composes detailed and well-structured descriptions based on inputs like job title, skills and experience level.</p>
+          <p>Generate professional, role-specific job descriptions with AI. Compose detailed descriptions based on job title, skills, and experience level.</p>
           <div className="form-group">
             <button onClick={() => navigate("/createJD")}>Create JD</button>
           </div>
         </div>
         <div className="card">
+          <div className="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 12C14.7614 12 17 9.76142 17 7C17 4.23858 14.7614 2 12 2C9.23858 2 7 4.23858 7 7C7 9.76142 9.23858 12 12 12Z" fill="currentColor"/>
+              <path d="M12 14C7.58172 14 4 17.5817 4 22H20C20 17.5817 16.4183 14 12 14Z" fill="currentColor" fillOpacity="0.7"/>
+            </svg>
+          </div>
           <h2>Candidate Profiler</h2>
-          <p>Upload a resume and job description to generate a comprehensive report, highlighting skill matches, role suitability, improvements, and recommendation, ensuring the perfect candidate-job alignment.</p>
+          <p>Upload a resume and job description to generate a comprehensive report highlighting skill matches and role suitability.</p>
           <div className="form-group">
             <button onClick={() => navigate("/ProfilerPage")}>Profile</button>
           </div>
         </div>
         <div className="card">
+          <div className="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" fill="currentColor" fillOpacity="0.3"/>
+              <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
           <h2>Screening Test</h2>
-          <p>AI-driven systems can create customized multiple-choice questions aligned with specific topics, skill levels, or objectives, allowing educators or evaluators to choose the most relevant questions for thorough and accurate assessments.</p>
+          <p>Create customized MCQ assessments aligned with specific topics, skill levels, or objectives using AI-driven question generation.</p>
           <div className="form-group">
             <button onClick={() => navigate("/createTemplate")}>Create Template</button>
           </div>
         </div>
         <div className="card">
-          <h2>Result</h2>
-          <p>Results page provides a summary of outcomes derived from specific tests. Paste the link shared with the candidate, then click the "Search" button to view the results. To ensure data privacy, we do not store candidates' details.</p>
+          <div className="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 20V10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 20V4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M6 20V14" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <h2>Results</h2>
+          <p>View test outcomes by pasting the candidate's link. Get detailed summaries while maintaining data privacy.</p>
           <div className="form-group">
-            <button onClick={() => navigate("/result")}>Check</button>
+            <button onClick={() => navigate("/result")}>Check Results</button>
           </div>
         </div>	
 
-        {loadingTemplate ? <p className="loading" style={{ gridColumn: '1 / -1' }}>Loading</p> : 
+        {loadingTemplate ? (
+          <div className="empty-state">
+            <p className="loading">Loading templates</p>
+          </div>
+        ) : (
         <>
-        {templates.length === 0 ? 
-        <p style={{ gridColumn: '1 / -1' }}>No templates found.</p>
-        :
+        {templates.length === 0 ? (
+          <div className="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <p>No templates found. Create your first screening test template above!</p>
+          </div>
+        ) : (
         <div className="section-header">
-          <h2>List of Screening Test Templates</h2>
+          <h2>Your Screening Test Templates</h2>
           <p>
-            Please choose a test from the options below. The test URL will be copied to your clipboard, allowing you to easily paste it into an email
-            and share it with the candidate.
+            Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
           </p>
         </div>
-        }
+        )}
         {templates.map((card, index) => {
           const templateState = templateStates[card.templateID] || {};
           return (
-              <div key={index} className="card">
-                {card.AssignedTo != globalValue ?
-                <div style={{display: "flex", justifyContent: "flex-end", gap: "10px", marginBottom: "10px"}}>
-                <button onClick={() => navigate(`/edit/${card.templateID}`)} className="delete-button" title="Edit Card">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="#000000"/></svg>
-                </button>
-                <button onClick={() => deleteConfirm(card.templateID)} className="delete-button" title="Delete Card">
-                  <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M4 2H1V4H15V2H12V0H4V2Z" fill="#000000"/>
-                  <path fillRule="evenodd" clipRule="evenodd" d="M3 6H13V16H3V6ZM7 9H9V13H7V9Z" fill="#000000"/>
-                  </svg>
-                </button>
-                <button onClick={() => assignModal(card.templateID)} className="delete-button" title="Assign to Recruiter">
-                  <svg fill="#000000" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" 
-                      width="25" height="25" viewBox="0 0 256 190" enableBackground="new 0 0 256 190" xmlSpace="preserve">
-                    <path d="M48.12,27.903C48.12,13.564,59.592,2,74.023,2c14.339,0,25.903,11.564,25.903,25.903
-                      C99.834,42.335,88.27,53.806,74.023,53.806C59.684,53.806,48.12,42.242,48.12,27.903z M191,139h-47V97c0-20.461-17.881-37-38-37H43
-                      C20.912,60,1.99,79.14,2,98v77c-0.026,8.533,6.001,12.989,12,13c6.014,0.011,12-4.445,12-13v-75h8v88h78v-88h8l0.081,50.37
-                      c-0.053,8.729,5.342,12.446,10.919,12.63h60C207.363,163,207.363,139,191,139z M254,33.317v88.735c0,2.296-1.837,4.133-4.133,4.133
-                      h-88.658c-2.296,0-4.133-1.837-4.133-4.133V33.317c0-2.296,1.837-4.133,4.133-4.133h88.658C252.163,29.184,254,31.021,254,33.317z
-                      M249.408,33.776h-43.889v11.671c0,3.559-5.204,6.428-7.423,3.75c-1.645-2.296-4.286-3.865-7.423-3.865
-                      c-5.051,0-9.183,4.133-9.183,9.183s4.133,9.183,9.183,9.183c3.023,0,5.778-1.569,7.423-3.865c2.181-2.64,7.423,0.115,7.423,3.865
-                      v0.191v13.699h13.699c3.865-0.459,6.428-5.701,3.673-7.997c-2.487-1.837-4.133-4.783-4.133-8.074c0-5.51,4.4-9.91,9.91-9.91
-                      s9.91,4.4,9.91,9.91c0,3.291-1.645,6.237-4.133,8.074c-2.755,2.219-0.191,7.347,3.406,7.997h11.556V33.776z M161.668,121.593h43.813
-                      v-11.671c0-3.559,5.204-6.428,7.423-3.75c1.645,2.296,4.286,3.865,7.423,3.865c5.051,0,9.183-4.133,9.183-9.183
-                      c0-5.051-4.133-9.183-9.183-9.183c-3.023,0-5.778,1.569-7.423,3.865c-2.181,2.64-7.423-0.115-7.423-3.865v-0.191V77.78h-13.699
-                      c-3.865,0.383-6.428,5.701-3.673,7.997c2.487,1.837,4.133,4.783,4.133,8.074c0,5.51-4.4,9.91-9.91,9.91s-9.91-4.4-9.91-9.91
-                      c0-3.291,1.645-6.237,4.133-8.074c2.755-2.219,0.191-7.347-3.406-7.997h-11.479V121.593z"/>
+              <div key={index} className="card template-card">
+                {card.AssignedTo !== globalValue ? (
+                <div className="card-actions">
+                  <button onClick={() => navigate(`/edit/${card.templateID}`)} className="delete-button" title="Edit Template">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" clipRule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="currentColor"/>
                     </svg>
-                </button>
-                {/* <button onClick={() => configModal(card.templateID)} className="delete-button" title="Configuration">
-                <svg width="25" height="25" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path fill-rule="evenodd" clip-rule="evenodd" d="M14.2788 2.15224C13.9085 2 13.439 2 12.5 2C11.561 2 11.0915 2 10.7212 2.15224C10.2274 2.35523 9.83509 2.74458 9.63056 3.23463C9.53719 3.45834 9.50065 3.7185 9.48635 4.09799C9.46534 4.65568 9.17716 5.17189 8.69017 5.45093C8.20318 5.72996 7.60864 5.71954 7.11149 5.45876C6.77318 5.2813 6.52789 5.18262 6.28599 5.15102C5.75609 5.08178 5.22018 5.22429 4.79616 5.5472C4.47814 5.78938 4.24339 6.1929 3.7739 6.99993C3.30441 7.80697 3.06967 8.21048 3.01735 8.60491C2.94758 9.1308 3.09118 9.66266 3.41655 10.0835C3.56506 10.2756 3.77377 10.437 4.0977 10.639C4.57391 10.936 4.88032 11.4419 4.88029 12C4.88026 12.5581 4.57386 13.0639 4.0977 13.3608C3.77372 13.5629 3.56497 13.7244 3.41645 13.9165C3.09108 14.3373 2.94749 14.8691 3.01725 15.395C3.06957 15.7894 3.30432 16.193 3.7738 17C4.24329 17.807 4.47804 18.2106 4.79606 18.4527C5.22008 18.7756 5.75599 18.9181 6.28589 18.8489C6.52778 18.8173 6.77305 18.7186 7.11133 18.5412C7.60852 18.2804 8.2031 18.27 8.69012 18.549C9.17714 18.8281 9.46533 19.3443 9.48635 19.9021C9.50065 20.2815 9.53719 20.5417 9.63056 20.7654C9.83509 21.2554 10.2274 21.6448 10.7212 21.8478C11.0915 22 11.561 22 12.5 22C13.439 22 13.9085 22 14.2788 21.8478C14.7726 21.6448 15.1649 21.2554 15.3694 20.7654C15.4628 20.5417 15.4994 20.2815 15.5137 19.902C15.5347 19.3443 15.8228 18.8281 16.3098 18.549C16.7968 18.2699 17.3914 18.2804 17.8886 18.5412C18.2269 18.7186 18.4721 18.8172 18.714 18.8488C19.2439 18.9181 19.7798 18.7756 20.2038 18.4527C20.5219 18.2105 20.7566 17.807 21.2261 16.9999C21.6956 16.1929 21.9303 15.7894 21.9827 15.395C22.0524 14.8691 21.9088 14.3372 21.5835 13.9164C21.4349 13.7243 21.2262 13.5628 20.9022 13.3608C20.4261 13.0639 20.1197 12.558 20.1197 11.9999C20.1197 11.4418 20.4261 10.9361 20.9022 10.6392C21.2263 10.4371 21.435 10.2757 21.5836 10.0835C21.9089 9.66273 22.0525 9.13087 21.9828 8.60497C21.9304 8.21055 21.6957 7.80703 21.2262 7C20.7567 6.19297 20.522 5.78945 20.2039 5.54727C19.7799 5.22436 19.244 5.08185 18.7141 5.15109C18.4722 5.18269 18.2269 5.28136 17.8887 5.4588C17.3915 5.71959 16.7969 5.73002 16.3099 5.45096C15.8229 5.17191 15.5347 4.65566 15.5136 4.09794C15.4993 3.71848 15.4628 3.45833 15.3694 3.23463C15.1649 2.74458 14.7726 2.35523 14.2788 2.15224ZM12.5 15C14.1695 15 15.5228 13.6569 15.5228 12C15.5228 10.3431 14.1695 9 12.5 9C10.8305 9 9.47716 10.3431 9.47716 12C9.47716 13.6569 10.8305 15 12.5 15Z" fill="#1C274C"/>
-                </svg>
-                </button> */}
+                  </button>
+                  <button onClick={() => deleteConfirm(card.templateID)} className="delete-button" title="Delete Template">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M6 7V18C6 19.1046 6.89543 20 8 20H16C17.1046 20 18 19.1046 18 18V7M6 7H5M6 7H8M18 7H19M18 7H16M10 11V16M14 11V16M8 7V5C8 4.44772 8.44772 4 9 4H15C15.5523 4 16 4.44772 16 5V7M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                  <button onClick={() => assignModal(card.templateID)} className="delete-button" title="Assign to Recruiter">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M8.5 11C10.7091 11 12.5 9.20914 12.5 7C12.5 4.79086 10.7091 3 8.5 3C6.29086 3 4.5 4.79086 4.5 7C4.5 9.20914 6.29086 11 8.5 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M20 8V14M17 11H23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
                 </div>
-              :
-              <>
-                <p style={{marginBottom:"-13px", marginTop:"-15px", }}>Assigned by {card.email}</p>
-              </>
-              }   
-              <p>Click on "Generate Test Link"; The test link will be copied to the clipboard</p>
-              <>
+                ) : (
+                  <div className="assigned-badge">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12Z" fill="currentColor"/>
+                      <path d="M12 14C7.59 14 4 17.59 4 22H20C20 17.59 16.41 14 12 14Z" fill="currentColor"/>
+                    </svg>
+                    Assigned by {card.email}
+                  </div>
+                )}
+                
+                
+                <p>Generate a unique test link to share with candidates</p>
+                
                 {templateState.uuid ? (
                   <div className="form-group">
-                    <button onClick={() => handleCopyToClipboard(card.templateID)}>Copy to Clipboard</button>
+                    <button onClick={() => handleCopyToClipboard(card.templateID)}>
+                      <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M8 5H6C5.46957 5 4.96086 5.21071 4.58579 5.58579C4.21071 5.96086 4 6.46957 4 7V19C4 19.5304 4.21071 20.0391 4.58579 20.4142C4.96086 20.7893 5.46957 21 6 21H16C16.5304 21 17.0391 20.7893 17.4142 20.4142C17.7893 20.0391 18 19.5304 18 19V18M8 5C8 5.53043 8.21071 6.03914 8.58579 6.41421C8.96086 6.78929 9.46957 7 10 7H12C12.5304 7 13.0391 6.78929 13.4142 6.41421C13.7893 6.03914 14 5.53043 14 5M8 5C8 4.46957 8.21071 3.96086 8.58579 3.58579C8.96086 3.21071 9.46957 3 10 3H12C12.5304 3 13.0391 3.21071 13.4142 3.58579C13.7893 3.96086 14 4.46957 14 5M14 5H16C16.5304 5 17.0391 5.21071 17.4142 5.58579C17.7893 5.96086 18 6.46957 18 7V10" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Copy to Clipboard
+                      </span>
+                    </button>
                   </div>
                 ) : (
                   <div className="form-group">
                     <button onClick={() => handleCreateTest(card.templateID)}>
-                      {clicked === card.templateID && loading ? "Loading..." : "Generate Test Link"}
+                      {clicked === card.templateID && loading ? (
+                        <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="spin-animation">
+                            <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Generating...
+                        </span>
+                      ) : (
+                        <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.479 3.53087C19.552 2.60383 18.2979 2.07799 16.987 2.0666C15.676 2.0552 14.413 2.55918 13.47 3.46997L11.75 5.17997" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M14 11C13.5705 10.4259 13.0226 9.95083 12.3934 9.60706C11.7642 9.26329 11.0684 9.05886 10.3533 9.00765C9.63816 8.95643 8.92037 9.05966 8.24861 9.3102C7.57685 9.56074 6.96684 9.95296 6.45996 10.46L3.45996 13.46C2.54917 14.403 2.04519 15.666 2.05659 16.977C2.06798 18.288 2.59382 19.5421 3.52086 20.4691C4.4479 21.3961 5.70197 21.922 7.01295 21.9334C8.32393 21.9448 9.58694 21.4408 10.53 20.53L12.24 18.82" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Generate Test Link
+                        </span>
+                      )}
                     </button>
                   </div>
                 )}
-                {templateState.message && <p>{templateState.message}</p>}
-                <h5>{card.templateName}</h5>
-                {card.AssignedTo &&
-                <>
-                  {card.AssignedTo !== globalValue &&
-                  <p style={{marginBottom:"10px", marginTop:"0px", }}>Assigned to {card.AssignedTo}</p>
-                  }
-                </>
-                }
+                <h5 style={{marginTop: "-10px"}}>{card.templateName}</h5>
+                {templateState.message && (
+                  <p style={{
+                    color: templateState.uuid ? 'var(--color-success-text)' : 'var(--color-error-text)',
+                    background: templateState.uuid ? 'var(--color-success-light)' : 'var(--color-error-light)',
+                    padding: '8px 12px',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--font-size-sm)',
+                    marginTop: '12px'
+                  }}>{templateState.message}</p>
+                )}
                 
-              </>
+                {card.AssignedTo && card.AssignedTo !== globalValue && (
+                  <p style={{
+                    fontSize: 'var(--font-size-xs)',
+                    color: 'var(--color-text-muted)',
+                    marginTop: '12px',
+                    marginBottom: '0'
+                  }}>
+                    Assigned to: {card.AssignedTo}
+                  </p>
+                )}
               </div>
           );
         })}
         </>
-        }
+        )}
         </div>
     </div>
   );
