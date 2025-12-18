@@ -37,7 +37,29 @@ const CreateJD = () => {
          }
 
          const data = await response.json();
-         const htmlContent = data.body.match(/<[^>]+>/g)?.join('') || '';
+         // Parse the body - it may be a JSON string that needs parsing
+         let parsedBody = data.body;
+         if (typeof parsedBody === 'string') {
+            try {
+               parsedBody = JSON.parse(parsedBody);
+            } catch {
+               // body is already a string (HTML content)
+            }
+         }
+         // Extract the HTML content from the response
+         let htmlContent = typeof parsedBody === 'object' && parsedBody.content 
+            ? parsedBody.content 
+            : (typeof parsedBody === 'string' ? parsedBody : '');
+         
+         // Clean up AI response artifacts - extract only the HTML between tags
+         // Remove intro text like "Sure, here is..." and markdown code blocks
+         htmlContent = htmlContent
+            .replace(/^[\s\S]*?```html\s*/i, '')  // Remove everything before ```html
+            .replace(/```[\s\S]*$/i, '')           // Remove ``` and everything after
+            .replace(/^[\s\S]*?(?=<!DOCTYPE|<html|<body|<div|<h1|<h2|<p|<ul|<ol)/i, '') // Remove intro text
+            .replace(/This HTML job description[\s\S]*$/i, '') // Remove trailing explanation
+            .trim();
+         
          setJobDescription(htmlContent);
       } catch (error) {
          console.error('Error generating job description:', error);
@@ -52,32 +74,94 @@ const CreateJD = () => {
       const printWindow = window.open("", "_blank");
       const styles = `
         <style>
-          body {
-            font-family: Arial, sans-serif;
+          * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
           }
-          #printableContent {
-            text-align: left;
-            background-color: #fff;
-            padding: 10px;
-            border: 1px solid #ebccd1;
-            border-radius: 5px;
-            margin: 20px auto;
+          body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.8;
+            color: #374151;
+            padding: 40px 50px;
             max-width: 900px;
+            margin: 0 auto;
           }
-          h1, p {
-            color: #007bff;
+          h1 {
+            color: #1CBBB4;
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 1.5rem 0;
+            padding-bottom: 12px;
+            border-bottom: 3px solid #1CBBB4;
+          }
+          h2 {
+            color: #2d3748;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+          }
+          h3 {
+            color: #4a5568;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 1.25rem 0 0.5rem 0;
+          }
+          p {
+            margin: 0.75rem 0;
+            text-align: justify;
+          }
+          ul, ol {
+            padding-left: 28px;
+            margin: 0.75rem 0;
+          }
+          li {
+            margin-bottom: 10px;
+          }
+          strong, b {
+            color: #2d3748;
+            font-weight: 600;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+          }
+          th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+          }
+          th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #2d3748;
+          }
+          .footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.9rem;
+          }
+          @media print {
+            body { padding: 20px 30px; }
           }
         </style>
       `;
       printWindow.document.write(`
         <html>
           <head>
-            <title>Job Description</title>
+            <title>Job Description - ${formData.roleName || 'HR Robots'}</title>
             ${styles}
           </head>
-          <body>${printableContent.innerHTML}<p style="text-align: center">Powered by HR Robots | www.hrrobots.com</p></body>
+          <body>
+            ${printableContent.innerHTML}
+            <div class="footer">Powered by HR Robots | www.hrrobots.com</div>
+          </body>
         </html>
       `);
       const images = printWindow.document.images;

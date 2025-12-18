@@ -282,8 +282,11 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         return 0;
     });
 
-    // Update total pages based on filtered items
-    const filteredTotalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+    // Update total pages based on filtered items or server total
+    // When filtering locally, use filtered count; otherwise use server's total count
+    const filteredTotalPages = searchFilter && searchFilter.trim() 
+        ? Math.max(1, Math.ceil(filteredItems.length / pageSize))
+        : Math.max(1, totalPages);
 
     // Pagination logic
     const startIndex = (currentPage - 1) * pageSize;
@@ -293,13 +296,15 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         const nextPage = currentPage + 1;
         const requiredItems = nextPage * pageSize;
 
-        // Check if we need to fetch more data
+        // Check if we need to fetch more data from server
         if (requiredItems > items.length && hasMore && !loading) {
-            await fetchData(false);
-        }
-
-        // Move to next page if within bounds
-        if (nextPage <= filteredTotalPages) {
+            const success = await fetchData(false);
+            // Only move to next page after data is fetched
+            if (success && nextPage <= filteredTotalPages) {
+                setCurrentPage(nextPage);
+            }
+        } else if (nextPage <= filteredTotalPages) {
+            // Data already loaded, just change page
             setCurrentPage(nextPage);
         }
     };
@@ -579,12 +584,18 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                                 key={pageNum}
                                 className={`pagination-btn pagination-number ${currentPage === pageNum ? 'active' : ''}`}
                                 onClick={async () => {
-                                    // Check if we need to fetch more data
+                                    // Check if we need to fetch more data from server
                                     const requiredItems = pageNum * pageSize;
                                     if (requiredItems > items.length && hasMore && !loading) {
-                                        await fetchData(false);
+                                        const success = await fetchData(false);
+                                        // Only change page after data is fetched
+                                        if (success) {
+                                            setCurrentPage(pageNum);
+                                        }
+                                    } else {
+                                        // Data already loaded, just change page
+                                        setCurrentPage(pageNum);
                                     }
-                                    setCurrentPage(pageNum);
                                 }}
                                 aria-label={`Go to page ${pageNum}`}
                                 aria-current={currentPage === pageNum ? 'page' : undefined}

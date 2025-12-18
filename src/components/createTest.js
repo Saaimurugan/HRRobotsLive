@@ -1,11 +1,39 @@
 import React, { useState, useEffect } from "react";
 import "../App.css"; // Import the CSS or inline styles here
+import "../CreateTemplate.css"; // Import for toast styles
 import { GlobalProvider, useGlobalContext } from "../globalContext";
 import { useNavigate } from "react-router-dom";
 import ConfirmationBox from './confirmationBox';
 import GetAPIKey from './getAPIKey';
 import AssignTemplate from "./assignTemplate";
 import ConfigTemplate from "./configTemplate";
+
+// Toast Component
+const Toast = ({ toasts, removeToast }) => {
+  return (
+    <div className="toast-container">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`toast ${toast.type} ${toast.exiting ? 'toast-exit' : ''}`}>
+          <svg className="toast-icon" viewBox="0 0 24 24">
+            {toast.type === 'error' && <path fill="#e53e3e" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>}
+            {toast.type === 'success' && <path fill="#38a169" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>}
+            {toast.type === 'warning' && <path fill="#dd6b20" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>}
+            {toast.type === 'info' && <path fill="#3182ce" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>}
+          </svg>
+          <div className="toast-content">
+            <div className="toast-title">{toast.title}</div>
+            <div className="toast-message">{toast.message}</div>
+          </div>
+          <button className="toast-close" onClick={() => removeToast(toast.id)}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const CreateTest = () => {
 const [popupVisible, setPopupVisible] = useState(false);
@@ -26,6 +54,26 @@ const [templateIDSelectedForDelete, setTemplateIDSelectedForDelete] = useState("
 const [templateIDSelectedToAssign, setTemplateIDSelectedToAssign] = useState("");
 const [isOpenAPIModal, setIsOpenAPIModal] = useState(false);
 const [apiKey, setApiKey] = useState("");
+const [toasts, setToasts] = useState([]);
+
+// Toast functions
+const showToast = (type, title, message) => {
+  const id = Date.now();
+  setToasts(prev => [...prev, { id, type, title, message }]);
+  setTimeout(() => {
+    setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 300);
+  }, 4000);
+};
+
+const removeToast = (id) => {
+  setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+  setTimeout(() => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, 300);
+};
 
 const deleteConfirm = (templateID) => {
   setShowConfirmation(true);
@@ -166,20 +214,11 @@ const handleCopyToClipboard = (templateID) => {
     navigator.clipboard
       .writeText(url)
       .then(() => {
-        setPopupVisible(true);
-        setTimeout(() => setPopupVisible(false), 6000); // Hide popup after 6 seconds
+        showToast('info', 'Copied to Clipboard', `The test URL has been copied. Paste it into an email and send it to the candidate. ${url}`);
       })
       .catch((err) => {
         console.error("Clipboard write failed: ", err);
-        const newTemplateStates = {
-          ...templateStates,
-          [templateID]: {
-            ...templateStates[templateID],
-            message: "Failed to copy the URL to the clipboard. Please try again.",
-          },
-        };
-        setTemplateStates(newTemplateStates);
-        setMessage("Failed to copy the URL to the clipboard. Please try again.");
+        showToast('error', 'Copy Failed', 'Failed to copy the URL to the clipboard. Please try again.');
       }).finally(() => { 
         setClicked(""); 
         setTemplateStates({}); // Clear all messages
@@ -272,12 +311,7 @@ const fetchTemplates = async () => {
 
   return (
     <div className="app">
-      {popupVisible && (
-        <div className="banner-popup">
-          <p>The test URL has been successfully copied to your clipboard. Kindly paste it into an email and send it to the candidate.</p>
-          <p>https://www.hrrobots.click/test/{uuid}</p>
-        </div>
-      )}
+      <Toast toasts={toasts} removeToast={removeToast} />
       {showConfirmation && (
         <ConfirmationBox
           message="Are you sure you want to delete this template? All the questions associated with it will also be removed!"

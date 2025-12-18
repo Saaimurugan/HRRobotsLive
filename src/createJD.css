@@ -165,26 +165,81 @@
 }
 
 .jd-content {
-  padding: 20px;
-  background: #f8fafc;
-  border-radius: 10px;
+  padding: 30px 40px;
+  background: #fff;
+  border-radius: 12px;
   border: 1px solid #e2e8f0;
   margin-bottom: 20px;
-  line-height: 1.7;
-  color: #4a5568;
+  line-height: 1.8;
+  color: #374151;
+  font-size: 1rem;
 }
 
-.jd-content h1, .jd-content h2, .jd-content h3 {
+.jd-content h1 {
+  color: #1CBBB4;
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 1.5rem 0;
+  padding-bottom: 12px;
+  border-bottom: 3px solid #1CBBB4;
+}
+
+.jd-content h2 {
   color: #2d3748;
-  margin-top: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 1.5rem 0 0.75rem 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.jd-content h3 {
+  color: #4a5568;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 1.25rem 0 0.5rem 0;
+}
+
+.jd-content p {
+  margin: 0.75rem 0;
+  text-align: justify;
 }
 
 .jd-content ul, .jd-content ol {
-  padding-left: 25px;
+  padding-left: 28px;
+  margin: 0.75rem 0;
 }
 
 .jd-content li {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  position: relative;
+}
+
+.jd-content ul li::marker {
+  color: #1CBBB4;
+}
+
+.jd-content strong, .jd-content b {
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.jd-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.jd-content th, .jd-content td {
+  padding: 12px 15px;
+  text-align: left;
+  border: 1px solid #e2e8f0;
+}
+
+.jd-content th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: #2d3748;
 }
 
 .print-btn {
