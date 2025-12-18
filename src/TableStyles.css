@@ -1,78 +1,79 @@
 /* Table Container */
 .table-container {
    width: 100%;
+   max-width: 1200px;
+   margin: 1rem auto 0;
    overflow-x: auto;
-   margin-top: 1rem;
+   padding: 0 16px;
+   box-sizing: border-box;
 }
 
 /* Table Styling */
 .table {
-   width: 90%;
+   width: 100%;
    border-collapse: collapse;
-   text-align: center;
+   text-align: left;
    background: white;
+   border-radius: 8px;
+   overflow: hidden;
+   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 th, td {
-   padding: 12px 16px;
-   border: 1px solid #ddd;
+   padding: 14px 16px;
+   border-bottom: 1px solid #e9ecef;
+   vertical-align: middle;
 }
 
 th {
-   background-color: #f4f4f4;
-   font-weight: bold;
+   background-color: #f8f9fa;
+   font-weight: 600;
    cursor: pointer;
    text-transform: uppercase;
+   font-size: 12px;
+   letter-spacing: 0.5px;
+   color: #495057;
+   border-bottom: 2px solid #dee2e6;
 }
 
 th:hover {
-   background-color: #e0e0e0;
+   background-color: #e9ecef;
 }
 
 /* Alternating Row Colors */
-tbody tr:nth-child(odd) {
-   background-color: #f9f9f9;
+tbody tr:nth-child(even) {
+   background-color: #f8f9fa;
+}
+
+tbody tr {
+   cursor: pointer;
+   transition: background-color 0.2s ease;
 }
 
 tbody tr:hover {
-   background-color: #f1f1f1;
+   background-color: #e3f2fd;
+}
+
+/* Status Cell - the td element with status class */
+td.status-cell {
+   text-align: center;
+   vertical-align: middle;
+   font-weight: 600;
+   font-size: 13px;
+   white-space: nowrap;
 }
 
 /* Status Colors */
-.status-completed {
-   color: green;
-   font-weight: bold;
+td.status-completed {
+   color: #155724;
 }
 
-.status-not-started {
-   color: red;
-   font-weight: bold;
+td.status-terminated {
+   color: #721c24;
 }
 
-/* Pagination Buttons */
-.pagination {
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   margin-top: 20px;
+td.status-not-started {
+   color: #856404;
 }
 
-.pagination button {
-   padding: 8px 12px;
-   margin: 0 5px;
-   border: none;
-   border-radius: 4px;
-   background-color: #007bff;
-   color: white;
-   cursor: pointer;
-   transition: background 0.3s;
-}
-
-.pagination button:hover {
-   background-color: #0056b3;
-}
-
-.pagination button:disabled {
-   background-color: #ccc;
-   cursor: not-allowed;
-}
+/* Pagination Buttons - moved to analsticsOnResult.css for consistency */

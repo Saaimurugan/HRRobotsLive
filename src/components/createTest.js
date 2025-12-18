@@ -337,22 +337,19 @@ const fetchTemplates = async () => {
             <button onClick={() => navigate("/result")}>Check</button>
           </div>
         </div>	
-        </div>
 
-
-        <div className="container">	
-        {loadingTemplate ? <p className="loading">Loading</p> : 
+        {loadingTemplate ? <p className="loading" style={{ gridColumn: '1 / -1' }}>Loading</p> : 
         <>
         {templates.length === 0 ? 
-        <p>No templates found.</p>
+        <p style={{ gridColumn: '1 / -1' }}>No templates found.</p>
         :
-        <>
-        <h2>List of Screening Test Templates</h2>
-        <p>
-          Please choose a test from the options below. The test URL will be copied to your clipboard, allowing you to easily paste it into an email
-          and share it with the candidate.
-        </p>
-        </>
+        <div className="section-header">
+          <h2>List of Screening Test Templates</h2>
+          <p>
+            Please choose a test from the options below. The test URL will be copied to your clipboard, allowing you to easily paste it into an email
+            and share it with the candidate.
+          </p>
+        </div>
         }
         {templates.map((card, index) => {
           const templateState = templateStates[card.templateID] || {};
@@ -361,17 +358,17 @@ const fetchTemplates = async () => {
                 {card.AssignedTo != globalValue ?
                 <div style={{alignItems: "right", display: "inline-flex", justifyContent: "flex-end"}}>
                 <button onClick={() => navigate(`/edit/${card.templateID}`)} className="delete-button" title="Edit Card">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="#000000"/></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fillRule="evenodd" clipRule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="#000000"/></svg>
                 </button>
                 <button onClick={() => deleteConfirm(card.templateID)} className="delete-button" title="Delete Card">
                   <svg width="18" height="18" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M4 2H1V4H15V2H12V0H4V2Z" fill="#000000"/>
-                  <path fill-rule="evenodd" clip-rule="evenodd" d="M3 6H13V16H3V6ZM7 9H9V13H7V9Z" fill="#000000"/>
+                  <path fillRule="evenodd" clipRule="evenodd" d="M3 6H13V16H3V6ZM7 9H9V13H7V9Z" fill="#000000"/>
                   </svg>
                 </button>
                 <button onClick={() => assignModal(card.templateID)} className="delete-button" title="Assign to Recruiter">
-                  <svg fill="#000000" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" 
-                      width="25" height="25" viewBox="0 0 256 190" enable-background="new 0 0 256 190" space="preserve">
+                  <svg fill="#000000" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" 
+                      width="25" height="25" viewBox="0 0 256 190" enableBackground="new 0 0 256 190" xmlSpace="preserve">
                     <path d="M48.12,27.903C48.12,13.564,59.592,2,74.023,2c14.339,0,25.903,11.564,25.903,25.903
                       C99.834,42.335,88.27,53.806,74.023,53.806C59.684,53.806,48.12,42.242,48.12,27.903z M191,139h-47V97c0-20.461-17.881-37-38-37H43
                       C20.912,60,1.99,79.14,2,98v77c-0.026,8.533,6.001,12.989,12,13c6.014,0.011,12-4.445,12-13v-75h8v88h78v-88h8l0.081,50.37
@@ -426,7 +423,7 @@ const fetchTemplates = async () => {
         })}
         </>
         }
-      </div>
+        </div>
     </div>
   );
 };

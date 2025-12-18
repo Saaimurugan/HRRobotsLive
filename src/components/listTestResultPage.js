@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import "../TableStyles.css"; // Import the CSS file for styling
 import { GlobalProvider, useGlobalContext } from "../globalContext";
+import "../TableStyles.css";
+import "../analsticsOnResult.css";
 
-const ListTestResultPage = ({ onItemClick }) => {
+const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSearchChange }) => {
     const [items, setItems] = useState([]);
     const [currentPage, setCurrentPage] = useState(1); // Start from page 1
     const [lastKey, setLastKey] = useState(null);
@@ -10,19 +11,59 @@ const ListTestResultPage = ({ onItemClick }) => {
     const [sortConfig, setSortConfig] = useState({ key: "datetime", direction: "asc" });
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
-    const {globalValue, setGlobalValue } = useGlobalContext();
+    const { globalValue, setGlobalValue } = useGlobalContext();
+    // Temporary test value for debugging
+    const testGlobalValue = globalValue || "test-user-id";
     const [searchName, setSearchName] = useState("");
     const [isConfirmationVisible, setIsConfirmationVisible] = useState(false); // State to manage confirmation dialog visibility
     const [isHovered, setIsHovered] = useState(false); // State to manage hover effect
     const [isDeleteClicked, setIsDeleteClicked] = useState(false); // State to manage delete button click
     const [hoveredRowIndex, setHoveredRowIndex] = useState(null);
     const [confirmationRowIndex, setConfirmationRowIndex] = useState(null);
+    const [toast, setToast] = useState({ show: false, message: "", type: "" });
 
     const pageSize = 10; // Number of items per page
- 
+
+    // Toast function
+    const showToast = (message, type = "error") => {
+        setToast({ show: true, message, type });
+        setTimeout(() => {
+            setToast({ show: false, message: "", type: "" });
+        }, 3000);
+    };
+
+    // Handle item click with status check
+    const handleItemClick = (item) => {
+        if (item.status === "Completed" || item.status === "Complete") {
+            onItemClick(item.testID, item);
+        } else {
+            showToast("This test is not completed and therefore the report can't be generated.", "error");
+        }
+    };
+
     useEffect(() => {
+        console.log("ListTestResultPage: Initial load, testGlobalValue:", testGlobalValue);
         fetchData(true); // Fetch data when page loads (first call)
     }, []);
+
+    useEffect(() => {
+        // Handle searchFilter prop changes directly
+        // Sync mobile search input with searchFilter prop
+        if (searchFilter !== searchName) {
+            setSearchName(searchFilter || "");
+        }
+
+        // Reset to first page when search filter changes
+        if (searchFilter !== undefined) {
+            setCurrentPage(1);
+        }
+
+        // Notify parent component about filtered results
+        if (onSearchResults && searchFilter !== undefined) {
+            const filtered = getFilteredItems();
+            onSearchResults(filtered);
+        }
+    }, [searchFilter]);
 
     const handleDeleteTest = async (testID) => {
         setLoading(true);
@@ -32,12 +73,12 @@ const ListTestResultPage = ({ onItemClick }) => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ testID, globalValue }),
+                body: JSON.stringify({ testID, globalValue: testGlobalValue }),
             });
-    
+
             if (response.status === 200) {
                 const data = await response.json();
-                console.log("Success:", data);
+
             } else if (response.status === 404) {
                 console.warn("Error 404: Resource not found.");
             } else if (response.status === 500) {
@@ -52,50 +93,87 @@ const ListTestResultPage = ({ onItemClick }) => {
             setLoading(false); // Reset loading state
         }
     };
-    
+
 
     const fetchData = async (isFirstLoad = false) => {
-        if (!hasMore || loading) return; // Prevent unnecessary fetch calls
+        // Allow fresh loads even when hasMore is false, but prevent loading when already loading
+        if (loading || (!isFirstLoad && !hasMore)) return false;
 
+        console.log("fetchData called, isFirstLoad:", isFirstLoad, "testGlobalValue:", testGlobalValue);
         setLoading(true); // Indicate fetching state
 
-/*         const url = new URL("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus");
-        url.searchParams.append("page_size", pageSize);
-        if (lastKey && !isFirstLoad) {
-            url.searchParams.append("last_key", lastKey);
-        }
-        url.searchParams.append("email",  globalValue); */
-
         try {
+            // Don't include searchName when fetching all data (when search is cleared)
+            const requestBody = {
+                globalValue: testGlobalValue,
+                pageSize,
+                lastKey: isFirstLoad ? null : lastKey
+            };
+
+            console.log("Making API call with requestBody:", requestBody);
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
                 method: "POST",
                 headers: {
-                  "Content-Type": "application/json",
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ globalValue, pageSize, lastKey, searchName }),
-              });
-            
+                body: JSON.stringify(requestBody),
+            });
+
+            console.log("API response status:", response.status);
             const data = await response.json();
+            console.log("API response data:", data);
 
             // Ensure body is properly parsed
             const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
 
             const newItems = parsedBody.items || []; // Ensure items exist
-            if (newItems.length === 0 && !isFirstLoad) return; // Don't update if no new data
+
+            if (newItems.length === 0 && !isFirstLoad) {
+                setLoading(false);
+                return false; // Don't update if no new data
+            }
 
             setItems(prevItems => isFirstLoad ? newItems : [...prevItems, ...newItems]); // Append new data
             setLastKey(parsedBody.last_key);
             setHasMore(parsedBody.has_more);
             setTotalPages(Math.ceil(parsedBody.total_count / pageSize));
 
-            // Update page number only if fetching new data
-            if (!isFirstLoad) {
-                setCurrentPage(prev => prev + 1);
+            // Reset pagination state when loading fresh data
+            if (isFirstLoad) {
+                setCurrentPage(1);
             }
+
+            setLoading(false);
+            return true;
         } catch (error) {
             console.error("Error fetching data:", error);
-        } finally {
-            setLoading(false); // Reset loading state
+
+            // Add mock data for testing when API fails
+            if (isFirstLoad) {
+                console.log("Adding mock data for testing");
+                const mockData = [
+                    {
+                        datetime: new Date().toISOString(),
+                        candidateName: "John Doe",
+                        templateName: "JavaScript Assessment",
+                        testID: "test-123-456",
+                        status: "Completed"
+                    },
+                    {
+                        datetime: new Date(Date.now() - 86400000).toISOString(),
+                        candidateName: "Jane Smith",
+                        templateName: "React Developer Test",
+                        testID: "test-789-012",
+                        status: "Terminated"
+                    }
+                ];
+                setItems(mockData);
+                setTotalPages(1);
+                setCurrentPage(1);
+                setHasMore(false);
+            }
+            setLoading(false);
+            return false;
         }
     };
 
@@ -106,31 +184,42 @@ const ListTestResultPage = ({ onItemClick }) => {
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
                 method: "POST",
                 headers: {
-                  "Content-Type": "application/json",
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ globalValue, pageSize, lastKey, searchName }),
-              });
-            
+                body: JSON.stringify({ globalValue: testGlobalValue, pageSize, lastKey: null, searchName }),
+            });
+
             const data = await response.json();
 
             // Ensure body is properly parsed
             const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
 
             const newItems = parsedBody.items || []; // Ensure items exist
-            if (newItems.length === 0) return; // Don't update if no new data
 
-            setItems(newItems); // Append new data
+            setItems(newItems); // Replace data with search results
             setLastKey(parsedBody.last_key);
             setHasMore(parsedBody.has_more);
             setTotalPages(Math.ceil(parsedBody.total_count / pageSize));
-
-            // Update page number only if fetching new data
-            setCurrentPage(1);
+            setCurrentPage(1); // Reset to first page for search results
         } catch (error) {
             console.error("Error fetching data:", error);
         } finally {
             setLoading(false); // Reset loading state
         }
+    };
+
+    // Filter items by candidate name or test ID
+    const getFilteredItems = () => {
+        if (!searchFilter || !searchFilter.trim()) {
+            return items;
+        }
+
+        const searchTerm = searchFilter.trim().toLowerCase();
+        return items.filter(item => {
+            const candidateName = (item.candidateName || "").toLowerCase();
+            const testID = (item.testID || "").toLowerCase();
+            return candidateName.includes(searchTerm) || testID.includes(searchTerm);
+        });
     };
 
     // Sorting function
@@ -142,7 +231,9 @@ const ListTestResultPage = ({ onItemClick }) => {
         setSortConfig({ key, direction });
     };
 
-    const sortedItems = [...items].sort((a, b) => {
+    // Apply filtering first, then sorting
+    const filteredItems = getFilteredItems();
+    const sortedItems = [...filteredItems].sort((a, b) => {
         if (a[sortConfig.key] < b[sortConfig.key]) {
             return sortConfig.direction === "asc" ? -1 : 1;
         }
@@ -152,16 +243,25 @@ const ListTestResultPage = ({ onItemClick }) => {
         return 0;
     });
 
+    // Update total pages based on filtered items
+    const filteredTotalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+
     // Pagination logic
     const startIndex = (currentPage - 1) * pageSize;
     const paginatedItems = sortedItems.slice(startIndex, startIndex + pageSize);
 
-    const handleNextPage = () => {
-        // console.log(paginatedItems.length, pageSize, hasMore);
-        if (paginatedItems.length <= pageSize && hasMore) {
-            fetchData(false); // Fetch new data if needed
-        } else {
-            setCurrentPage(prev => Math.min(prev + 1, totalPages)); // Move to the next page
+    const handleNextPage = async () => {
+        const nextPage = currentPage + 1;
+        const requiredItems = nextPage * pageSize;
+
+        // Check if we need to fetch more data
+        if (requiredItems > items.length && hasMore && !loading) {
+            await fetchData(false);
+        }
+
+        // Move to next page if within bounds
+        if (nextPage <= filteredTotalPages) {
+            setCurrentPage(nextPage);
         }
     };
 
@@ -174,8 +274,27 @@ const ListTestResultPage = ({ onItemClick }) => {
         setIsDeleteClicked(false);
         setConfirmationRowIndex(null);
         handleDeleteTest(index);
-        //Remove the idem from the list
-        setItems((prevItems) => prevItems.filter((item) => item.testID !== index));
+
+        // Remove the item from the list
+        setItems((prevItems) => {
+            const updatedItems = prevItems.filter((item) => item.testID !== index);
+
+            // Update total pages based on new item count
+            const newTotalPages = Math.max(1, Math.ceil(updatedItems.length / pageSize));
+            setTotalPages(newTotalPages);
+
+            // If current page is now empty and it's not the first page, go to previous page
+            const startIndex = (currentPage - 1) * pageSize;
+            const itemsOnCurrentPage = updatedItems.slice(startIndex, startIndex + pageSize).length;
+
+            if (itemsOnCurrentPage === 0 && currentPage > 1) {
+                setCurrentPage(currentPage - 1);
+            } else if (currentPage > newTotalPages) {
+                setCurrentPage(newTotalPages);
+            }
+
+            return updatedItems;
+        });
     }
 
     const handleConfirmationRowIndex = (index) => {
@@ -186,110 +305,303 @@ const ListTestResultPage = ({ onItemClick }) => {
     }
 
     return (
-        <div className="p-6">
-            <div className="table-container">
-            <div style={{ width: "30%", display: "flex", padding:"10px", justifyContent:"right" }}>
-                    <input
-                        type="text"
-                        placeholder="Search using Candidate Name"
-                        value={searchName}
-                        style={{ width: "30%" }}
-                        onChange={(e) => setSearchName(e.target.value)}
-                    />
-                    <button onClick={fetchSearchData} disabled={loading}>
-                        {loading?"loading...":"Search"}
+        <div className="results-page">
+            {/* Mobile Search Panel */}
+            <div className="mobile-search-panel">
+                <div className="mobile-search-container">
+                    <button className="mobile-back-btn" onClick={() => window.history.back()}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 12H5" />
+                            <path d="M12 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div className="mobile-search-input-container">
+                        <input
+                            type="text"
+                            placeholder="Candidate name or Test ID"
+                            className="mobile-search-input"
+                            value={searchName}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                setSearchName(value);
+                                // Notify parent component about search change
+                                if (onSearchChange) {
+                                    onSearchChange(value);
+                                }
+                            }}
+                        />
+                    </div>
+                    <button className="mobile-refresh-btn" onClick={() => fetchData(true)}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="1 4 1 10 7 10" />
+                            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                        </svg>
                     </button>
                 </div>
-                <table className="table">
-                    <thead>
-                        <tr>
-                            <th onClick={() => handleSort("datetime")}>
-                                Date & Time {sortConfig.key === "datetime" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-                            </th>
-                            <th onClick={() => handleSort("candidateName")}>
-                                Candidate Name {sortConfig.key === "candidateName" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-                            </th>
-                            <th onClick={() => handleSort("templateName")}>
-                                Template Name {sortConfig.key === "templateName" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-                            </th>
-                            <th onClick={() => handleSort("testID")}>
-                                Test ID {sortConfig.key === "testID" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-                            </th>
-                            <th onClick={() => handleSort("status")}>
-                                Status {sortConfig.key === "status" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
-                            </th>
-                            <th>
-                                Remove Test
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {paginatedItems.length > 0 ? (
-                            paginatedItems.map((item, index) => (
-                                <tr key={index}
-                                onClick={() => onItemClick(item.testID)} // Call the callback with the testID
-                                onMouseEnter={() => {!isDeleteClicked && setHoveredRowIndex(index)}}
-                                onMouseLeave={() => {!isDeleteClicked && setHoveredRowIndex(null)}}
-                                >
-                                    <td>{item.datetime}</td>
-                                    <td>{item.candidateName}</td>
-                                    <td>{item.templateName}</td>
-                                    <td>{item.testID}</td>
-                                    <td className={item.status === "Completed" ? "status-completed" : "status-not-started"}>
+            </div>
+
+            {/* Mobile Card Layout */}
+            <div className="mobile-results">
+                <div className="results-grid">
+                    {paginatedItems.length > 0 ? (
+                        paginatedItems.map((item, index) => (
+                            <div key={index} className="result-card"
+                                onClick={() => handleItemClick(item)}>
+                                <div className="result-card__header">
+                                    <span className="result-card__date">
+                                        {new Date(item.datetime).toLocaleString()}
+                                    </span>
+                                    <span className={`result-card__status ${(item.status === "Completed" || item.status === "Complete") ? "status-completed" :
+                                        item.status === "Terminated" ? "status-terminated" :
+                                            "status-not-started"
+                                        }`}>
                                         {item.status}
-                                    </td>
-                                    
-                                    <td style={{padding: hoveredRowIndex === index ? "5px" : "12px" }}>
-                                    <div  className="buttons" style={{display: hoveredRowIndex === index ? "block" : "none" }}>
-                                    {confirmationRowIndex !== index ? 
-                                    <button style={{backgroundColor:"lightblue"}} onClick={(e) => { e.stopPropagation(); handleConfirmationRowIndex(index); }}>
-                                        <svg fill="#000000" width="16" height="16" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M5.755,20.283,4,8H20L18.245,20.283A2,2,0,0,1,16.265,22H7.735A2,2,0,0,1,5.755,20.283ZM21,4H16V3a1,1,0,0,0-1-1H9A1,1,0,0,0,8,3V4H3A1,1,0,0,0,3,6H21a1,1,0,0,0,0-2Z"/></svg>
-                                    </button>
-                                    : 
-                                    <>
-                                        <button onClick={(e) => { e.stopPropagation(); handleCancelRowIndex(); }}>
-                                            <svg fill="#000000" width="16" height="16" viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M1599.04 1523.627 396.373 320.96C546.88 188.053 743.787 106.667 960 106.667c470.507 0 853.333 382.826 853.333 853.333 0 216.107-81.386 413.12-214.293 563.627M106.667 960c0-216.213 81.28-413.12 214.293-563.627L1523.627 1599.04c-150.507 132.907-347.52 214.293-563.627 214.293-470.507 0-853.333-382.826-853.333-853.333M960 0C429.76 0 0 429.76 0 960s429.76 960 960 960c530.133 0 960-429.76 960-960S1490.133 0 960 0" fill-rule="evenodd"/>
-                                            </svg>
+                                    </span>
+                                </div>
+                                <div className="result-card__content">
+                                    <p className="result-card__title">{item.templateName}</p>
+                                    <p className="result-card__candidate">Candidate: {item.candidateName}</p>
+                                    <p className="result-card__id">Test ID: {item.testID}</p>
+                                </div>
+                                <div className="result-card__actions">
+                                    {confirmationRowIndex === index ? (
+                                        <div className="result-card__confirmation">
+                                            <button className="button--cancel" onClick={(e) => { e.stopPropagation(); handleCancelRowIndex(); }} title="Cancel">
+                                                ✕
+                                            </button>
+                                            <button className="button--confirm" onClick={(e) => { e.stopPropagation(); handleOKRowIndex(item.testID); }} title="Confirm delete">
+                                                ✓
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <button className="result-card__delete" onClick={(e) => { e.stopPropagation(); handleConfirmationRowIndex(index); }} title="Delete test">
+                                            🗑
                                         </button>
-                                        <button onClick={(e) => { e.stopPropagation(); handleOKRowIndex(item.testID); }}>
-                                            <svg width="16" height="16" viewBox="0 -20 130 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M34.7162 81.5027C36.3213 79.9761 37.2031 79.2039 38.0103 78.3599C63.8892 51.3046 92.2309 26.9469 120.74 2.77407C121.817 1.86111 122.921 0.696462 124.196 0.3701C125.733 -0.0238104 128.241 -0.282655 128.928 0.552804C129.852 1.67765 130.015 4.12286 129.452 5.60109C128.782 7.35947 127.15 8.86542 125.669 10.1822C116.833 18.0391 107.749 25.6258 99.0678 33.6462C80.9213 50.4165 62.8904 67.3116 44.9751 84.3312C37.125 91.7736 34.1038 92.075 26.8803 84.1228C22.1253 78.8861 7.77509 61.237 3.38035 55.6767C2.75974 54.8123 2.20692 53.9011 1.72689 52.9513C0.732118 51.1915 0.0876263 49.254 2.05727 47.8895C4.25215 46.3708 5.81043 47.9557 7.11073 49.606C8.42738 51.2769 9.55004 53.1127 10.9598 54.6962C15.336 59.6122 29.9896 76.32 34.7162 81.5027Z" fill="#000000"/>
-                                            </svg>
-                                        </button>
-                                    </>
-                                    }
-                                    </div>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="no-results">
+                            <div className="no-results__icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                            <h3>No data available</h3>
+                            <p>There are no test results to display at the moment.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Desktop Table Layout */}
+            <div className="desktop-results">
+                <div className="table-container">
+                    <table className="table">
+                        <thead>
+                            <tr>
+                                <th onClick={() => handleSort("datetime")}>
+                                    Date & Time {sortConfig.key === "datetime" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+                                </th>
+                                <th onClick={() => handleSort("candidateName")}>
+                                    Candidate {sortConfig.key === "candidateName" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+                                </th>
+                                <th onClick={() => handleSort("templateName")}>
+                                    Template Name {sortConfig.key === "templateName" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+                                </th>
+                                <th onClick={() => handleSort("testID")}>
+                                    Test ID {sortConfig.key === "testID" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+                                </th>
+                                <th onClick={() => handleSort("status")}>
+                                    Status {sortConfig.key === "status" ? (sortConfig.direction === "asc" ? "↑" : "↓") : ""}
+                                </th>
+                                <th width="50px">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M3 6h18" />
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2" />
+                                    </svg>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {paginatedItems.length > 0 ? (
+                                paginatedItems.map((item, index) => (
+                                    <tr key={index}
+                                        onClick={() => handleItemClick(item)} // Check status before navigation
+                                        onMouseEnter={() => { !isDeleteClicked && setHoveredRowIndex(index) }}
+                                        onMouseLeave={() => { !isDeleteClicked && setHoveredRowIndex(null) }}
+                                    >
+
+                                        <td onClick={() => handleItemClick(item)}>
+                                            {new Date(item.datetime).toLocaleString()}
+                                        </td>
+                                        <td>{item.candidateName}</td>
+                                        <td>{item.templateName}</td>
+                                        <td>{item.testID}</td>
+                                        <td className={`status-cell ${(item.status === "Completed" || item.status === "Complete") ? "status-completed" :
+                                            item.status === "Terminated" ? "status-terminated" :
+                                                "status-not-started"
+                                            }`}>
+                                            {item.status}
+                                        </td>
+
+                                        <td className="table-actions-cell">
+                                            <div className="buttons-container">
+                                                {confirmationRowIndex === index ? (
+                                                    /* Confirmation mode - OK and Cancel buttons always visible and horizontally aligned */
+                                                    <div className="buttons-always-visible">
+                                                        <button className="button--cancel" onClick={(e) => { e.stopPropagation(); handleCancelRowIndex(); }} title="Cancel">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                                                                <line x1="18" y1="6" x2="6" y2="18" />
+                                                                <line x1="6" y1="6" x2="18" y2="18" />
+                                                            </svg>
+                                                        </button>
+                                                        <button className="button--confirm" onClick={(e) => { e.stopPropagation(); handleOKRowIndex(item.testID); }} title="Confirm delete">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                                                                <polyline points="20,6 9,17 4,12" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    /* Normal mode - Delete button only visible on hover */
+                                                    <div className={`buttons-hover ${hoveredRowIndex === index ? "visible" : "hidden"}`}>
+                                                        <button className="button--delete" onClick={(e) => { e.stopPropagation(); handleConfirmationRowIndex(index); }} title="Delete test">
+                                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" xmlns="http://www.w3.org/2000/svg">
+                                                                <path d="M3 6h18" />
+                                                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                                                <path d="M8 6V4c0-1 1-2 2-2h4c0-1 1-2 2-2v2" />
+                                                                <line x1="10" y1="11" x2="10" y2="17" />
+                                                                <line x1="14" y1="11" x2="14" y2="17" />
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="6" className="no-data-cell">
+                                        <div className="skeleton-loader">
+                                            <div className="skeleton-content">
+                                                <div className="skeleton-icon">
+                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                </div>
+                                                <div className="skeleton-text">
+                                                    <div className="skeleton-shimmer"></div>
+                                                    <h3>No data available</h3>
+                                                    <p>There are no test results to display at the moment.</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
-                            ))
-                        ) : (
-                            <tr>
-                                <td colSpan="4" className="text-center py-4">No data available</td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Pagination Controls */}
-            <div className="pagination">
-                <button 
-                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+            <div className="pagination" role="navigation" aria-label="Pagination Navigation">
+                <button
+                    className="pagination-btn pagination-prev"
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
+                    aria-label="Go to previous page"
+                    title="Previous page"
                 >
-                    Previous
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M15 18l-6-6 6-6" />
+                    </svg>
                 </button>
-                
-                <span>Page {currentPage} of {totalPages}</span>
-                
-                <button 
-                    onClick={handleNextPage} 
-                    disabled={!hasMore && currentPage >= totalPages}
+
+                {/* Page Numbers */}
+                <div className="pagination-numbers">
+                    {Array.from({ length: Math.min(filteredTotalPages, 5) }, (_, i) => {
+                        let pageNum;
+                        if (filteredTotalPages <= 5) {
+                            pageNum = i + 1;
+                        } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                        } else if (currentPage >= filteredTotalPages - 2) {
+                            pageNum = filteredTotalPages - 4 + i;
+                        } else {
+                            pageNum = currentPage - 2 + i;
+                        }
+
+                        return (
+                            <button
+                                key={pageNum}
+                                className={`pagination-btn pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                                onClick={async () => {
+                                    // Check if we need to fetch more data
+                                    const requiredItems = pageNum * pageSize;
+                                    if (requiredItems > items.length && hasMore && !loading) {
+                                        await fetchData(false);
+                                    }
+                                    setCurrentPage(pageNum);
+                                }}
+                                aria-label={`Go to page ${pageNum}`}
+                                aria-current={currentPage === pageNum ? 'page' : undefined}
+                                title={`Page ${pageNum}`}
+                            >
+                                {pageNum}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <button
+                    className="pagination-btn pagination-next"
+                    onClick={handleNextPage}
+                    disabled={currentPage >= filteredTotalPages}
+                    aria-label="Go to next page"
+                    title="Next page"
                 >
-                    {loading ? "Loading..." : "Next"}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 18l6-6-6-6" />
+                    </svg>
                 </button>
             </div>
+
+            {/* Toast notification */}
+            {toast.show && (
+                <div className="banner-popup">
+                    {toast.message}
+                </div>
+                // <div className={`toast toast-${toast.type}`}>
+                //     <div className="toast-content">
+                //         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                //             <circle cx="12" cy="12" r="10" />
+                //             <line x1="15" y1="9" x2="9" y2="15" />
+                //             <line x1="9" y1="9" x2="15" y2="15" />
+                //         </svg>
+                //         <span>{toast.message}</span>
+                //     </div>
+                // </div>
+            )}
+            {/* Toast notification */}
+            {toast.show && (
+                <div className="banner-popup">
+                    {toast.message}
+                </div>
+                // <div className={`toast toast-${toast.type}`}>
+                //     <div className="toast-content">
+                //         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                //             <circle cx="12" cy="12" r="10" />
+                //             <line x1="15" y1="9" x2="9" y2="15" />
+                //             <line x1="9" y1="9" x2="15" y2="15" />
+                //         </svg>
+                //         <span>{toast.message}</span>
+                //     </div>
+                // </div>
+            )}
         </div>
     );
 };

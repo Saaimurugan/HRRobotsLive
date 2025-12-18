@@ -1,0 +1,239 @@
+.create-jd-page {
+  margin-top: 85px;
+  min-height: calc(100vh - 85px);
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  padding: 30px 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.create-jd-form-container {
+  background: #fff;
+  padding: 35px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 100%;
+  animation: slideUp 0.4s ease-out;
+}
+
+.create-jd-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 1.5rem;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.create-jd-header h1 {
+  font-size: 1.75rem;
+  color: #2d3748;
+  font-weight: 700;
+  margin: 0;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Back button - matching searchResult style */
+.modern-button--outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  color: #1CBBB4;
+  border: 1.5px solid #1CBBB4;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modern-button--outline:hover {
+  background: #1CBBB4;
+  color: #fff;
+}
+
+.modern-button--outline svg {
+  width: 16px;
+  height: 16px;
+}
+
+.create-jd-form .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.create-jd-form .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.create-jd-form .form-group input,
+.create-jd-form .form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  font-size: 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+  background: #f8fafc;
+}
+
+.create-jd-form .form-group input:focus,
+.create-jd-form .form-group textarea:focus {
+  outline: none;
+  border-color: #1CBBB4;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(28, 187, 180, 0.1);
+}
+
+.create-jd-form .form-group textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.create-jd-form .submit-btn {
+  width: 100%;
+  padding: 14px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #1CBBB4 0%, #17a59f 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(28, 187, 180, 0.3);
+}
+
+.create-jd-form .submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(28, 187, 180, 0.4);
+}
+
+.create-jd-form .submit-btn:disabled {
+  background: linear-gradient(135deg, #a0aec0 0%, #8a9aab 100%);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Result Container */
+.jd-result-container {
+  background: #fff;
+  padding: 35px;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 900px;
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.jd-result-container h2 {
+  font-size: 1.5rem;
+  color: #2d3748;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.jd-content {
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 20px;
+  line-height: 1.7;
+  color: #4a5568;
+}
+
+.jd-content h1, .jd-content h2, .jd-content h3 {
+  color: #2d3748;
+  margin-top: 1rem;
+}
+
+.jd-content ul, .jd-content ol {
+  padding-left: 25px;
+}
+
+.jd-content li {
+  margin-bottom: 8px;
+}
+
+.print-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+}
+
+.print-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+}
+
+.print-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Result Container - full width */
+.jd-result-container {
+  max-width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .create-jd-page {
+    padding: 20px 20px;
+  }
+
+  .create-jd-form-container,
+  .jd-result-container {
+    padding: 25px 20px;
+  }
+
+  .create-jd-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .modern-button--outline {
+    padding: 8px 12px;
+  }
+}

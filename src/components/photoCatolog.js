@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import '../analsticsOnResult.css';
 
 const PhotoCatalog = ({ searchTerm }) => {
    const [Photos, setPhotos] = useState([]);
@@ -43,22 +44,28 @@ const PhotoCatalog = ({ searchTerm }) => {
       fetchPhotos();
    }, [searchTerm]);
 
+   const getGridClass = () => {
+      if (!Photos || Photos.length === 0) return '';
+      if (Photos.length === 1) return 'photo-grid-1';
+      if (Photos.length === 2) return 'photo-grid-2';
+      return 'photo-grid-3';
+   };
+
    return (
       <>
-      <h2 style={{ textAlign: 'center' }}>Candidate Photographs</h2>
-      <div style={styles.container}>
+      <div className={`photo-catalog-container ${getGridClass()}`}>
          {loading ? (
             <p>Loading photos...</p>
          ) : error ? (
-            <p style={styles.error}>{error}</p>
+            <p className="photo-catalog-error">{error}</p>
          ) : Photos && Photos.length > 0 ? (
             Photos.map((photo, index) => (
-               <div key={index} style={styles.photoCard}>
-                  <img src={photo.url} style={styles.image} />
+               <div key={index} className="photo-card">
+                  <img src={photo.url} alt={`Photo ${index + 1}`} className="photo-card-image" />
                </div>
             ))
          ) : (
-            <p style={styles.noPhotos}>No photos available</p>
+            <p className="photo-catalog-no-photos">No photos available</p>
          )}
       </div>
       </>
@@ -95,5 +102,6 @@ const styles = {
       color: 'red',
    },
 };
+
 
 export default PhotoCatalog;

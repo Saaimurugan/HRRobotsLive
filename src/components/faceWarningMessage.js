@@ -1,41 +1,41 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
 const FaceWarningMessage = ({count, offFocus, userUniqueID}) => {
   const videoRef = useRef(null);
+  const photoCapturedRef = useRef(false);
 
-  // const capturePhoto = async () => {
+  const capturePhoto = async () => {
+    if (!userUniqueID) {
+      console.error("userUniqueID is required");
+      return;
+    }
 
-  //   if (!userUniqueID) {
-  //     console.error("userUniqueID is required");
-  //     return;
-  //   }
-  
-  //   if (videoRef.current) {
-  //     const canvas = document.createElement('canvas');
-  //     canvas.width = videoRef.current.videoWidth;
-  //     canvas.height = videoRef.current.videoHeight;
-  //     const ctx = canvas.getContext('2d');
-  //     ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-  //     const imageData = canvas.toDataURL('image/jpeg');
-  //     if (imageData) 
-  //       {
-  //         sendToAPI(imageData);
-  //       }
-  //   }
-  // };
+    // Get video element from the existing face detection video
+    const existingVideo = document.querySelector('video');
+    if (existingVideo) {
+      const canvas = document.createElement('canvas');
+      canvas.width = existingVideo.videoWidth;
+      canvas.height = existingVideo.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(existingVideo, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/jpeg');
+      if (imageData) {
+        sendToAPI(imageData);
+      }
+    }
+  };
 
-  // const sendToAPI = async (imageData) => {
-  //   console.log("Captured Image Data:", imageData);
-  //   try {
-  //     await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
-  //       method: 'POST',
-  //       headers: { 'Content-Type': 'application/json' },
-  //       body: JSON.stringify({ image: imageData, userUniqueID }),
-  //     });
-  //   } catch (error) {
-  //     console.error('Error sending image:', error);
-  //   }
-  // };
+  const sendToAPI = async (imageData) => {
+    try {
+      await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: imageData, userUniqueID }),
+      });
+    } catch (error) {
+      console.error('Error sending image:', error);
+    }
+  };
 
   const containerStyle = {
     backgroundColor: "#ffcccb",
@@ -64,9 +64,13 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID}) => {
     textAlign: "left",
   };
 
-  // useEffect(() => {
-  //   capturePhoto();
-  // }, [userUniqueID]);
+  // Capture photo when warning message is displayed
+  useEffect(() => {
+    if (!photoCapturedRef.current) {
+      capturePhoto();
+      photoCapturedRef.current = true;
+    }
+  }, [userUniqueID]);
 
   return (
     <div style={containerStyle}>

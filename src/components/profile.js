@@ -1,47 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { GlobalProvider, useGlobalContext } from "../globalContext";
+import { useGlobalContext } from "../globalContext";
 import { useNavigate } from 'react-router-dom';
-import ForgotPasswordPage from './forgotPassword';
+import "../profile.css";
 
-// Component 1: Get the S3 Bucket Key and ID
-const S3Config = () => {
+const Profile = () => {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // S3 Config
   const [bucketKey, setBucketKey] = useState('');
   const [bucketId, setBucketId] = useState('');
-  return (
-           <div className="containerLogin">
-            <div className="login-container">
-    <div style={{ margin: '24px 0', padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-      <h3>S3 Configuration</h3>
-      <div>
-        <label>S3 Bucket Key:&nbsp;
-          <input
-            type="text"
-            value={bucketKey}
-            onChange={e => setBucketKey(e.target.value)}
-            style={{ width: 250 }}
-          />
-        </label>
-      </div>
-      <div style={{ marginTop: 12 }}>
-        <label>S3 Bucket ID:&nbsp;
-          <input
-            type="text"
-            value={bucketId}
-            onChange={e => setBucketId(e.target.value)}
-            style={{ width: 250 }}
-          />
-        </label>
-      </div>
-    </div>
-    </div>
-    </div>
-  );
-};
 
-// Component 2: Get the LLM Key, List of public LLMs as a dropdown, and a text box to add the key
-const LLMConfig = () => {
+  // LLM Config
   const [llmKey, setLlmKey] = useState('');
   const [selectedLLM, setSelectedLLM] = useState('');
+
+  const { globalAPIValue } = useGlobalContext();
+  const { globalValue } = useGlobalContext();
+  const navigate = useNavigate();
+
   const publicLLMs = [
     { value: 'openai', label: 'OpenAI GPT-4' },
     { value: 'claude', label: 'Anthropic Claude' },
@@ -49,63 +29,183 @@ const LLMConfig = () => {
     { value: 'mistral', label: 'Mistral' },
     { value: 'nova', label: 'AWS Nova' }
   ];
-  return (
-              <div className="containerLogin">
-            <div className="login-container">
-    <div style={{ margin: '24px 0', padding: 16, border: '1px solid #eee', borderRadius: 8 }}>
-      <h3>LLM Configuration</h3>
-      <div>
-        <label>Select Public LLM:&nbsp;
-          <select
-            value={selectedLLM}
-            onChange={e => setSelectedLLM(e.target.value)}
-            style={{ width: 250 }}
-          >
-            <option value="">Select LLM</option>
-            {publicLLMs.map(llm => (
-              <option key={llm.value} value={llm.value}>{llm.label}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <div style={{ marginTop: 12 }}>
-        <label>LLM Key:&nbsp;
-          <input
-            type="text"
-            value={llmKey}
-            onChange={e => setLlmKey(e.target.value)}
-            style={{ width: 250 }}
-          />
-        </label>
-      </div>
-    </div>
-    </div>
-    </div>
-  );
-};
-
-const Profile = () => {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [message, setMessage] = useState('');
-  const { globalAPIValue, setGlobalAPIValue } = useGlobalContext();
-  const { globalValue, setGlobalValue } = useGlobalContext();
-
-  const email = globalAPIValue;
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (globalValue === "") {
-      navigate("/login"); // Redirect to login if globalValue is false
+      navigate("/login");
     }
   }, [globalValue, navigate]);
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (password !== confirmPassword) {
+      setMessage("Passwords do not match");
+      setMessageType("error");
+      return;
+    }
+    if (password.length < 6) {
+      setMessage("Password must be at least 6 characters");
+      setMessageType("error");
+      return;
+    }
+    setLoading(true);
+    // Add your password change API call here
+    setTimeout(() => {
+      setMessage("Password updated successfully");
+      setMessageType("success");
+      setLoading(false);
+      setPassword('');
+      setConfirmPassword('');
+    }, 1000);
+  };
+
+  const handleSaveS3Config = () => {
+    // Add your S3 config save API call here
+    setMessage("S3 configuration saved");
+    setMessageType("success");
+  };
+
+  const handleSaveLLMConfig = () => {
+    // Add your LLM config save API call here
+    setMessage("LLM configuration saved");
+    setMessageType("success");
+  };
+
   return (
-    <>
-      <ForgotPasswordPage />
-      <S3Config />
-      <LLMConfig />
-    </>
+    <div className="profile-page">
+      <div className="profile-container">
+        <div className="profile-header">
+          <button onClick={() => navigate(-1)} className="profile-back-btn" title="Back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1>Profile Settings</h1>
+        </div>
+
+        <div className="config-sections">
+          {/* Password Change Section */}
+          <div className="config-card password-section">
+            <div className="config-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+              <h3>Change Password</h3>
+            </div>
+            <form className="config-form" onSubmit={handlePasswordChange}>
+              <div className="config-form-row">
+                <div className="config-form-group">
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <div className="config-form-group">
+                  <label>Confirm Password</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Confirm new password"
+                  />
+                </div>
+              </div>
+              <button type="submit" className="save-btn" disabled={loading}>
+                {loading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          </div>
+
+          {/* S3 Configuration Section */}
+          {/* <div className="config-card">
+            <div className="config-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                <line x1="12" y1="22.08" x2="12" y2="12" />
+              </svg>
+              <h3>S3 Configuration</h3>
+            </div>
+            <div className="config-form">
+              <div className="config-form-row">
+                <div className="config-form-group">
+                  <label>S3 Bucket Key</label>
+                  <input
+                    type="text"
+                    value={bucketKey}
+                    onChange={(e) => setBucketKey(e.target.value)}
+                    placeholder="Enter S3 bucket key"
+                  />
+                </div>
+                <div className="config-form-group">
+                  <label>S3 Bucket ID</label>
+                  <input
+                    type="text"
+                    value={bucketId}
+                    onChange={(e) => setBucketId(e.target.value)}
+                    placeholder="Enter S3 bucket ID"
+                  />
+                </div>
+              </div>
+              <button type="button" className="save-btn" onClick={handleSaveS3Config}>
+                Save S3 Configuration
+              </button>
+            </div>
+          </div> */}
+
+          {/* LLM Configuration Section */}
+          {/* <div className="config-card">
+            <div className="config-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 0 1 2-2z" />
+                <circle cx="7.5" cy="14.5" r="1.5" />
+                <circle cx="16.5" cy="14.5" r="1.5" />
+              </svg>
+              <h3>LLM Configuration</h3>
+            </div>
+            <div className="config-form">
+              <div className="config-form-row">
+                <div className="config-form-group">
+                  <label>Select LLM Provider</label>
+                  <select
+                    value={selectedLLM}
+                    onChange={(e) => setSelectedLLM(e.target.value)}
+                  >
+                    <option value="">Select LLM</option>
+                    {publicLLMs.map(llm => (
+                      <option key={llm.value} value={llm.value}>{llm.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="config-form-group">
+                  <label>API Key</label>
+                  <input
+                    type="password"
+                    value={llmKey}
+                    onChange={(e) => setLlmKey(e.target.value)}
+                    placeholder="Enter your API key"
+                  />
+                </div>
+              </div>
+              <button type="button" className="save-btn" onClick={handleSaveLLMConfig}>
+                Save LLM Configuration
+              </button>
+            </div>
+          </div> */}
+
+          {message && (
+            <div className={`profile-message ${messageType}`}>
+              {message}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
   );
 };
 
