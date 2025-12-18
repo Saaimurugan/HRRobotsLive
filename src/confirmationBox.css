@@ -1,52 +1,58 @@
 .overlay {
-   position: fixed;
-   top: 0;
-   left: 0;
-   width: 100%;
-   height: 100%;
-   background: rgba(0, 0, 0, 0.5);
-   display: flex;
-   justify-content: center;
-   align-items: center;
-   z-index: 1000;
-   backdrop-filter: blur(5px);
- }
- 
- .confirmation-box {
-   background: #fff;
-   padding: 20px;
-   border-radius: 10px;
-   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-   text-align: center;
-   min-width: 500px;
- }
- 
- .confirmation-box p {
-   margin-bottom: 20px;
-   font-size: 16px;
-   color: #333;
- }
- 
- .buttons button {
-   margin: 0 10px;
-   padding: 10px 20px;
-   border: none;
-   border-radius: 5px;
-   font-size: 14px;
-   cursor: pointer;
- }
- 
- .buttons button:first-child {
-   background: #28a745;
-   color: #fff;
- }
- 
- .buttons button:last-child {
-   background: #dc3545;
-   color: #fff;
- }
- 
- .buttons button:hover {
-   opacity: 0.9;
- }
- 
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.confirmation-box {
+  background: var(--color-bg-primary);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  min-width: 500px;
+}
+
+.confirmation-box p {
+  margin-bottom: 20px;
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-normal);
+}
+
+.buttons button {
+  margin: 0 10px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.buttons button:first-child {
+  background: var(--color-success);
+  color: var(--color-bg-primary);
+}
+
+.buttons button:first-child:hover {
+  background: var(--color-success-dark);
+}
+
+.buttons button:last-child {
+  background: var(--color-error);
+  color: var(--color-bg-primary);
+}
+
+.buttons button:last-child:hover {
+  background: var(--color-error-dark);
+}

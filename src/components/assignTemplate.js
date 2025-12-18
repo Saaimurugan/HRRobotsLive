@@ -6,7 +6,7 @@ const AssignTemplate = ({ text, title, onAssign, onCancel }) => {
   return (
     <div className="overlay">
       <div className="confirmation-box">
-        <h1>{title}</h1>
+        <h2>{title}</h2>
         <div className="form-group">
             <label htmlFor="email">{text}</label>
             <input 

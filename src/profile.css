@@ -1,7 +1,7 @@
 .profile-page {
   margin-top: 85px;
   min-height: calc(100vh - 85px);
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: var(--color-bg-gradient);
   padding: 30px 50px;
   display: flex;
   flex-direction: column;
@@ -10,10 +10,10 @@
 }
 
 .profile-container {
-  background: #fff;
+  background: var(--color-bg-primary);
   padding: 35px;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   animation: slideUp 0.4s ease-out;
 }
@@ -35,13 +35,13 @@
   gap: 15px;
   margin-bottom: 2rem;
   padding-bottom: 15px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .profile-header h1 {
-  font-size: 1.75rem;
-  color: #2d3748;
-  font-weight: 700;
+  font-size: var(--font-size-3xl);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
   margin: 0;
 }
 
@@ -52,19 +52,19 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   background: transparent;
-  color: #1CBBB4;
-  border: 1.5px solid #1CBBB4;
-  border-radius: 8px;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
 }
 
 .profile-back-btn:hover {
-  background: #1CBBB4;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
 }
 
 .profile-back-btn svg {
@@ -80,15 +80,15 @@
 }
 
 .config-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 25px;
-  transition: all 0.3s ease;
+  transition: all var(--transition-slow);
 }
 
 .config-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .config-card-header {
@@ -97,20 +97,20 @@
   gap: 12px;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border);
 }
 
 .config-card-header svg {
   width: 24px;
   height: 24px;
-  color: #1CBBB4;
+  color: var(--color-primary);
 }
 
 .config-card-header h3 {
-  font-size: 1.2rem;
-  color: #2d3748;
+  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
   margin: 0;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .config-form {
@@ -126,27 +126,27 @@
 }
 
 .config-form-group label {
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #4a5568;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
 }
 
 .config-form-group input,
 .config-form-group select {
   width: 100%;
   padding: 12px 15px;
-  font-size: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  font-size: var(--font-size-base);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
   box-sizing: border-box;
-  transition: all 0.3s ease;
-  background: #fff;
+  transition: all var(--transition-slow);
+  background: var(--color-bg-primary);
 }
 
 .config-form-group input:focus,
 .config-form-group select:focus {
   outline: none;
-  border-color: #1CBBB4;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(28, 187, 180, 0.1);
 }
 
@@ -163,26 +163,26 @@
   justify-content: center;
   gap: 8px;
   padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #1CBBB4 0%, #17a59f 100%);
-  color: #fff;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-primary-gradient);
+  color: var(--color-bg-primary);
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(28, 187, 180, 0.3);
+  transition: all var(--transition-slow);
+  box-shadow: var(--shadow-primary);
   margin-top: 10px;
   align-self: flex-start;
 }
 
 .save-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(28, 187, 180, 0.4);
+  box-shadow: var(--shadow-primary-hover);
 }
 
 .save-btn:disabled {
-  background: linear-gradient(135deg, #a0aec0 0%, #8a9aab 100%);
+  background: linear-gradient(135deg, var(--color-text-light) 0%, #8a9aab 100%);
   cursor: not-allowed;
   box-shadow: none;
 }
@@ -190,30 +190,30 @@
 /* Password Section */
 .password-section {
   background: #fff5f5;
-  border: 1px solid #fed7d7;
+  border: 1px solid var(--color-error-light);
 }
 
 .password-section .config-card-header svg {
-  color: #e53e3e;
+  color: var(--color-error-dark);
 }
 
 /* Message */
 .profile-message {
   padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
   margin-top: 15px;
 }
 
 .profile-message.success {
-  background: #c6f6d5;
-  color: #276749;
+  background: var(--color-success-light);
+  color: var(--color-success-text);
   border: 1px solid #68d391;
 }
 
 .profile-message.error {
-  background: #fed7d7;
-  color: #c53030;
+  background: var(--color-error-light);
+  color: var(--color-error-text);
   border: 1px solid #fc8181;
 }
 

@@ -2,15 +2,38 @@
   margin-top: 5px;
   height: 100%;
   padding: 20px;
-  background-color: #fafafa;
-  border-radius: 6px;
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
   user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
 }
 
-MCQUL{
+.MCQUL {
   list-style-type: none;
   padding: 0;
   list-style: none !important;
+}
+
+.MCQUL li {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: var(--font-size-base);
+  color: var(--color-text-primary);
+}
+
+.MCQUL li:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.MCQUL li.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  font-weight: var(--font-weight-medium);
 }

@@ -1,7 +1,7 @@
 .create-jd-page {
   margin-top: 85px;
   min-height: calc(100vh - 85px);
-  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+  background: var(--color-bg-gradient);
   padding: 30px 50px;
   display: flex;
   flex-direction: column;
@@ -10,10 +10,10 @@
 }
 
 .create-jd-form-container {
-  background: #fff;
+  background: var(--color-bg-primary);
   padding: 35px;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 100%;
   animation: slideUp 0.4s ease-out;
@@ -25,13 +25,13 @@
   gap: 15px;
   margin-bottom: 1.5rem;
   padding-bottom: 15px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .create-jd-header h1 {
-  font-size: 1.75rem;
-  color: #2d3748;
-  font-weight: 700;
+  font-size: var(--font-size-3xl);
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-bold);
   margin: 0;
 }
 
@@ -53,19 +53,19 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
   background: transparent;
-  color: #1CBBB4;
-  border: 1.5px solid #1CBBB4;
-  border-radius: 8px;
+  color: var(--color-primary);
+  border: 1.5px solid var(--color-primary);
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all var(--transition-normal);
 }
 
 .modern-button--outline:hover {
-  background: #1CBBB4;
-  color: #fff;
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
 }
 
 .modern-button--outline svg {
@@ -80,28 +80,28 @@
 .create-jd-form .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #4a5568;
-  font-weight: 500;
-  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-sm);
 }
 
 .create-jd-form .form-group input,
 .create-jd-form .form-group textarea {
   width: 100%;
   padding: 12px 15px;
-  font-size: 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
+  font-size: var(--font-size-base);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
   box-sizing: border-box;
-  transition: all 0.3s ease;
-  background: #f8fafc;
+  transition: all var(--transition-slow);
+  background: var(--color-bg-secondary);
 }
 
 .create-jd-form .form-group input:focus,
 .create-jd-form .form-group textarea:focus {
   outline: none;
-  border-color: #1CBBB4;
-  background: #fff;
+  border-color: var(--color-primary);
+  background: var(--color-bg-primary);
   box-shadow: 0 0 0 4px rgba(28, 187, 180, 0.1);
 }
 
@@ -113,35 +113,35 @@
 .create-jd-form .submit-btn {
   width: 100%;
   padding: 14px;
-  font-size: 1.05rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #1CBBB4 0%, #17a59f 100%);
-  color: #fff;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-primary-gradient);
+  color: var(--color-bg-primary);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-slow);
   margin-top: 10px;
-  box-shadow: 0 4px 15px rgba(28, 187, 180, 0.3);
+  box-shadow: var(--shadow-primary);
 }
 
 .create-jd-form .submit-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(28, 187, 180, 0.4);
+  box-shadow: var(--shadow-primary-hover);
 }
 
 .create-jd-form .submit-btn:disabled {
-  background: linear-gradient(135deg, #a0aec0 0%, #8a9aab 100%);
+  background: linear-gradient(135deg, var(--color-text-light) 0%, #8a9aab 100%);
   cursor: not-allowed;
   box-shadow: none;
 }
 
 /* Result Container */
 .jd-result-container {
-  background: #fff;
+  background: var(--color-bg-primary);
   padding: 35px;
-  border-radius: 16px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
   width: 100%;
   max-width: 900px;
   animation: fadeIn 0.5s ease-out;
@@ -157,46 +157,46 @@
 }
 
 .jd-result-container h2 {
-  font-size: 1.5rem;
-  color: #2d3748;
+  font-size: var(--font-size-2xl);
+  color: var(--color-text-primary);
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .jd-content {
   padding: 30px 40px;
-  background: #fff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
   margin-bottom: 20px;
-  line-height: 1.8;
-  color: #374151;
-  font-size: 1rem;
+  line-height: var(--line-height-relaxed);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-base);
 }
 
 .jd-content h1 {
-  color: #1CBBB4;
-  font-size: 1.75rem;
-  font-weight: 700;
+  color: var(--color-primary);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
   margin: 0 0 1.5rem 0;
   padding-bottom: 12px;
-  border-bottom: 3px solid #1CBBB4;
+  border-bottom: 3px solid var(--color-primary);
 }
 
 .jd-content h2 {
-  color: #2d3748;
-  font-size: 1.25rem;
-  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
   margin: 1.5rem 0 0.75rem 0;
   padding-bottom: 8px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid var(--color-border);
 }
 
 .jd-content h3 {
-  color: #4a5568;
-  font-size: 1.1rem;
-  font-weight: 600;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   margin: 1.25rem 0 0.5rem 0;
 }
 
@@ -216,12 +216,12 @@
 }
 
 .jd-content ul li::marker {
-  color: #1CBBB4;
+  color: var(--color-primary);
 }
 
 .jd-content strong, .jd-content b {
-  color: #2d3748;
-  font-weight: 600;
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .jd-content table {
@@ -233,13 +233,13 @@
 .jd-content th, .jd-content td {
   padding: 12px 15px;
   text-align: left;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-border);
 }
 
 .jd-content th {
-  background: #f8fafc;
-  font-weight: 600;
-  color: #2d3748;
+  background: var(--color-bg-secondary);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .print-btn {
@@ -247,14 +247,14 @@
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  font-size: 1rem;
-  font-weight: 600;
-  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-  color: #fff;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-secondary-gradient);
+  color: var(--color-bg-primary);
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all var(--transition-slow);
   box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
 }
 
@@ -285,7 +285,7 @@
   }
 
   .create-jd-header h1 {
-    font-size: 1.5rem;
+    font-size: var(--font-size-2xl);
   }
 
   .modern-button--outline {

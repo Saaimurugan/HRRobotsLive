@@ -1,79 +1,78 @@
 /* Table Container */
 .table-container {
-   width: 100%;
-   max-width: 1200px;
-   margin: 1rem auto 0;
-   overflow-x: auto;
-   padding: 0 16px;
-   box-sizing: border-box;
+  width: 100%;
+  max-width: 1200px;
+  margin: 1rem auto 0;
+  overflow-x: auto;
+  padding: 0 16px;
+  box-sizing: border-box;
 }
 
 /* Table Styling */
 .table {
-   width: 100%;
-   border-collapse: collapse;
-   text-align: left;
-   background: white;
-   border-radius: 8px;
-   overflow: hidden;
-   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
 }
 
 th, td {
-   padding: 14px 16px;
-   border-bottom: 1px solid #e9ecef;
-   vertical-align: middle;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+  font-size: var(--font-size-sm);
 }
 
 th {
-   background-color: #f8f9fa;
-   font-weight: 600;
-   cursor: pointer;
-   text-transform: uppercase;
-   font-size: 12px;
-   letter-spacing: 0.5px;
-   color: #495057;
-   border-bottom: 2px solid #dee2e6;
+  background-color: var(--color-bg-secondary);
+  font-weight: var(--font-weight-semibold);
+  cursor: pointer;
+  text-transform: uppercase;
+  font-size: var(--font-size-xs);
+  letter-spacing: 0.5px;
+  color: var(--color-text-secondary);
+  border-bottom: 2px solid var(--color-border);
 }
 
 th:hover {
-   background-color: #e9ecef;
+  background-color: var(--color-border-light);
 }
 
 /* Alternating Row Colors */
 tbody tr:nth-child(even) {
-   background-color: #f8f9fa;
+  background-color: var(--color-bg-secondary);
 }
 
 tbody tr {
-   cursor: pointer;
-   transition: background-color 0.2s ease;
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
 }
 
 tbody tr:hover {
-   background-color: #e3f2fd;
+  background-color: var(--color-primary-light);
 }
 
 /* Status Cell - the td element with status class */
 td.status-cell {
-   text-align: center;
-   vertical-align: middle;
-   font-weight: 600;
-   font-size: 13px;
-   white-space: nowrap;
+  text-align: center;
+  vertical-align: middle;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
 }
 
 /* Status Colors */
 td.status-completed {
-   color: #155724;
+  color: var(--color-success-text);
 }
 
 td.status-terminated {
-   color: #721c24;
+  color: var(--color-error-text);
 }
 
 td.status-not-started {
-   color: #856404;
+  color: var(--color-warning-text);
 }
-
-/* Pagination Buttons - moved to analsticsOnResult.css for consistency */

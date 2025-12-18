@@ -352,7 +352,7 @@ const fetchTemplates = async () => {
         </div>
         <div className="card">
           <h2>Candidate Profiler</h2>
-          <p>Effortlessly upload a resume and job description to generate a comprehensive report, highlighting skill matches, role suitability, suggested improvements, and recommendation, ensuring the perfect candidate-job alignment.</p>
+          <p>Upload a resume and job description to generate a comprehensive report, highlighting skill matches, role suitability, improvements, and recommendation, ensuring the perfect candidate-job alignment.</p>
           <div className="form-group">
             <button onClick={() => navigate("/ProfilerPage")}>Profile</button>
           </div>
@@ -426,7 +426,7 @@ const fetchTemplates = async () => {
                 </div>
               :
               <>
-                <p style={{marginBottom:"-10px", marginTop:"-2px", }}>Assigned by {card.email}</p>
+                <p style={{marginBottom:"-13px", marginTop:"-15px", }}>Assigned by {card.email}</p>
               </>
               }   
               <p>Click on "Generate Test Link"; The test link will be copied to the clipboard</p>
@@ -447,7 +447,7 @@ const fetchTemplates = async () => {
                 {card.AssignedTo &&
                 <>
                   {card.AssignedTo !== globalValue &&
-                  <p style={{marginBottom:"10px", marginTop:"-10px", }}>Assigned to {card.AssignedTo}</p>
+                  <p style={{marginBottom:"10px", marginTop:"0px", }}>Assigned to {card.AssignedTo}</p>
                   }
                 </>
                 }
