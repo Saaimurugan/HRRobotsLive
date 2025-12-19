@@ -8,8 +8,7 @@ import FaceTracking from "./faceDetection.js";
 import "../App.css";
 import TestComponent from "./testComponent.js";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
-import VideoPreviewForPositioning from "./videoPreviewForPositioning.js"; 
-import DeviceWarning from "./deviceWarning.js";
+import TestSetupWizard from "./TestSetupWizard.js";
 
 //Proctor
 //1. Content Menu Disable
@@ -479,116 +478,16 @@ if (userUniqueID != '')
       {
       requestCameraAndMic();
       return (
-        <div 
-        style={{
-          fontFamily: "'Roboto', sans-serif",
-          maxWidth: "600px",
-          margin: "auto",
-          padding: "10px",
-          background: "#f9f9f9",
-          borderRadius: "10px",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-          marginTop: "100px"
-         }}
-        >
-          {/* <p>{allowedDefaults}</p>
-          <p>{toleranceLevel}</p>
-          <p>{faceRecognition}</p> */}
-        <DeviceWarning />
-        <div>
-        <main style={{ padding: "20px;" }}>
-        <div
-        style={{
-          background: '#fff',
-          padding: '20px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
-          marginTop: '10px',
-          position: 'relative',
-        }}
-      >
-        <p style={{ fontSize: '16px', color: '#333' }}>
-          Please grant access to the camera and microphone if it has not been granted already.
-        </p>
-        <div style={{ display: "FLEX", marginBottom: '20px', justifyContent: "space-between" }}>
-          <div>
-          <p>
-            <strong>Camera and mic status:</strong>
-          </p>
-          <p>
-            Camera Permission: <span style={{ color: cameraPermission ? 'green' : 'red' }}>
-            {cameraPermission === null
-              ? "Not Requested"
-              : cameraPermission
-              ? "Granted"
-              : "Denied"}
-              </span>
-          </p>
-          <p>
-          Microphone Permission: <span style={{ color: micPermission ? 'green' : 'red' }}>
-            {micPermission === null
-              ? "Not Requested"
-              : micPermission
-              ? "Granted"
-              : "Denied"}
-              </span>
-          </p>
-          </div>
-{/*           <div>
-            <FaceTracking onTrackingConfidence={(score) => setConfidence(score)} />
-        </div> */}
-        </div>
-      </div>
-        </main>
-          <h3 style={{ fontsize: "18px", color: "#444" }}>Test Guidelines</h3>
-          <p><b>Once the test begins, please make sure to follow the below. The test can be <span style={{color:"red"}}>terminated</span> for the following reasons:</b></p>
-          <ul>
-            <li>The camera must remain on, and access should not be denied.</li>
-            <li>The microphone must remain on, and access must not be denied.</li>
-            <li>Fullscreen mode must remain enabled and must not be exited.</li>
-            <li>No other window should be opened, and the window focus must remain unchanged.</li>
-            <li>Make sure your camera is focused on your face and that your entire face is fully visible in the video.</li>
-            <li>The proctor will randomly capture your photograph and also if it detects malpractice.</li>
-            <li>Make sure to turn off all notification services, as they may interfere with full-screen mode.</li>
-          </ul>
-          <p>Please enter your name (Mandatory, minimum 4 letters):</p>
-          <input
-            type="text"
-            id="candidateName"
-            name="candidateName"
-            onChange={(e) => setCandidateName(e.target.value)}
-            style={{
-              padding: '10px',
-              borderRadius: '5px',
-              border: '1px solid #ccc',
-              width: '95%',
-              marginBottom: '10px',
-            }}
-            required 
-            />
-        <VideoPreviewForPositioning userUniqueID={userUniqueID} onComplete={handlePhotoCaptured} />
-        <br/>          
-            {photoCaptured && cameraPermission && micPermission && candidateName.length > 3
-            ?
-          <>
-          <button
-            onClick={startQuiz}
-            style={{
-              backgroundColor: '#1CBBB4',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '5px',
-              cursor: 'pointer',
-            }}
-          >
-            I Accept and Start Test
-          </button>
-{/*           {confidence < 90 && <p>Please wait until the video loads and face tracking is enabled. Ensure proper face tracking is activated before starting the test.</p>}
- */}          </>
-              :""}
-        </div>
-        </div>
+        <TestSetupWizard
+          userUniqueID={userUniqueID}
+          cameraPermission={cameraPermission}
+          micPermission={micPermission}
+          onComplete={(status) => {
+            handlePhotoCaptured(status);
+            startQuiz();
+          }}
+          onCandidateNameChange={setCandidateName}
+        />
       );
     }
   }

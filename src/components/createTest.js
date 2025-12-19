@@ -400,9 +400,26 @@ const fetchTemplates = async () => {
         </div>	
 
         {loadingTemplate ? (
-          <div className="empty-state">
-            <p className="loading">Loading templates</p>
-          </div>
+          <>
+            <div className="section-header">
+              <h2>Your Screening Test Templates</h2>
+              <p>
+                Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
+              </p>
+            </div>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="card template-card skeleton-card">
+                <div className="skeleton-actions">
+                  <div className="skeleton skeleton-icon"></div>
+                  <div className="skeleton skeleton-icon"></div>
+                  <div className="skeleton skeleton-icon"></div>
+                </div>
+                <div className="skeleton skeleton-text skeleton-text-sm"></div>
+                <div className="skeleton skeleton-button"></div>
+                <div className="skeleton skeleton-text skeleton-text-lg"></div>
+              </div>
+            ))}
+          </>
         ) : (
         <>
         {templates.length === 0 ? (
