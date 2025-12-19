@@ -155,7 +155,16 @@ const LoginPage = () => {
                         </div>
                         
                         <div className="form-options">
-                            <a href="/forgot-password" className="forgot-link">Forgot password?</a>
+                            <span 
+                                className="forgot-link" 
+                                onClick={() => {
+                                    setGlobalValue(email);
+                                    navigate("/forgot-password");
+                                }}
+                                style={{ cursor: 'pointer' }}
+                            >
+                                Forgot password?
+                            </span>
                         </div>
                         
                         <button type="submit" className="login-btn" disabled={loading}>

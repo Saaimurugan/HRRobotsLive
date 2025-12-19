@@ -125,7 +125,6 @@ const ForgotPasswordPage = () => {
                                             onFocus={() => setFocusedField('email')}
                                             onBlur={() => setFocusedField(null)}
                                             required
-                                            disabled={globalValue !== ""}
                                         />
                                     </div>
                                 </div>
