@@ -43,6 +43,7 @@ const EditTemplate = () => {
   });
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState("fresher");
+  const [groupByTopic, setGroupByTopic] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -110,18 +111,18 @@ const EditTemplate = () => {
 
     if (formData.type === "mcq") {
       if (!formData.options.length) {
-        alert("MCQ must have at least one option.");
+        showToast('warning', 'Missing Options', 'MCQ must have at least one option.');
         return;
       }
       if (!formData.correctAnswer) {
-        alert("Please select a correct answer.");
+        showToast('warning', 'No Answer Selected', 'Please select a correct answer.');
         return;
       }
       newQuestion.options = formData.options;
       newQuestion.correctAnswer = formData.correctAnswer;
     } else {
       if (!formData.correctAnswer) {
-        alert("Answer cannot be empty for a descriptive question.");
+        showToast('warning', 'Missing Answer', 'Answer cannot be empty for a descriptive question.');
         return;
       }
       newQuestion.correctAnswer = formData.correctAnswer;
@@ -203,17 +204,6 @@ const EditTemplate = () => {
     }
   };
 
-  const autoFixJSON = (fileContent) => {
-    try {
-      fileContent = fileContent.replace(/```(json)?/g, '').trim();
-      const jsonData = JSON.parse(fileContent);
-      const prettyJSON = JSON.stringify(jsonData, null, 4);
-      return prettyJSON;
-    } catch (error) {
-      console.error('Error auto-fixing JSON:', error.message);
-    }
-  };
-
   const loadQuestions = async (passedTemplateID) => {
     try {
       setLoadingTemplate(true);
@@ -249,7 +239,7 @@ const EditTemplate = () => {
 
   const generateQuestions = async () => {
     if (!topic) {
-      alert("Please enter a topic to generate questions.");
+      showToast('warning', 'Topic Required', 'Please enter a topic to generate questions.');
       return;
     }
 
@@ -270,7 +260,7 @@ const EditTemplate = () => {
 
       const questionsWithTopic = generatedQuestions.map(q => ({
         ...q,
-        question: `${topic}::: ${q.question}`
+        question: groupByTopic ? `${topic}::: ${q.question}` : q.question
       }));
 
       setQuestionSet([...questionSet, ...questionsWithTopic]);
@@ -279,7 +269,7 @@ const EditTemplate = () => {
       }
     } catch (error) {
       console.error(error);
-      alert("Error generating questions. Please try again later.");
+      showToast('error', 'Generation Failed', 'Error generating questions. Please try again later.');
     } finally {
       setIsGenerating(false);
     }
@@ -420,6 +410,16 @@ const EditTemplate = () => {
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                   />
+                </div>
+                <div className="form-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={groupByTopic}
+                      onChange={(e) => setGroupByTopic(e.target.checked)}
+                    />
+                    Group questions by Topic
+                  </label>
                 </div>
                 <div className="form-group">
                   <label>Difficulty Level</label>

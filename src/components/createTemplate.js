@@ -43,6 +43,7 @@ const CreateTemplate = () => {
   });
   const [topic, setTopic] = useState("");
   const [level, setLevel] = useState("fresher");
+  const [groupByTopic, setGroupByTopic] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
@@ -88,36 +89,33 @@ const CreateTemplate = () => {
   };
 
   const setCorrectAnswer = (index) => {
-    setMessage("");
     const selectedAnswer = formData.options[index];
     setFormData({ ...formData, correctAnswer: selectedAnswer });
   };
 
   const removeOption = (index) => {
-    setMessage("");
     const newOptions = [...formData.options];
     newOptions.splice(index, 1);
     setFormData({ ...formData, options: newOptions });
   };
 
   const addQuestion = () => {
-    setMessage("");
     const newQuestion = { type: formData.type, question: formData.question };
 
     if (formData.type === "mcq") {
       if (!formData.options.length) {
-        alert("MCQ must have at least one option.");
+        showToast('warning', 'Missing Options', 'MCQ must have at least one option.');
         return;
       }
       if (!formData.correctAnswer) {
-        alert("Please select a correct answer.");
+        showToast('warning', 'No Answer Selected', 'Please select a correct answer.');
         return;
       }
       newQuestion.options = formData.options;
       newQuestion.correctAnswer = formData.correctAnswer;
     } else {
       if (!formData.correctAnswer) {
-        alert("Answer cannot be empty for a descriptive question.");
+        showToast('warning', 'Missing Answer', 'Answer cannot be empty for a descriptive question.');
         return;
       }
       newQuestion.correctAnswer = formData.correctAnswer;
@@ -131,17 +129,14 @@ const CreateTemplate = () => {
     setFormData({ type: "mcq", question: "", options: [], correctAnswer: "" });
     setIsEditing(false);
     setEditingIndex(null);
-    setMessage("");
   };
 
   const removeQuestion = (index) => {
-    setMessage("");
     const updatedQuestions = questionSet.filter((_, i) => i !== index);
     setQuestionSet(updatedQuestions);
   };
 
   const editQuestion = (index) => {
-    setMessage("");
     const questionToEdit = questionSet[index];
     setFormData({
       type: questionToEdit.type,
@@ -154,7 +149,6 @@ const CreateTemplate = () => {
   };
 
   const saveEditedQuestion = () => {
-    setMessage("");
     const updatedQuestions = [...questionSet];
     updatedQuestions[editingIndex] = { ...formData };
     setQuestionSet(updatedQuestions);
@@ -206,7 +200,7 @@ const CreateTemplate = () => {
 
   const generateQuestions = async () => {
     if (!topic) {
-      alert("Please enter a topic to generate questions.");
+      showToast('warning', 'Topic Required', 'Please enter a topic to generate questions.');
       return;
     }
 
@@ -227,14 +221,14 @@ const CreateTemplate = () => {
 
       const questionsWithTopic = generatedQuestions.map(q => ({
         ...q,
-        question: `${topic}::: ${q.question}`
+        question: groupByTopic ? `${topic}::: ${q.question}` : q.question
       }));
 
       setQuestionSet([...questionSet, ...questionsWithTopic]);
       setTtname(topic + " - " + level);
     } catch (error) {
       console.error(error);
-      alert("Error generating questions. Please try again later.");
+      showToast('error', 'Generation Failed', 'Error generating questions. Please try again later.');
     } finally {
       setIsGenerating(false);
     }
@@ -369,6 +363,16 @@ const CreateTemplate = () => {
                   value={topic}
                   onChange={(e) => setTopic(e.target.value)}
                 />
+              </div>
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={groupByTopic}
+                    onChange={(e) => setGroupByTopic(e.target.checked)}
+                  />
+                  Group questions by Topic
+                </label>
               </div>
               <div className="form-group">
                 <label>Difficulty Level</label>
