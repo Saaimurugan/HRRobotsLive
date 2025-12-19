@@ -619,21 +619,6 @@ function SearchResult() {
                     handleSearchFromList(testID, itemData);
                   }}
                   searchFilter={tableFilter}
-                  onSearchResults={(items) => {
-                    // Callback when table search finds results
-                    if (items && items.length > 0 && tableFilter) {
-                      // Auto-load the first available test result
-                      const completedTest = items.find(item => item.status === "Completed");
-                      const testToLoad = completedTest || items[0];
-                      if (testToLoad) {
-                        handleSearchFromList(testToLoad.testID, testToLoad);
-                      }
-                    } else if (tableFilter && items.length === 0) {
-                      // Don't show error messages, just let the table be empty
-                      setMessage("");
-                      setMessageType("");
-                    }
-                  }}
                   onSearchChange={(value) => {
                     // Handle mobile search change
                     setTableFilter(value);

@@ -122,12 +122,19 @@
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+}
+
+.search-loading-indicator svg {
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  from { transform: translateY(-50%) rotate(0deg); }
-  to { transform: translateY(-50%) rotate(360deg); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* Modern Buttons */
@@ -715,7 +722,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background var(--transition-normal);
+  transition: background var(--transition-normal), color var(--transition-normal);
+}
+
+.button--delete {
+  color: var(--color-text-muted);
 }
 
 .button--delete:hover {

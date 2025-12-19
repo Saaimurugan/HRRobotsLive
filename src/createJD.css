@@ -111,6 +111,10 @@
 }
 
 .create-jd-form .submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   width: 100%;
   padding: 14px;
   font-size: var(--font-size-lg);
@@ -123,6 +127,19 @@
   transition: all var(--transition-slow);
   margin-top: 10px;
   box-shadow: var(--shadow-primary);
+}
+
+.create-jd-form .submit-btn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .create-jd-form .submit-btn:hover:not(:disabled) {
@@ -143,7 +160,7 @@
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   width: 100%;
-  max-width: 900px;
+  max-width: 100%;
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -268,10 +285,7 @@
   height: 18px;
 }
 
-/* Result Container - full width */
-.jd-result-container {
-  max-width: 100%;
-}
+
 
 /* Responsive */
 @media (max-width: 600px) {
