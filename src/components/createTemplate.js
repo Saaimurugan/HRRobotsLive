@@ -30,11 +30,30 @@ const Toast = ({ toasts, removeToast }) => {
   );
 };
 
+// Mobile Warning Modal Component
+const MobileWarningModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="mobile-warning-overlay">
+      <div className="mobile-warning-modal">
+        <svg className="mobile-warning-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+          <line x1="12" y1="9" x2="12" y2="13"/>
+          <line x1="12" y1="17" x2="12.01" y2="17"/>
+        </svg>
+        <p>For the best experience, please use a larger screen when editing or creating templates. These actions are not supported on mobile devices.</p>
+        <button className="btn-primary" onClick={onClose}>OK</button>
+      </div>
+    </div>
+  );
+};
+
 const CreateTemplate = () => {
   const [questionSet, setQuestionSet] = useState([]);
   const { globalValue } = useGlobalContext("");
   const [ttname, setTtname] = useState("");
   const [toasts, setToasts] = useState([]);
+  const [showMobileWarning, setShowMobileWarning] = useState(false);
   const [formData, setFormData] = useState({
     type: "mcq",
     question: "",
@@ -49,6 +68,16 @@ const CreateTemplate = () => {
   const [editingIndex, setEditingIndex] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Check for mobile screen on mount
+  useEffect(() => {
+    const checkMobile = () => {
+      if (window.innerWidth <= 900) {
+        setShowMobileWarning(true);
+      }
+    };
+    checkMobile();
+  }, []);
 
   useEffect(() => {
     if (globalValue === "") {
@@ -236,6 +265,7 @@ const CreateTemplate = () => {
 
   return (
     <div className="create-template-page">
+      <MobileWarningModal isOpen={showMobileWarning} onClose={() => setShowMobileWarning(false)} />
       <Toast toasts={toasts} removeToast={removeToast} />
       <div className="create-template-container">
         <div className="template-header">
