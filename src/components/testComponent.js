@@ -200,7 +200,7 @@ const TestComponent = ({ testID, userID, candidateName }) => {
           <p>{currentQuestion.question}</p>
           <ul className="MCQUL">
             {currentQuestion.options.map((option, index) => (
-              <li key={index} style={{ margin: "10px 0", listStyle: "none" }}>
+              <li key={index}>
                 <input
                   type="radio"
                   id={`option-${index}`}
@@ -208,22 +208,10 @@ const TestComponent = ({ testID, userID, candidateName }) => {
                   value={option}
                   checked={answers[currentQuestionIndex] === option}
                   onChange={() => saveAnswer(option)}
-                  style={{ verticalAlign: "top", marginLeft: "-40px"}} // Align the input with the label text
                 />
-                &ensp;
-                <label 
-                htmlFor={`option-${index}`}
-                style={{
-                  display: "inline-block",
-                  marginLeft: "0px", // Adjust for the indent
-                  textIndent: "0px", // Hanging indent
-                  lineHeight: "1.5",
-                  verticalAlign: "top",
-                  marginTop: "-2px",
-                }}
-              >
-                {option}
-              </label>
+                <label htmlFor={`option-${index}`}>
+                  {option}
+                </label>
               </li>
             ))}
           </ul>
@@ -234,7 +222,7 @@ const TestComponent = ({ testID, userID, candidateName }) => {
               style={{ backgroundColor: "#6c757d" }}
             >
               Previous
-            </button>
+            </button>&ensp;
             {(currentQuestionIndex + questionCount) >= 50 ? (
               <button
                 onClick={handleSubmit}

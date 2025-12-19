@@ -34,9 +34,17 @@ const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const routesToCheck = ["/test", "/logout", "/login", "/redirectPage", "/signup", "/forgot-password", "/reset"];
+  // Hide navbar on auth pages
+  const authPages = ["/login", "/logout", "/signup", "/forgot-password"];
+  const isAuthPage = authPages.some(route => location.pathname === route || location.pathname.startsWith(route + "/"));
+  
+  if (isAuthPage) {
+    return null;
+  }
+
+  const routesToCheck = ["/test", "/redirectPage", "/reset"];
   const isResult = routesToCheck.some(route => location.pathname.includes(route));
-  const loginCheck = ["/test", "/logout", "/login"];
+  const loginCheck = ["/test"];
   const isLogin = loginCheck.some(route => location.pathname.includes(route));
 
   const navButtonStyle = {
