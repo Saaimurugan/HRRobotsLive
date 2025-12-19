@@ -76,3 +76,127 @@ td.status-terminated {
 td.status-not-started {
   color: var(--color-warning-text);
 }
+
+
+/* ===================================
+   Skeleton Loader Styles
+   =================================== */
+
+/* Skeleton Animation */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Base skeleton line */
+.skeleton-line {
+  background: linear-gradient(
+    90deg,
+    var(--color-border-light) 25%,
+    var(--color-bg-secondary) 50%,
+    var(--color-border-light) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* Skeleton Card (Mobile) */
+.skeleton-card {
+  pointer-events: none;
+  background: var(--color-bg-primary);
+}
+
+.skeleton-card .skeleton-date {
+  width: 120px;
+  height: 14px;
+  display: inline-block;
+}
+
+.skeleton-card .skeleton-status {
+  width: 70px;
+  height: 20px;
+  display: inline-block;
+  border-radius: var(--radius-full);
+}
+
+.skeleton-card .skeleton-title {
+  width: 80%;
+  height: 18px;
+  margin-bottom: 10px;
+}
+
+.skeleton-card .skeleton-text {
+  width: 60%;
+  height: 14px;
+  margin-bottom: 8px;
+}
+
+.skeleton-card .skeleton-text-short {
+  width: 40%;
+  height: 14px;
+}
+
+/* Skeleton Table Row (Desktop) */
+.skeleton-row {
+  pointer-events: none;
+}
+
+.skeleton-row td {
+  padding: 14px 16px;
+}
+
+.skeleton-cell {
+  width: 100px;
+  height: 16px;
+}
+
+.skeleton-cell-wide {
+  width: 150px;
+  height: 16px;
+}
+
+.skeleton-cell-short {
+  width: 70px;
+  height: 16px;
+}
+
+.skeleton-cell-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+}
+
+/* No data table styling */
+.no-data-cell {
+  text-align: center;
+  padding: 48px 16px !important;
+}
+
+.no-results-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.no-results-table .no-results__icon {
+  color: var(--color-text-light);
+  opacity: 0.6;
+}
+
+.no-results-table h3 {
+  font-size: var(--font-size-lg);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.no-results-table p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}

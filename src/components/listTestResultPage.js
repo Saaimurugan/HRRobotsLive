@@ -31,6 +31,32 @@ const Toast = ({ toasts, removeToast }) => {
   );
 };
 
+// Skeleton Loader Components
+const SkeletonCard = () => (
+    <div className="result-card skeleton-card">
+        <div className="result-card__header">
+            <span className="skeleton-line skeleton-date"></span>
+            <span className="skeleton-line skeleton-status"></span>
+        </div>
+        <div className="result-card__content">
+            <div className="skeleton-line skeleton-title"></div>
+            <div className="skeleton-line skeleton-text"></div>
+            <div className="skeleton-line skeleton-text-short"></div>
+        </div>
+    </div>
+);
+
+const SkeletonTableRow = () => (
+    <tr className="skeleton-row">
+        <td><div className="skeleton-line skeleton-cell"></div></td>
+        <td><div className="skeleton-line skeleton-cell"></div></td>
+        <td><div className="skeleton-line skeleton-cell-wide"></div></td>
+        <td><div className="skeleton-line skeleton-cell-wide"></div></td>
+        <td><div className="skeleton-line skeleton-cell-short"></div></td>
+        <td><div className="skeleton-line skeleton-cell-icon"></div></td>
+    </tr>
+);
+
 const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSearchChange }) => {
     const [items, setItems] = useState([]);
     const [currentPage, setCurrentPage] = useState(1); // Start from page 1
@@ -387,7 +413,14 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             {/* Mobile Card Layout */}
             <div className="mobile-results">
                 <div className="results-grid">
-                    {paginatedItems.length > 0 ? (
+                    {loading && items.length === 0 ? (
+                        // Skeleton loader for mobile cards
+                        <>
+                            {[...Array(5)].map((_, index) => (
+                                <SkeletonCard key={index} />
+                            ))}
+                        </>
+                    ) : paginatedItems.length > 0 ? (
                         paginatedItems.map((item, index) => (
                             <div key={index} className="result-card"
                                 onClick={() => handleItemClick(item)}>
@@ -470,7 +503,14 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                             </tr>
                         </thead>
                         <tbody>
-                            {paginatedItems.length > 0 ? (
+                            {loading && items.length === 0 ? (
+                                // Skeleton loader for table rows
+                                <>
+                                    {[...Array(5)].map((_, index) => (
+                                        <SkeletonTableRow key={index} />
+                                    ))}
+                                </>
+                            ) : paginatedItems.length > 0 ? (
                                 paginatedItems.map((item, index) => (
                                     <tr key={index}
                                         onClick={() => handleItemClick(item)} // Check status before navigation
@@ -529,19 +569,14 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                             ) : (
                                 <tr>
                                     <td colSpan="6" className="no-data-cell">
-                                        <div className="skeleton-loader">
-                                            <div className="skeleton-content">
-                                                <div className="skeleton-icon">
-                                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                                        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                    </svg>
-                                                </div>
-                                                <div className="skeleton-text">
-                                                    <div className="skeleton-shimmer"></div>
-                                                    <h3>No data available</h3>
-                                                    <p>There are no test results to display at the moment.</p>
-                                                </div>
+                                        <div className="no-results-table">
+                                            <div className="no-results__icon">
+                                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                                                    <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
                                             </div>
+                                            <h3>No data available</h3>
+                                            <p>There are no test results to display at the moment.</p>
                                         </div>
                                     </td>
                                 </tr>

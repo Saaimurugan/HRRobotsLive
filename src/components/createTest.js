@@ -393,7 +393,7 @@ const fetchTemplates = async () => {
             </svg>
           </div>
           <h2>Results</h2>
-          <p>View test outcomes by pasting the candidate's link. Get detailed summaries while maintaining data privacy.</p>
+          <p>View test outcomes by pasting the candidate's link. Get detailed summaries while maintaining data privacy.<br/><br/></p>
           <div className="form-group">
             <button onClick={() => navigate("/result")}>Check Results</button>
           </div>
