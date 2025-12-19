@@ -374,7 +374,7 @@ const SignUp = () => {
                     </form>
 
                     <div className="login-footer">
-                        <p>Already have an account? <a href="/login">Sign in</a></p>
+                        <p>Already have an account? <a href="/">Sign in</a></p>
                     </div>
                 </div>
             </div>
