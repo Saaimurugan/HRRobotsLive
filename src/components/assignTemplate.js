@@ -1,28 +1,36 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import '../confirmationBox.css';
 
 const AssignTemplate = ({ text, title, onAssign, onCancel }) => {
     const [email, setEmail] = useState("");
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onAssign(email);
+    };
+
   return (
     <div className="overlay">
       <div className="confirmation-box">
         <h2>{title}</h2>
-        <div className="form-group">
-            <label htmlFor="email">{text}</label>
-            <input 
-                type="email" 
-                id="email" 
-                name="email" 
-                placeholder="Enter the recruiter's email to assign" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required 
-            />
-        </div>
-        <div className="buttons">
-          <button onClick={(d) => onAssign(email)}>Confirm</button>
-          <button onClick={onCancel}>Cancel</button>
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+              <label htmlFor="email">{text}</label>
+              <input 
+                  type="email" 
+                  id="email" 
+                  name="email" 
+                  placeholder="Enter the recruiter's email to assign" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required 
+              />
+          </div>
+          <div className="buttons">
+            <button type="submit">Confirm</button>
+            <button type="button" onClick={onCancel}>Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
   );
