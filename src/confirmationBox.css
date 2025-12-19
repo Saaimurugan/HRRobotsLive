@@ -28,6 +28,12 @@
   line-height: var(--line-height-normal);
 }
 
+.confirmation-box .form-group label {
+  font-weight: var(--font-weight-normal);
+  margin-top: 16px;
+  display: block;
+}
+
 .buttons button {
   margin: 0 10px;
   padding: 10px 20px;
@@ -55,4 +61,50 @@
 
 .buttons button:last-child:hover {
   background: var(--color-error-dark);
+}
+
+/* Mobile Responsive */
+@media (max-width: 600px) {
+  .confirmation-box {
+    min-width: unset;
+    width: 90%;
+    max-width: 400px;
+    padding: 16px;
+    margin: 0 15px;
+  }
+
+  .confirmation-box h2 {
+    font-size: var(--font-size-lg);
+    margin-bottom: 12px;
+  }
+
+  .confirmation-box p {
+    font-size: var(--font-size-sm);
+    margin-bottom: 16px;
+  }
+
+  .confirmation-box .form-group {
+    margin-bottom: 16px;
+  }
+
+  .confirmation-box .form-group label {
+    font-size: var(--font-size-sm);
+  }
+
+  .confirmation-box .form-group input {
+    padding: 10px 12px;
+    font-size: var(--font-size-sm);
+  }
+
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .buttons button {
+    margin: 0;
+    width: 100%;
+    padding: 12px 16px;
+  }
 }
