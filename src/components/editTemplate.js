@@ -1,7 +1,77 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import "../CreateTemplate.css";
 import { useGlobalContext } from "../globalContext";
 import { useNavigate } from "react-router-dom";
+
+// Helper function to parse topic from question
+const parseQuestionTopic = (questionText) => {
+  if (questionText && questionText.includes(':::')) {
+    const [topic, ...rest] = questionText.split(':::');
+    return { topic: topic.trim(), question: rest.join(':::').trim() };
+  }
+  return { topic: '', question: questionText };
+};
+
+// Helper function to format question with topic
+const formatQuestionWithTopic = (topic, question) => {
+  if (topic && topic.trim()) {
+    return `${topic.trim()}::: ${question}`;
+  }
+  return question;
+};
+
+// Topic Combobox Component
+const TopicCombobox = ({ value, onChange, existingTopics, placeholder = "Select or type a topic" }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [inputValue, setInputValue] = useState(value || '');
+
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
+
+  const filteredTopics = existingTopics.filter(topic =>
+    topic.toLowerCase().includes(inputValue.toLowerCase())
+  );
+
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
+    onChange(e.target.value);
+    setIsOpen(true);
+  };
+
+  const handleSelectTopic = (topic) => {
+    setInputValue(topic);
+    onChange(topic);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="topic-combobox">
+      <input
+        type="text"
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+        placeholder={placeholder}
+        className="topic-combobox-input"
+      />
+      {isOpen && filteredTopics.length > 0 && (
+        <ul className="topic-combobox-dropdown">
+          {filteredTopics.map((topic, index) => (
+            <li
+              key={index}
+              onClick={() => handleSelectTopic(topic)}
+              className="topic-combobox-option"
+            >
+              {topic}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+};
 
 // Toast Component
 const Toast = ({ toasts, removeToast }) => {
@@ -61,14 +131,73 @@ const EditTemplate = () => {
     correctAnswer: "",
   });
   const [topic, setTopic] = useState("");
+  const [manualTopic, setManualTopic] = useState(""); // Topic for manual question entry
   const [level, setLevel] = useState("fresher");
   const [groupByTopic, setGroupByTopic] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingOriginalIndex, setEditingOriginalIndex] = useState(null); // Track original index in questionSet
   const [loading, setLoading] = useState(false);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const navigate = useNavigate();
+
+  // Extract unique topics from questions
+  const existingTopics = useMemo(() => {
+    const topics = new Set();
+    questionSet.forEach(q => {
+      const { topic } = parseQuestionTopic(q.question);
+      if (topic) topics.add(topic);
+    });
+    return Array.from(topics).sort();
+  }, [questionSet]);
+
+  // Group and sort questions by topic
+  const groupedQuestions = useMemo(() => {
+    const groups = {};
+    const noTopicQuestions = [];
+
+    questionSet.forEach((q, originalIndex) => {
+      const { topic, question } = parseQuestionTopic(q.question);
+      const questionWithMeta = { ...q, originalIndex, displayQuestion: question, topic };
+      
+      if (topic) {
+        if (!groups[topic]) groups[topic] = [];
+        groups[topic].push(questionWithMeta);
+      } else {
+        noTopicQuestions.push(questionWithMeta);
+      }
+    });
+
+    // Sort topics alphabetically and build ordered list
+    const sortedTopics = Object.keys(groups).sort();
+    const result = [];
+    
+    sortedTopics.forEach(topic => {
+      result.push(...groups[topic]);
+    });
+    
+    // Add questions without topic at the end
+    result.push(...noTopicQuestions);
+    
+    return result;
+  }, [questionSet]);
+
+  // Calculate topic counts for display
+  const topicCounts = useMemo(() => {
+    const counts = {};
+    let noTopicCount = 0;
+    
+    questionSet.forEach(q => {
+      const { topic } = parseQuestionTopic(q.question);
+      if (topic) {
+        counts[topic] = (counts[topic] || 0) + 1;
+      } else {
+        noTopicCount++;
+      }
+    });
+    
+    return { counts, noTopicCount };
+  }, [questionSet]);
 
   // Check for mobile screen on mount
   useEffect(() => {
@@ -136,7 +265,7 @@ const EditTemplate = () => {
   };
 
   const addQuestion = () => {
-    const newQuestion = { type: formData.type, question: formData.question };
+    const newQuestion = { type: formData.type, question: formatQuestionWithTopic(manualTopic, formData.question) };
 
     if (formData.type === "mcq") {
       if (!formData.options.length) {
@@ -163,30 +292,36 @@ const EditTemplate = () => {
 
   const clearForm = () => {
     setFormData({ type: "mcq", question: "", options: [], correctAnswer: "" });
+    setManualTopic("");
     setIsEditing(false);
-    setEditingIndex(null);
+    setEditingOriginalIndex(null);
   };
 
-  const removeQuestion = (index) => {
-    const updatedQuestions = questionSet.filter((_, i) => i !== index);
+  const removeQuestion = (originalIndex) => {
+    const updatedQuestions = questionSet.filter((_, i) => i !== originalIndex);
     setQuestionSet(updatedQuestions);
   };
 
-  const editQuestion = (index) => {
-    const questionToEdit = questionSet[index];
+  const editQuestion = (originalIndex) => {
+    const questionToEdit = questionSet[originalIndex];
+    const { topic, question } = parseQuestionTopic(questionToEdit.question);
     setFormData({
       type: questionToEdit.type,
-      question: questionToEdit.question,
+      question: question,
       options: questionToEdit.options || [],
       correctAnswer: questionToEdit.correctAnswer || "",
     });
+    setManualTopic(topic);
     setIsEditing(true);
-    setEditingIndex(index);
+    setEditingOriginalIndex(originalIndex);
   };
 
   const saveEditedQuestion = () => {
     const updatedQuestions = [...questionSet];
-    updatedQuestions[editingIndex] = { ...formData };
+    updatedQuestions[editingOriginalIndex] = { 
+      ...formData,
+      question: formatQuestionWithTopic(manualTopic, formData.question)
+    };
     setQuestionSet(updatedQuestions);
     clearForm();
   };
@@ -330,7 +465,21 @@ const EditTemplate = () => {
           <div className="template-content">
             <div className="left-panel">
               <div className="form-section">
-                <h3>Questions ({questionSet.length})</h3>
+                <div className="topic-counts-summary">
+                  <span className="topic-count-badge topic-count-total">
+                    Total: {questionSet.length}
+                  </span>
+                  {Object.entries(topicCounts.counts).sort((a, b) => a[0].localeCompare(b[0])).map(([topicName, count]) => (
+                    <span key={topicName} className="topic-count-badge">
+                      {topicName}: {count}
+                    </span>
+                  ))}
+                  {topicCounts.noTopicCount > 0 && (
+                    <span className="topic-count-badge topic-count-no-topic">
+                      No Topic: {topicCounts.noTopicCount}
+                    </span>
+                  )}
+                </div>
                 <div className="form-group">
                   <label>Test Template Name</label>
                   <input
@@ -347,20 +496,33 @@ const EditTemplate = () => {
               </div>
 
               <div className="questions-list">
-                {questionSet.length > 0 ? (
-                  questionSet.map((q, index) => (
-                    <div key={index} className="qcard">
-                      <h4>{index + 1}. {q.question}</h4>
-                      {q.options && (
-                        <ul>{q.options.map((opt, i) => <li key={i}>{opt}</li>)}</ul>
-                      )}
-                      <p><strong>Answer:</strong> {q.correctAnswer}</p>
-                      <div className="qcard-actions">
-                        <button className="btn-edit" onClick={(e) => { e.preventDefault(); editQuestion(index); }}>Edit</button>
-                        <button className="btn-danger" onClick={(e) => { e.preventDefault(); removeQuestion(index); }}>Remove</button>
-                      </div>
-                    </div>
-                  ))
+                {groupedQuestions.length > 0 ? (
+                  groupedQuestions.map((q, index) => {
+                    const prevQuestion = index > 0 ? groupedQuestions[index - 1] : null;
+                    const showTopicHeader = q.topic && (!prevQuestion || prevQuestion.topic !== q.topic);
+                    
+                    return (
+                      <React.Fragment key={q.originalIndex}>
+                        {showTopicHeader && (
+                          <div className="topic-group-header">
+                            <span className="topic-tag">{q.topic}</span>
+                          </div>
+                        )}
+                        <div className="qcard">
+                          {q.topic && <span className="question-topic-tag">{q.topic}</span>}
+                          <h4>{index + 1}. {q.displayQuestion}</h4>
+                          {q.options && (
+                            <ul>{q.options.map((opt, i) => <li key={i}>{opt}</li>)}</ul>
+                          )}
+                          <p><strong>Answer:</strong> {q.correctAnswer}</p>
+                          <div className="qcard-actions">
+                            <button className="btn-edit" onClick={(e) => { e.preventDefault(); editQuestion(q.originalIndex); }}>Edit</button>
+                            <button className="btn-danger" onClick={(e) => { e.preventDefault(); removeQuestion(q.originalIndex); }}>Remove</button>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })
                 ) : (
                   <div className="empty-state">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -380,6 +542,16 @@ const EditTemplate = () => {
                   <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
                     <option value="mcq">MCQ</option>
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Topic</label>
+                  <TopicCombobox
+                    value={manualTopic}
+                    onChange={setManualTopic}
+                    existingTopics={existingTopics}
+                    placeholder="Select or type a topic"
+                  />
                 </div>
 
                 <div className="form-group">
@@ -434,11 +606,11 @@ const EditTemplate = () => {
                 </h3>
                 <div className="form-group">
                   <label>Topic</label>
-                  <input
-                    type="text"
-                    placeholder="e.g., JavaScript, React, Python"
+                  <TopicCombobox
                     value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
+                    onChange={setTopic}
+                    existingTopics={existingTopics}
+                    placeholder="e.g., JavaScript, React, Python"
                   />
                 </div>
                 <div className="form-group">
