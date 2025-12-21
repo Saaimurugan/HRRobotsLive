@@ -290,6 +290,15 @@
   margin: 6px 0;
   text-align: left;
   color: var(--color-text-secondary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+}
+
+.qcard li.correct-answer {
+  background: var(--color-success-light);
+  color: var(--color-success-dark);
+  font-weight: var(--font-weight-medium);
+  border-left: 3px solid var(--color-success);
 }
 
 .qcard p {

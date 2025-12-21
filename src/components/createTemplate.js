@@ -473,9 +473,8 @@ const CreateTemplate = () => {
                         {q.topic && <span className="question-topic-tag">{q.topic}</span>}
                         <h4>{index + 1}. {q.displayQuestion}</h4>
                         {q.options && (
-                          <ul>{q.options.map((opt, i) => <li key={i}>{opt}</li>)}</ul>
+                          <ul>{q.options.map((opt, i) => <li key={i} className={opt === q.correctAnswer ? 'correct-answer' : ''}>{opt}</li>)}</ul>
                         )}
-                        <p><strong>Answer:</strong> {q.correctAnswer}</p>
                         <div className="qcard-actions">
                           <button className="btn-edit" onClick={(e) => { e.preventDefault(); editQuestion(q.originalIndex); }}>Edit</button>
                           <button className="btn-danger" onClick={(e) => { e.preventDefault(); removeQuestion(q.originalIndex); }}>Remove</button>
