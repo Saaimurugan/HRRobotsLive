@@ -54,3 +54,17 @@
   flex: 1;
   line-height: 1.5;
 }
+
+
+.question-topic-tag {
+  display: inline-block;
+  background: var(--color-bg-secondary);
+  color: var(--color-primary);
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  margin-left: 10px;
+  border: 1px solid var(--color-primary);
+  vertical-align: middle;
+}

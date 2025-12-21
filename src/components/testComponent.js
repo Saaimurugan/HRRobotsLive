@@ -6,6 +6,15 @@ import DisplayMessage from "./displayMessage.js";
  */
 /* import { useNavigate } from "react-router-dom"; */
 
+// Helper function to parse topic from question
+const parseQuestionTopic = (questionText) => {
+  if (questionText && questionText.includes(':::')) {
+    const [topic, ...rest] = questionText.split(':::');
+    return { topic: topic.trim(), question: rest.join(':::').trim() };
+  }
+  return { topic: '', question: questionText };
+};
+
 const TestComponent = ({ testID, userID, candidateName }) => {
   const [answers, setAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
@@ -191,13 +200,18 @@ const TestComponent = ({ testID, userID, candidateName }) => {
       <>
       {(currentQuestionIndex + questionCount) <= 50? 
         <div>{/* {currentQuestionIndex} - {questionCount} -  */}
-          <h2>Question {questionCount === 1 
+          <h2>
+            Question {questionCount === 1 
                         ? currentQuestionIndex + 1 
                         : questionCount === 0 
                           ? currentQuestionIndex + 1
                           : currentQuestionIndex + questionCount}
-          /50</h2>
-          <p>{currentQuestion.question}</p>
+            /50
+            {parseQuestionTopic(currentQuestion.question).topic && (
+              <span className="question-topic-tag">{parseQuestionTopic(currentQuestion.question).topic}</span>
+            )}
+          </h2>
+          <p>{parseQuestionTopic(currentQuestion.question).question}</p>
           <ul className="MCQUL">
             {currentQuestion.options.map((option, index) => (
               <li key={index}>
