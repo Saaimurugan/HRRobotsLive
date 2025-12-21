@@ -128,6 +128,9 @@ const TestPage = () => {
   const [ candidateName, setCandidateName ] = useState("");
   const { candidateAccept, setcandidateAccept } = useGlobalContext("");
   const [ isTimeOut, setIsTimeOut ] = useState(true);
+  const [testProgress, setTestProgress] = useState({ currentQuestion: 0, questionCount: 0, answers: [], totalQuestions: 50 });
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [isFaceDetectionLoaded, setIsFaceDetectionLoaded] = useState(false);
   
   const handlePhotoCaptured = (status) => {
     setPhotoCaptured(status); // Update state when child notifies
@@ -582,6 +585,7 @@ if (userUniqueID != '')
         </p> */}
         {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
         // {isTimeOut? 
+          <>
           <FaceTracking 
         userUniqueID={userUniqueID} 
         handleFaceScore={(d) => setFaceFocusScore(d)}
@@ -590,7 +594,64 @@ if (userUniqueID != '')
           //console.log("Timer has ended! test page component will be closed.");
           setIsTimeOut(false); // Trigger termination
           }}
+        onLoadComplete={(loaded) => setIsFaceDetectionLoaded(loaded)}
         />
+        {/* Progress dots for larger screens */}
+        <div className="progress-dots-desktop" style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '4px',
+          marginLeft: '15px',
+          maxWidth: '600px'
+        }}>
+          {Array.from({ length: 50 }, (_, i) => {
+            const questionNum = i + 1;
+            const currentDisplayQuestion = testProgress.questionCount <= 1 
+              ? testProgress.currentQuestion + 1 
+              : testProgress.currentQuestion + testProgress.questionCount;
+            const isAnswered = testProgress.answers[i - testProgress.questionCount + 1] && testProgress.answers[i - testProgress.questionCount + 1] !== "";
+            const isCurrent = questionNum === currentDisplayQuestion;
+            return (
+              <span
+                key={i}
+                style={{
+                  width: '22px',
+                  height: '22px',
+                  borderRadius: '50%',
+                  backgroundColor: isAnswered ? '#28a745' : '#fd7e14',
+                  border: isCurrent ? '2px solid #007bff' : 'none',
+                  boxSizing: 'border-box',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  fontSize: '10px',
+                  fontWeight: 'bold',
+                  color: 'white'
+                }}
+                title={`Question ${questionNum}`}
+              >
+                {questionNum}
+              </span>
+            );
+          })}
+        </div>
+        {/* Hamburger for mobile */}
+        <button 
+          className="progress-hamburger"
+          onClick={() => setShowProgressModal(true)}
+          style={{
+            display: 'none',
+            background: 'none',
+            border: 'none',
+            fontSize: '24px',
+            cursor: 'pointer',
+            marginLeft: 'auto',
+            padding: '5px 10px'
+          }}
+        >
+          ☰
+        </button>
+        </>
         :
         <div style={{
           fontSize: '75px', // Much bigger font size
@@ -615,7 +676,33 @@ if (userUniqueID != '')
         {showFaceWarning && 
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
         }
-        <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName}/>
+        {isFaceDetectionLoaded ? (
+          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress}/>
+        ) : (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            minHeight: '300px',
+            padding: '40px'
+          }}>
+            <div style={{
+              width: '50px',
+              height: '50px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #3498db',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }}></div>
+            <p style={{ marginTop: '20px', fontSize: '18px', color: '#666' }}>
+              Loading Face Detection...
+            </p>
+            <p style={{ fontSize: '14px', color: '#999' }}>
+              Please ensure your face is visible in the camera
+            </p>
+          </div>
+        )}
       </>
       :
       <div>
@@ -627,6 +714,89 @@ if (userUniqueID != '')
       :
       <div><TestIDMissing/></div>
     }
+    {/* Progress Modal for mobile */}
+    {showProgressModal && (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 9998
+      }}>
+        <div style={{
+          backgroundColor: 'white',
+          padding: '20px',
+          borderRadius: '10px',
+          maxWidth: '90%',
+          maxHeight: '80%',
+          overflow: 'auto'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0 }}>Question Progress</h3>
+            <button 
+              onClick={() => setShowProgressModal(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                cursor: 'pointer'
+              }}
+            >×</button>
+          </div>
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(10, 1fr)',
+            gap: '8px'
+          }}>
+            {Array.from({ length: 50 }, (_, i) => {
+              const questionNum = i + 1;
+              const currentDisplayQuestion = testProgress.questionCount <= 1 
+                ? testProgress.currentQuestion + 1 
+                : testProgress.currentQuestion + testProgress.questionCount;
+              const isAnswered = testProgress.answers[i - testProgress.questionCount + 1] && testProgress.answers[i - testProgress.questionCount + 1] !== "";
+              const isCurrent = questionNum === currentDisplayQuestion;
+              return (
+                <span
+                  key={i}
+                  style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '50%',
+                    backgroundColor: isAnswered ? '#28a745' : '#fd7e14',
+                    border: isCurrent ? '3px solid #007bff' : 'none',
+                    boxSizing: 'border-box',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    color: 'white'
+                  }}
+                  title={`Question ${questionNum}`}
+                >
+                  {questionNum}
+                </span>
+              );
+            })}
+          </div>
+          <div style={{ marginTop: '15px', fontSize: '12px' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '15px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#28a745', marginRight: '5px' }}></span>
+              Answered
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#fd7e14', marginRight: '5px' }}></span>
+              Not Answered
+            </span>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   );
 };

@@ -487,3 +487,23 @@ textarea {
   max-width: 600px;
   margin: 0 auto;
 }
+
+
+/* Progress dots responsive styles */
+.progress-dots-desktop {
+  display: flex !important;
+}
+
+.progress-hamburger {
+  display: none !important;
+}
+
+@media (max-width: 768px) {
+  .progress-dots-desktop {
+    display: none !important;
+  }
+  
+  .progress-hamburger {
+    display: block !important;
+  }
+}

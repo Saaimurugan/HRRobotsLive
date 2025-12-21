@@ -15,7 +15,7 @@ const parseQuestionTopic = (questionText) => {
   return { topic: '', question: questionText };
 };
 
-const TestComponent = ({ testID, userID, candidateName }) => {
+const TestComponent = ({ testID, userID, candidateName, onProgressUpdate }) => {
   const [answers, setAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -57,6 +57,18 @@ const TestComponent = ({ testID, userID, candidateName }) => {
   }, [message]);
 
   const fetchedRef = React.useRef(false);
+
+  // Report progress to parent component
+  useEffect(() => {
+    if (onProgressUpdate) {
+      onProgressUpdate({
+        currentQuestion: currentQuestionIndex,
+        questionCount,
+        answers,
+        totalQuestions: 50
+      });
+    }
+  }, [currentQuestionIndex, questionCount, answers, onProgressUpdate]);
 
   useEffect(() => {
     // Fetch the first question when the component loads (prevent double fetch in StrictMode)

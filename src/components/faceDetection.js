@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import * as faceapi from 'face-api.js';
 import TimerComponent from "./timerComponent.js";
 
-const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel}) => {
+const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel, onLoadComplete}) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const intervalRef = useRef(null);
@@ -26,20 +26,34 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
         //console.log("Face Landmark Model Loaded");
         await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);  // Load face recognition model if needed
         //console.log("Face Recognition Model Loaded");
-        startVideo();
+        await startVideo();
         capturePhoto();
         setIsLoading(false);
+        if (onLoadComplete) {
+          onLoadComplete(true);
+        }
       } catch (error) {
         console.error("Error loading models:", error);
+        setIsLoading(false);
+        if (onLoadComplete) {
+          onLoadComplete(false);
+        }
       }
     };
 
     // Start video
     const startVideo = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {}
-      });
-      videoRef.current.srcObject = stream;
+      if (!videoRef.current) return; // Guard against null ref
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {}
+        });
+        if (videoRef.current) { // Check again after async operation
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.error("Error starting video:", error);
+      }
     };
 
     const capturePhoto = async () => {
