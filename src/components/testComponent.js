@@ -150,6 +150,12 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate }) => {
     }
   };
 
+  const handlePrev = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+    }
+  };
+
   const handleNext = async () => {
     if (isLoadingNext) return; // Prevent double-clicks
     setIsLoadingNext(true);
@@ -162,9 +168,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate }) => {
         await saveAnswer("");
       }
       
+      // If we already have the next question loaded, just move to it
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
+        // Only fetch a new question if we're at the end of loaded questions
         await fetchQuestion();
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       }
@@ -214,14 +222,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate }) => {
     <div className="MCQOuterWrap">
       {currentQuestion ?
       <>
-      {(currentQuestionIndex + questionCount) <= 50? 
+      {(currentQuestionIndex + questionCount) < 50? 
         <div>{/* {currentQuestionIndex} - {questionCount} -  */}
           <h2>
-            Question {questionCount === 1 
-                        ? currentQuestionIndex + 1 
-                        : questionCount === 0 
-                          ? currentQuestionIndex + 1
-                          : currentQuestionIndex + questionCount}
+            Question {questionCount === 0 ? currentQuestionIndex + 1 : currentQuestionIndex + questionCount}
             /50
             {parseQuestionTopic(currentQuestion.question).topic && (
               <span className="question-topic-tag">{parseQuestionTopic(currentQuestion.question).topic}</span>
@@ -247,7 +251,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate }) => {
           </ul>
           <div>
             <button
-              onClick={() => setCurrentQuestionIndex(currentQuestionIndex - 1)}
+              onClick={handlePrev}
               disabled={currentQuestionIndex === 0}
               style={{ backgroundColor: "#6c757d" }}
             >
