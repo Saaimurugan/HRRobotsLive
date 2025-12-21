@@ -37,6 +37,19 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID}) => {
     }
   };
 
+  const overlayStyle = {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 9999
+  };
+
   const containerStyle = {
     backgroundColor: "#ffcccb",
     color: "#a94442",
@@ -45,8 +58,7 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID}) => {
     borderRadius: "5px",
     maxWidth: "400px",
     textAlign: "center",
-    margin: "20px auto",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)"
   };
 
   const headerStyle = {
@@ -73,25 +85,27 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID}) => {
   }, [userUniqueID]);
 
   return (
-    <div style={containerStyle}>
-      {
-      offFocus <= 1 && count === 0?
-      <>
-      <div style={headerStyle}>Please Wait</div>
-      <div style={textStyle}>The test will begin once the facial recognition process has finished loading.</div>
-      <ul>
-        <li style={listStyle}>Please ensure your face is centered in the video capture.</li>
-      </ul>
-      </>
-      :
-      <>
-      <div style={headerStyle}>Warning</div>
-      <div style={textStyle}>The test is passed because the face is not properly focused on the screen.</div>
-      <ul>
-        <li style={listStyle}>The total number of allowed focus deviations is 10. You have been out of focus {count} times.</li>
-      </ul>
-      </>
-      }
+    <div style={overlayStyle}>
+      <div style={containerStyle}>
+        {
+        offFocus <= 1 && count === 0?
+        <>
+        <div style={headerStyle}>Please Wait</div>
+        <div style={textStyle}>The test will begin once the facial recognition process has finished loading.</div>
+        <ul>
+          <li style={listStyle}>Please ensure your face is centered in the video capture.</li>
+        </ul>
+        </>
+        :
+        <>
+        <div style={headerStyle}>Warning</div>
+        <div style={textStyle}>The test is passed because the face is not properly focused on the screen.</div>
+        <ul>
+          <li style={listStyle}>The total number of allowed focus deviations is 10. You have been out of focus {count} times.</li>
+        </ul>
+        </>
+        }
+      </div>
     </div>
   );
 };

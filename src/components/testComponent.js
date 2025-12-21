@@ -56,9 +56,14 @@ const TestComponent = ({ testID, userID, candidateName }) => {
     }
   }, [message]);
 
+  const fetchedRef = React.useRef(false);
+
   useEffect(() => {
-    // Fetch the first question when the component loads
-    fetchQuestion();
+    // Fetch the first question when the component loads (prevent double fetch in StrictMode)
+    if (!fetchedRef.current) {
+      fetchedRef.current = true;
+      fetchQuestion();
+    }
   }, []);
 
   const fetchQuestion = async () => {
@@ -96,7 +101,6 @@ const TestComponent = ({ testID, userID, candidateName }) => {
   };
 
   const saveAnswer = async (answer) => {
-    setIsLoadingNext(true);
     const currentQuestion = questions[currentQuestionIndex];
 
     // Save the answer locally
@@ -132,29 +136,29 @@ const TestComponent = ({ testID, userID, candidateName }) => {
       setMessage("Failed to save answer: " + error.message);
       console.error("Error saving answer:", error);
     }
-    finally {
-      setIsLoadingNext(false);
-    }
   };
 
   const handleNext = async () => {
+    if (isLoadingNext) return; // Prevent double-clicks
     setIsLoadingNext(true);
-    //check whether setSavedQuestionCount has the currentQuestion.questionID
-    //console.log("savedQuestions: ", savedQuestions);
-    //console.log("currentQuestion.questionID: ", currentQuestion.questionID);
-    if (savedQuestions.includes(currentQuestion.questionID)) {}else{
-      //console.log("Saving answer for question: ", currentQuestion.questionID);
-      saveAnswer("");
+    try {
+      //check whether setSavedQuestionCount has the currentQuestion.questionID
+      //console.log("savedQuestions: ", savedQuestions);
+      //console.log("currentQuestion.questionID: ", currentQuestion.questionID);
+      if (!savedQuestions.includes(currentQuestion.questionID)) {
+        //console.log("Saving answer for question: ", currentQuestion.questionID);
+        await saveAnswer("");
+      }
+      
+      if (currentQuestionIndex < questions.length - 1) {
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      } else {
+        await fetchQuestion();
+        setCurrentQuestionIndex(currentQuestionIndex + 1);
+      }
+    } finally {
+      setIsLoadingNext(false);
     }
-    
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    } else {
-      await fetchQuestion();
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
-    // Save the answer for the current question before moving to the next one
-    setIsLoadingNext(false);
   };
 
   const handleSubmit = async () => {

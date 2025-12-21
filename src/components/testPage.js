@@ -612,11 +612,10 @@ if (userUniqueID != '')
     {/*     {faceOffWarningCount < 10? */} 
     {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
     <>
-        {showFaceWarning?
+        {showFaceWarning && 
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
-        :
-        <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName}/>
         }
+        <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName}/>
       </>
       :
       <div>
