@@ -129,6 +129,7 @@ const CreateTemplate = () => {
     question: "",
     options: [],
     correctAnswer: "",
+    correctAnswerIndex: -1,
   });
   const [topic, setTopic] = useState("");
   const [manualTopic, setManualTopic] = useState(""); // Topic for manual question entry
@@ -247,14 +248,19 @@ const CreateTemplate = () => {
   };
 
   const setCorrectAnswer = (index) => {
-    const selectedAnswer = formData.options[index];
-    setFormData({ ...formData, correctAnswer: selectedAnswer });
+    setFormData({ ...formData, correctAnswerIndex: index });
   };
 
   const removeOption = (index) => {
     const newOptions = [...formData.options];
     newOptions.splice(index, 1);
-    setFormData({ ...formData, options: newOptions });
+    let newCorrectIndex = formData.correctAnswerIndex;
+    if (index === formData.correctAnswerIndex) {
+      newCorrectIndex = -1; // Reset if the correct answer was removed
+    } else if (index < formData.correctAnswerIndex) {
+      newCorrectIndex = formData.correctAnswerIndex - 1; // Adjust index
+    }
+    setFormData({ ...formData, options: newOptions, correctAnswerIndex: newCorrectIndex });
   };
 
   const addQuestion = () => {
@@ -265,12 +271,12 @@ const CreateTemplate = () => {
         showToast('warning', 'Missing Options', 'MCQ must have at least one option.');
         return;
       }
-      if (!formData.correctAnswer) {
+      if (formData.correctAnswerIndex < 0) {
         showToast('warning', 'No Answer Selected', 'Please select a correct answer.');
         return;
       }
       newQuestion.options = formData.options;
-      newQuestion.correctAnswer = formData.correctAnswer;
+      newQuestion.correctAnswer = formData.options[formData.correctAnswerIndex];
     } else {
       if (!formData.correctAnswer) {
         showToast('warning', 'Missing Answer', 'Answer cannot be empty for a descriptive question.');
@@ -284,7 +290,7 @@ const CreateTemplate = () => {
   };
 
   const clearForm = () => {
-    setFormData({ type: "mcq", question: "", options: [], correctAnswer: "" });
+    setFormData({ type: "mcq", question: "", options: [], correctAnswer: "", correctAnswerIndex: -1 });
     setManualTopic("");
     setIsEditing(false);
     setEditingOriginalIndex(null);
@@ -298,11 +304,13 @@ const CreateTemplate = () => {
   const editQuestion = (originalIndex) => {
     const questionToEdit = questionSet[originalIndex];
     const { topic, question } = parseQuestionTopic(questionToEdit.question);
+    const correctIndex = questionToEdit.options ? questionToEdit.options.indexOf(questionToEdit.correctAnswer) : -1;
     setFormData({
       type: questionToEdit.type,
       question: question,
       options: questionToEdit.options || [],
       correctAnswer: questionToEdit.correctAnswer || "",
+      correctAnswerIndex: correctIndex,
     });
     setManualTopic(topic);
     setIsEditing(true);
@@ -311,9 +319,11 @@ const CreateTemplate = () => {
 
   const saveEditedQuestion = () => {
     const updatedQuestions = [...questionSet];
+    const correctAnswer = formData.correctAnswerIndex >= 0 ? formData.options[formData.correctAnswerIndex] : formData.correctAnswer;
     updatedQuestions[editingOriginalIndex] = { 
       ...formData,
-      question: formatQuestionWithTopic(manualTopic, formData.question)
+      question: formatQuestionWithTopic(manualTopic, formData.question),
+      correctAnswer: correctAnswer,
     };
     setQuestionSet(updatedQuestions);
     clearForm();
@@ -522,7 +532,7 @@ const CreateTemplate = () => {
                       <input
                         type="radio"
                         name="correctAnswer"
-                        checked={formData.correctAnswer === opt}
+                        checked={formData.correctAnswerIndex === i}
                         onChange={() => setCorrectAnswer(i)}
                       />
                       <input
@@ -531,7 +541,12 @@ const CreateTemplate = () => {
                         onChange={(e) => updateOption(i, e.target.value)}
                         placeholder={`Option ${i + 1}`}
                       />
-                      <button className="btn-danger" onClick={() => removeOption(i)}>×</button>
+                      <button className="btn-danger" onClick={() => removeOption(i)} title="Delete option">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                      </button>
                     </div>
                   ))}
                   <button className="btn-secondary" onClick={addOption}>+ Add Option</button>

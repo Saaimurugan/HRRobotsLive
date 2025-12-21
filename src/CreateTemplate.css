@@ -323,15 +323,29 @@
 
 .option-item input[type="text"] {
   flex: 1;
-  padding: 10px 12px;
+  padding: 14px 16px;
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  min-height: 48px;
 }
 
 .option-item input[type="text"]:focus {
   border-color: var(--color-primary);
   outline: none;
+}
+
+.option-item .btn-danger {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  line-height: 1;
 }
 
 /* AI Section */
