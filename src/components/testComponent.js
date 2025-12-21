@@ -15,7 +15,7 @@ const parseQuestionTopic = (questionText) => {
   return { topic: '', question: questionText };
 };
 
-const TestComponent = ({ testID, userID, candidateName, onProgressUpdate }) => {
+const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef }) => {
   const [answers, setAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -65,10 +65,25 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate }) => {
         currentQuestion: currentQuestionIndex,
         questionCount,
         answers,
-        totalQuestions: 50
+        totalQuestions: 50,
+        questionsLoaded: questions.length
       });
     }
-  }, [currentQuestionIndex, questionCount, answers, onProgressUpdate]);
+  }, [currentQuestionIndex, questionCount, answers, onProgressUpdate, questions.length]);
+
+  // Expose navigation function to parent via ref
+  useEffect(() => {
+    if (navigateToQuestionRef) {
+      navigateToQuestionRef.current = (questionNum) => {
+        // questionNum is 1-based (1-50), convert to index based on questionCount
+        const targetIndex = questionNum - questionCount;
+        // Only navigate if the question has been loaded
+        if (targetIndex >= 0 && targetIndex < questions.length) {
+          setCurrentQuestionIndex(targetIndex);
+        }
+      };
+    }
+  }, [navigateToQuestionRef, questionCount, questions.length]);
 
   useEffect(() => {
     // Fetch the first question when the component loads (prevent double fetch in StrictMode)

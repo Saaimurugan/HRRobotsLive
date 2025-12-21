@@ -128,12 +128,22 @@ const TestPage = () => {
   const [ candidateName, setCandidateName ] = useState("");
   const { candidateAccept, setcandidateAccept } = useGlobalContext("");
   const [ isTimeOut, setIsTimeOut ] = useState(true);
-  const [testProgress, setTestProgress] = useState({ currentQuestion: 0, questionCount: 0, answers: [], totalQuestions: 50 });
+  const [testProgress, setTestProgress] = useState({ currentQuestion: 0, questionCount: 0, answers: [], totalQuestions: 50, questionsLoaded: 0 });
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [isFaceDetectionLoaded, setIsFaceDetectionLoaded] = useState(false);
+  const navigateToQuestionRef = useRef(null);
   
   const handlePhotoCaptured = (status) => {
     setPhotoCaptured(status); // Update state when child notifies
+  };
+
+  const handleQuestionDotClick = (questionNum) => {
+    // Only allow navigation to questions that have been loaded
+    const targetIndex = questionNum - testProgress.questionCount;
+    const questionsLoaded = testProgress.questionsLoaded || 0;
+    if (targetIndex >= 0 && targetIndex < questionsLoaded && navigateToQuestionRef.current) {
+      navigateToQuestionRef.current(questionNum);
+    }
   };
 
   // Detect full-screen changes
@@ -613,9 +623,13 @@ if (userUniqueID != '')
               : testProgress.currentQuestion + testProgress.questionCount;
             const isAnswered = testProgress.answers[i - testProgress.questionCount + 1] && testProgress.answers[i - testProgress.questionCount + 1] !== "";
             const isCurrent = questionNum === currentDisplayQuestion;
+            const targetIndex = questionNum - testProgress.questionCount;
+            const questionsLoaded = testProgress.questionsLoaded || 0;
+            const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
             return (
               <span
                 key={i}
+                onClick={() => isClickable && handleQuestionDotClick(questionNum)}
                 style={{
                   width: '22px',
                   height: '22px',
@@ -628,9 +642,11 @@ if (userUniqueID != '')
                   alignItems: 'center',
                   fontSize: '10px',
                   fontWeight: 'bold',
-                  color: 'white'
+                  color: 'white',
+                  cursor: isClickable ? 'pointer' : 'not-allowed',
+                  opacity: isClickable ? 1 : 0.5
                 }}
-                title={`Question ${questionNum}`}
+                title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
               >
                 {questionNum}
               </span>
@@ -679,7 +695,7 @@ if (userUniqueID != '')
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
         }
         {isFaceDetectionLoaded ? (
-          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress}/>
+          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef}/>
         ) : (
           <div style={{
             display: 'flex',
@@ -771,9 +787,18 @@ if (userUniqueID != '')
                 : testProgress.currentQuestion + testProgress.questionCount;
               const isAnswered = testProgress.answers[i - testProgress.questionCount + 1] && testProgress.answers[i - testProgress.questionCount + 1] !== "";
               const isCurrent = questionNum === currentDisplayQuestion;
+              const targetIndex = questionNum - testProgress.questionCount;
+              const questionsLoaded = testProgress.questionsLoaded || 0;
+              const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
               return (
                 <span
                   key={i}
+                  onClick={() => {
+                    if (isClickable) {
+                      handleQuestionDotClick(questionNum);
+                      setShowProgressModal(false);
+                    }
+                  }}
                   style={{
                     width: '24px',
                     height: '24px',
@@ -786,9 +811,11 @@ if (userUniqueID != '')
                     alignItems: 'center',
                     fontSize: '10px',
                     fontWeight: 'bold',
-                    color: 'white'
+                    color: 'white',
+                    cursor: isClickable ? 'pointer' : 'not-allowed',
+                    opacity: isClickable ? 1 : 0.5
                   }}
-                  title={`Question ${questionNum}`}
+                  title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
                 >
                   {questionNum}
                 </span>
