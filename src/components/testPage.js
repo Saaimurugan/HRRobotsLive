@@ -508,7 +508,7 @@ if (userUniqueID != '')
       <div
         style={{
           background: "linear-gradient(132deg, rgb(227, 244, 253) 0.00%, rgb(170, 209, 226) 100.00%)",
-					marginTop: "80px",																		
+          marginTop: "50px",
           padding: "0 5px 0",
           color: "black",
           display: "flex",
@@ -601,8 +601,10 @@ if (userUniqueID != '')
           display: 'flex',
           flexWrap: 'wrap',
           gap: '4px',
-          marginLeft: '15px',
-          maxWidth: '600px'
+          flex: 1,
+          justifyContent: 'center',
+          maxWidth: '600px',
+          margin: '0 auto'
         }}>
           {Array.from({ length: 50 }, (_, i) => {
             const questionNum = i + 1;
