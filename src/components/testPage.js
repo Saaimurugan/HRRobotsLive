@@ -730,28 +730,37 @@ if (userUniqueID != '')
       }}>
         <div style={{
           backgroundColor: 'white',
-          padding: '20px',
+          padding: '15px',
           borderRadius: '10px',
-          maxWidth: '90%',
+          maxWidth: '95%',
           maxHeight: '80%',
           overflow: 'auto'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ margin: 0 }}>Question Progress</h3>
+            <h3 style={{ margin: 0, fontSize: '16px' }}>Question Progress</h3>
             <button 
               onClick={() => setShowProgressModal(false)}
               style={{
-                background: 'none',
-                border: 'none',
-                fontSize: '24px',
-                cursor: 'pointer'
+                background: '#f0f0f0',
+                border: '1px solid #ccc',
+                fontSize: '18px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                color: '#333',
+                width: '30px',
+                height: '30px',
+                borderRadius: '4px',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                lineHeight: '1'
               }}
             >×</button>
           </div>
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(10, 1fr)',
-            gap: '8px'
+            gap: '5px'
           }}>
             {Array.from({ length: 50 }, (_, i) => {
               const questionNum = i + 1;
@@ -764,16 +773,16 @@ if (userUniqueID != '')
                 <span
                   key={i}
                   style={{
-                    width: '32px',
-                    height: '32px',
+                    width: '24px',
+                    height: '24px',
                     borderRadius: '50%',
                     backgroundColor: isAnswered ? '#28a745' : '#fd7e14',
-                    border: isCurrent ? '3px solid #007bff' : 'none',
+                    border: isCurrent ? '2px solid #007bff' : 'none',
                     boxSizing: 'border-box',
                     display: 'flex',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    fontSize: '12px',
+                    fontSize: '10px',
                     fontWeight: 'bold',
                     color: 'white'
                   }}
@@ -784,13 +793,13 @@ if (userUniqueID != '')
               );
             })}
           </div>
-          <div style={{ marginTop: '15px', fontSize: '12px' }}>
+          <div style={{ marginTop: '12px', fontSize: '11px' }}>
             <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '15px' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#28a745', marginRight: '5px' }}></span>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#28a745', marginRight: '5px' }}></span>
               Answered
             </span>
             <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: '#fd7e14', marginRight: '5px' }}></span>
+              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#fd7e14', marginRight: '5px' }}></span>
               Not Answered
             </span>
           </div>
