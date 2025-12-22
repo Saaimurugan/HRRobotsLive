@@ -158,7 +158,7 @@ const App = () => {
         {/* Protected routes */}
         <Route path="/" element={<ProtectedRoute><RedirectPage /></ProtectedRoute>} />
         <Route path="/list" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
-          <Route path="/test/:id" element={<ProtectedRoute><TestPage /></ProtectedRoute>} />
+          <Route path="/test/:id" element={<TestPage />} />
           <Route path="/reset/:id" element={<ResetPage />} />
           <Route path="/result" element={<ProtectedRoute><SearchResult/></ProtectedRoute>} />
           <Route path="/createTemplate" element={<ProtectedRoute><CreateTemplate/></ProtectedRoute>} />
