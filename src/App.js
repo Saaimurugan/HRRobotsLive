@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import TestPage from './components/testPage';
 import LoginPage from './components/login';
 import CreateTest from './components/createTest';
 import SignUp from './components/signup';
-import { GlobalProvider } from "./globalContext";
+import { GlobalProvider, useGlobalContext } from "./globalContext";
 import ForgotPasswordPage from './components/forgotPassword';
 import ResetPage from './components/reset';
 import RedirectPage from './components/redirectPage';
@@ -19,6 +19,20 @@ import FaceDetection from './components/faceDetection';
 import EditTemplate from './components/editTemplate';
 import Profile from './components/profile';
 import CreateJD from './components/createJD';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Logout component that clears session and redirects
+const LogoutHandler = () => {
+  const { logout } = useGlobalContext();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    logout();
+    navigate('/login', { replace: true });
+  }, [logout, navigate]);
+
+  return null;
+};
 
 const Header = () => {
   const navigate = useNavigate();
@@ -135,26 +149,28 @@ const App = () => {
       <>
         <Header />
         <Routes>
-        <Route path="/" element={<RedirectPage />} />
-        <Route path="/list" element={<CreateTest />} />
-          <Route path="/test/:id" element={<TestPage />} />
+        {/* Public routes */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/logout" element={<LogoutHandler />} />
+        
+        {/* Protected routes */}
+        <Route path="/" element={<ProtectedRoute><RedirectPage /></ProtectedRoute>} />
+        <Route path="/list" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
+          <Route path="/test/:id" element={<ProtectedRoute><TestPage /></ProtectedRoute>} />
           <Route path="/reset/:id" element={<ResetPage />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/logout" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/result" element={<SearchResult/>} />
-          <Route path="/createTemplate" element={<CreateTemplate/>} />
-          <Route path="/profilerPage" element={<ProfilerPage/>} />
-          <Route path="/aiinterview" element={<AIInterview/>} />
-          <Route path="/interviewPage" element={<InterviewPage/>} />
-          <Route path="/speechtotext" element={<SpeechToText/>} />
-          <Route path="/chatBot" element={<ChatBot/>} />
-          <Route path="/faceDetection" element={<FaceDetection/>} />
-          <Route path="/edit/:id" element={<EditTemplate/>} />
-          <Route path='/profile' element={<Profile/>} />
-          <Route path="/createJD" element={<CreateJD />} />
-          {/* <Route path="/testAuth" element={<TestAuth />} /> */}
+          <Route path="/result" element={<ProtectedRoute><SearchResult/></ProtectedRoute>} />
+          <Route path="/createTemplate" element={<ProtectedRoute><CreateTemplate/></ProtectedRoute>} />
+          <Route path="/profilerPage" element={<ProtectedRoute><ProfilerPage/></ProtectedRoute>} />
+          <Route path="/aiinterview" element={<ProtectedRoute><AIInterview/></ProtectedRoute>} />
+          <Route path="/interviewPage" element={<ProtectedRoute><InterviewPage/></ProtectedRoute>} />
+          <Route path="/speechtotext" element={<ProtectedRoute><SpeechToText/></ProtectedRoute>} />
+          <Route path="/chatBot" element={<ProtectedRoute><ChatBot/></ProtectedRoute>} />
+          <Route path="/faceDetection" element={<ProtectedRoute><FaceDetection/></ProtectedRoute>} />
+          <Route path="/edit/:id" element={<ProtectedRoute><EditTemplate/></ProtectedRoute>} />
+          <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
+          <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
         </Routes>
       </>
     </Router>

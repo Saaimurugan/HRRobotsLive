@@ -1,35 +1,37 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 const GlobalContext = createContext();
-const STORAGE_KEY = "globalAPIValue";
+const SESSION_KEY = "userSession";
 
 export const GlobalProvider = ({ children }) => {
   const [globalValue, setGlobalValue] = useState(() => {
-    // Initialize from localStorage if available
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      localStorage.removeItem(STORAGE_KEY); // Clear after restoring
-      return stored;
-    }
-    return "";
+    // Initialize from sessionStorage if available (persists during session)
+    const stored = sessionStorage.getItem(SESSION_KEY);
+    return stored || "";
   });
 
+  // Sync globalValue to sessionStorage whenever it changes
   useEffect(() => {
-    // Save to localStorage before page unload (refresh/close)
-    const handleBeforeUnload = () => {
-      if (globalValue) {
-        localStorage.setItem(STORAGE_KEY, globalValue);
-      }
-    };
-
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    if (globalValue) {
+      sessionStorage.setItem(SESSION_KEY, globalValue);
+    } else {
+      sessionStorage.removeItem(SESSION_KEY);
+    }
   }, [globalValue]);
 
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    return !!globalValue || !!sessionStorage.getItem(SESSION_KEY);
+  };
+
+  // Logout function - clears session
+  const logout = () => {
+    setGlobalValue("");
+    sessionStorage.removeItem(SESSION_KEY);
+  };
+
   return (
-    <GlobalContext.Provider value={{ globalValue, setGlobalValue }}>
+    <GlobalContext.Provider value={{ globalValue, setGlobalValue, isAuthenticated, logout }}>
       {children}
     </GlobalContext.Provider>
   );
