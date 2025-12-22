@@ -1,14 +1,28 @@
 import React, { useEffect, useState, useRef } from 'react';
 import * as faceapi from 'face-api.js';
 import TimerComponent from "./timerComponent.js";
+import AudioWaveOverlay from "./AudioWaveOverlay.js";
 
-const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel, onLoadComplete}) => {
+const FaceTracking = ({
+  userUniqueID, 
+  handleFaceScore, 
+  onTimerEnd, 
+  toleranceLevel, 
+  onLoadComplete,
+  onMultipleFacesDetected, // Callback when multiple faces are detected
+  // Audio detection props
+  audioVolume = 0,
+  isTalking = false,
+  speechCount = 0,
+  isAudioListening = false
+}) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const intervalRef = useRef(null);
   const canvasInstance = useRef(null); // Ref to store the canvas instance
   const waitTimeRef = useRef(0); // Ref to store the current waitTime value
   const photoIntervalRef = useRef(null); // Ref to store the 5-minute photo capture interval
+  const multipleFaceStartRef = useRef(null); // Ref to track when multiple faces started being detected
   const [isLoading, setIsLoading] = useState(false);
   //const [waitTime, setWaitTime] = useState(0);
 /*   const [confidence, setConfidence] = useState(0); */
@@ -165,6 +179,29 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
             const confidenceScore = detections.length > 0 ? detections[0].detection.score * 100 : 0;
             handleFaceScore(confidenceScore);
 
+            // Check for multiple faces detected
+            if (detections.length > 1) {
+              // Multiple faces detected
+              if (multipleFaceStartRef.current === null) {
+                // Start tracking multiple faces
+                multipleFaceStartRef.current = Date.now();
+              } else {
+                // Check if 5 seconds have passed with multiple faces
+                const elapsedTime = Date.now() - multipleFaceStartRef.current;
+                if (elapsedTime >= 5000) {
+                  // Trigger multiple faces warning callback
+                  if (onMultipleFacesDetected) {
+                    onMultipleFacesDetected(detections.length);
+                  }
+                  capturePhoto(); // Capture photo when multiple faces detected
+                  multipleFaceStartRef.current = Date.now(); // Reset timer after triggering
+                }
+              }
+            } else {
+              // Single face or no face - reset multiple face tracking
+              multipleFaceStartRef.current = null;
+            }
+
             // Increment waitTime using the ref
             waitTimeRef.current += 1;
             //setWaitTime(waitTimeRef.current); // Update state for UI purposes
@@ -243,7 +280,18 @@ const handleTimerEnd = () => {
         muted
         width="100"
         height="90"
-        style={{ display: 'block' }}
+        style={{ display: 'block', borderRadius: '4px' }}
+      />
+      {/* Audio Wave Overlay */}
+      <AudioWaveOverlay 
+        volume={audioVolume}
+        isTalking={isTalking}
+        speechCount={speechCount}
+        isListening={isAudioListening}
+        width={100}
+        height={90}
+        barCount={5}
+        showCount={true}
       />
     </>
     </div>

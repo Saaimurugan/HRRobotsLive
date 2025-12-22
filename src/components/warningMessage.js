@@ -7,7 +7,9 @@ const WarningMessage = ({ reason }) => {
     { key: "fullscreen", text: "Fullscreen mode exited" },
     { key: "window", text: "Another window opened" },
     { key: "face", text: "Face not properly focused on the Camera" },
+    { key: "multiplefaces", text: "Multiple faces detected on the Camera" },
     { key: "screenshot", text: "Screenshot Captured" },
+    { key: "voice", text: "Unauthorized voice/speech detected" },
   ];
 
   const containerStyle = {

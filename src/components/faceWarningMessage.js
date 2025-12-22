@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-const FaceWarningMessage = ({count, offFocus, userUniqueID}) => {
+const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "noface"}) => {
   const videoRef = useRef(null);
   const photoCapturedRef = useRef(false);
 
@@ -84,27 +84,48 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID}) => {
     }
   }, [userUniqueID]);
 
-  return (
-    <div style={overlayStyle}>
-      <div style={containerStyle}>
-        {
-        offFocus <= 1 && count === 0?
+  const renderWarningContent = () => {
+    if (warningType === "multiplefaces") {
+      return (
         <>
-        <div style={headerStyle}>Please Wait</div>
-        <div style={textStyle}>The test will begin once the facial recognition process has finished loading.</div>
-        <ul>
-          <li style={listStyle}>Please ensure your face is centered in the video capture.</li>
-        </ul>
+          <div style={headerStyle}>Warning</div>
+          <div style={textStyle}>Multiple faces have been detected on the camera.</div>
+          <ul>
+            <li style={listStyle}>The total number of allowed deviations is 10. Multiple faces have been detected {count} times.</li>
+            <li style={listStyle}>Please ensure only one person is visible in the camera frame.</li>
+          </ul>
         </>
-        :
+      );
+    }
+    
+    // Default: no face warning
+    if (offFocus <= 1 && count === 0) {
+      return (
         <>
+          <div style={headerStyle}>Please Wait</div>
+          <div style={textStyle}>The test will begin once the facial recognition process has finished loading.</div>
+          <ul>
+            <li style={listStyle}>Please ensure your face is centered in the video capture.</li>
+          </ul>
+        </>
+      );
+    }
+    
+    return (
+      <>
         <div style={headerStyle}>Warning</div>
         <div style={textStyle}>The test is passed because the face is not properly focused on the screen.</div>
         <ul>
           <li style={listStyle}>The total number of allowed focus deviations is 10. You have been out of focus {count} times.</li>
         </ul>
-        </>
-        }
+      </>
+    );
+  };
+
+  return (
+    <div style={overlayStyle}>
+      <div style={containerStyle}>
+        {renderWarningContent()}
       </div>
     </div>
   );

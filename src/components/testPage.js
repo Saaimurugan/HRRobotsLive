@@ -9,6 +9,7 @@ import "../App.css";
 import TestComponent from "./testComponent.js";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
 import TestSetupWizard from "./TestSetupWizard.js";
+import useAudioDetection from "./useAudioDetection.js";
 
 // Toast Component for notifications
 const Toast = ({ toasts, removeToast }) => {
@@ -167,6 +168,8 @@ const TestPage = () => {
   const [continuousLowScoreStart, setContinuousLowScoreStart] = useState(null);
   const [showFaceWarning, setShowFaceWarning] = useState(false);
   const [faceDetectionInitialized, setFaceDetectionInitialized] = useState(false);
+  const [multipleFacesWarningCount, setMultipleFacesWarningCount] = useState(0);
+  const [showMultipleFacesWarning, setShowMultipleFacesWarning] = useState(false);
   const faceFocusScoreRef = useRef(-1); // Ref to track latest score for interval
   const lowScoreStartRef = useRef(null); // Ref to track when low score started
   const warningShownForCurrentPeriodRef = useRef(false); // Track if warning was shown for current no-face period
@@ -182,6 +185,31 @@ const TestPage = () => {
   const [isFaceDetectionLoaded, setIsFaceDetectionLoaded] = useState(false);
   const navigateToQuestionRef = useRef(null);
   const lastClipboardCheckRef = useRef(null); // Track last clipboard state
+
+  // Audio detection state
+  const [isTalking, setIsTalking] = useState(false);
+  const [audioVolume, setAudioVolume] = useState(0);
+  const [speechCount, setSpeechCount] = useState(0);
+
+  // Audio detection hook - only active when quiz is started and not terminated
+  const audioDetection = useAudioDetection({
+    enabled: isQuizStarted && !isTerminated && micPermission,
+    threshold: 30, // Adjust sensitivity (lower = more sensitive)
+    silenceDelay: 500,
+    onSpeechStart: () => {
+      setIsTalking(true);
+      setSpeechCount(prev => prev + 1);
+      // Optional: Log or track speech events
+      // console.log('Speech detected');
+    },
+    onSpeechEnd: () => {
+      setIsTalking(false);
+      // console.log('Speech ended');
+    },
+    onVolumeChange: (vol) => {
+      setAudioVolume(vol);
+    }
+  });
 
   // Clipboard monitoring for screenshot detection
   useEffect(() => {
@@ -396,6 +424,9 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   } else if (allowedDefaults > 0 && faceOffWarningCount >= allowedDefaults) {
     terminationMessage = 'Too many face detection warnings.';
     reason = 'face';
+  } else if (allowedDefaults > 0 && multipleFacesWarningCount >= allowedDefaults) {
+    terminationMessage = 'Too many multiple faces detected warnings.';
+    reason = 'multiplefaces';
   }
   
   if (terminationMessage) {
@@ -413,6 +444,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   cameraPermission,
   micPermission,
   faceOffWarningCount,
+  multipleFacesWarningCount,
   allowedDefaults,
 ]);
 
@@ -777,7 +809,7 @@ if (userUniqueID != '')
         {/* <p style={{ fontSize: '12px', color: 'black' }}>
           Score: {faceFocusScore >= 0 ? faceFocusScore.toFixed(2) : 'Loading...'} | Init: {faceDetectionInitialized ? 'YES' : 'NO'} | Warning: {showFaceWarning ? 'YES' : 'NO'}
         </p> */}
-        {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && !isTerminated && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
+        {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && !isTerminated && (!faceRecognition || (faceOffWarningCount < allowedDefaults && multipleFacesWarningCount < allowedDefaults))? 
         // {isTimeOut? 
           <>
           <FaceTracking 
@@ -789,6 +821,16 @@ if (userUniqueID != '')
           setIsTimeOut(false); // Trigger termination
           }}
         onLoadComplete={(loaded) => setIsFaceDetectionLoaded(loaded)}
+        onMultipleFacesDetected={(faceCount) => {
+          setMultipleFacesWarningCount(c => c + 1);
+          setShowMultipleFacesWarning(true);
+          // Auto-hide warning after 3 seconds
+          setTimeout(() => setShowMultipleFacesWarning(false), 3000);
+        }}
+        audioVolume={audioDetection.volume}
+        isTalking={audioDetection.isTalking}
+        speechCount={speechCount}
+        isAudioListening={audioDetection.isListening}
         />
         {/* Progress dots for larger screens */}
         <div className="progress-dots-desktop" style={{
@@ -873,10 +915,13 @@ if (userUniqueID != '')
     { userUniqueIDPresent ?
     <>
     {/*     {faceOffWarningCount < 10? */} 
-    {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && !isTerminated && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
+    {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && !isTerminated && (!faceRecognition || (faceOffWarningCount < allowedDefaults && multipleFacesWarningCount < allowedDefaults))? 
     <>
         {showFaceWarning && 
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
+        }
+        {showMultipleFacesWarning && 
+        <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
         {isFaceDetectionLoaded ? (
           <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef}/>
