@@ -32,25 +32,21 @@ const ForgotPasswordPage = () => {
             });
 
             const data = await response.json();
+            const body = data.body ? JSON.parse(data.body) : data;
 
             if (data.statusCode === 200) {
                 setMessageType("success");
-                setMessage(data.message || "Reset link sent successfully!");
+                setMessage(body.message || "Reset link sent successfully!");
                 setEmailSent(true);
             } else {
                 setMessageType("error");
-                setMessage(data.message || "Failed to send reset link. Please try again.");
+                setMessage(body.message || "Failed to send reset link. Please try again.");
             }
         } catch (error) {
             setMessageType("error");
             setMessage("An error occurred. Please try again later.");
         } finally {
             setLoading(false);
-            if (!message) {
-                setMessageType("info");
-                setMessage("Please check your email for the reset link.");
-                setEmailSent(true);
-            }
         }
     };
 
