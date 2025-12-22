@@ -10,6 +10,33 @@ import TestComponent from "./testComponent.js";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
 import TestSetupWizard from "./TestSetupWizard.js";
 
+// Toast Component for notifications
+const Toast = ({ toasts, removeToast }) => {
+  return (
+    <div className="toast-container">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`toast ${toast.type} ${toast.exiting ? 'toast-exit' : ''}`}>
+          <svg className="toast-icon" viewBox="0 0 24 24">
+            {toast.type === 'error' && <path fill="#e53e3e" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>}
+            {toast.type === 'success' && <path fill="#38a169" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>}
+            {toast.type === 'warning' && <path fill="#dd6b20" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>}
+            {toast.type === 'info' && <path fill="#3182ce" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>}
+          </svg>
+          <div className="toast-content">
+            <div className="toast-title">{toast.title}</div>
+            <div className="toast-message">{toast.message}</div>
+          </div>
+          <button className="toast-close" onClick={() => removeToast(toast.id)}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 //Proctor
 //1. Content Menu Disable
 //2. Select Text Disable
@@ -58,10 +85,32 @@ const TestPage = () => {
 /*   const [confidence, setConfidence] = useState(0);
  */
   const [isTerminated, setIsTerminated] = useState(false); // New state
+  const [terminationReason, setTerminationReason] = useState(''); // Reason for termination
+  const [toasts, setToasts] = useState([]); // Toast notifications
+  const clipboardHashRef = useRef(null); // Track clipboard content hash
 
   const [faceRecognition, setFaceRecognition] = useState(false);
   const [toleranceLevel, setToleranceLevel] = useState(0);
   const [allowedDefaults, setAllowedDefaults] = useState(10); // Default to 10 allowed deviations
+
+  // Toast functions
+  const showToast = (type, title, message) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, 300);
+    }, 4000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 300);
+  };
   
   useEffect(() => {
     // Fetch initial config on component mount, passing templateID as a query param
@@ -132,6 +181,121 @@ const TestPage = () => {
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [isFaceDetectionLoaded, setIsFaceDetectionLoaded] = useState(false);
   const navigateToQuestionRef = useRef(null);
+  const lastClipboardCheckRef = useRef(null); // Track last clipboard state
+
+  // Clipboard monitoring for screenshot detection
+  useEffect(() => {
+    if (!isQuizStarted || isTerminated) return;
+
+    let hasTerminated = false; // Local guard to prevent multiple terminations
+
+    const terminateForScreenshot = (reason) => {
+      if (hasTerminated) return; // Prevent multiple calls
+      hasTerminated = true;
+      setTerminationReason('screenshot');
+      showToast('error', 'Test Terminated', 'Taking screenshots during the test is not allowed.');
+      setIsTerminated(true);
+    };
+
+    const checkClipboard = async () => {
+      if (hasTerminated) return; // Skip if already terminated
+      try {
+        // Check if clipboard API is available
+        if (!navigator.clipboard || !navigator.clipboard.read) return;
+
+        const clipboardItems = await navigator.clipboard.read();
+        
+        for (const item of clipboardItems) {
+          // Check if clipboard contains an image (screenshot)
+          const imageType = item.types.find(t => t.startsWith('image/'));
+          if (imageType) {
+            const blob = await item.getType(imageType);
+            // Create hash based on size only (type is usually same for screenshots)
+            const newHash = `${blob.size}`;
+            
+            // If clipboard hash was set and this is a different image size, it's a new screenshot
+            if (clipboardHashRef.current !== null && clipboardHashRef.current !== newHash) {
+              terminateForScreenshot('Screenshot detected');
+              return;
+            }
+            
+            // Store the current hash
+            clipboardHashRef.current = newHash;
+          }
+        }
+      } catch (error) {
+        // Clipboard access denied - try alternative method
+        // Some browsers don't allow clipboard.read() without user gesture
+      }
+    };
+
+    // Check clipboard more frequently (every 500ms)
+    const clipboardInterval = setInterval(checkClipboard, 500);
+
+    // Listen for keyboard shortcuts commonly used for screenshots
+    const handleKeyDown = (e) => {
+      // Detect Print Screen key (with or without modifiers)
+      if (e.key === 'PrintScreen' || e.code === 'PrintScreen') {
+        e.preventDefault();
+        terminateForScreenshot('Screenshot attempt detected (Print Screen)');
+        return;
+      }
+      
+      // Detect Windows + Print Screen (metaKey is Windows key on Windows)
+      if (e.code === 'PrintScreen' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        terminateForScreenshot('Screenshot attempt detected (Win + Print Screen)');
+        return;
+      }
+      
+      // Detect Windows + Shift + S (Windows Snipping Tool)
+      if ((e.key === 's' || e.key === 'S') && e.shiftKey && (e.metaKey || (e.getModifierState && e.getModifierState('OS')))) {
+        e.preventDefault();
+        terminateForScreenshot('Screenshot attempt detected (Snipping Tool)');
+        return;
+      }
+      
+      // Detect Cmd + Shift + 3/4/5 (Mac screenshots)
+      if ((e.key === '3' || e.key === '4' || e.key === '5') && e.shiftKey && e.metaKey) {
+        e.preventDefault();
+        terminateForScreenshot('Screenshot attempt detected (Mac Screenshot)');
+        return;
+      }
+    };
+
+    // Also listen for keyup as some screenshot keys are only detectable on release
+    const handleKeyUp = (e) => {
+      if (e.key === 'PrintScreen' || e.code === 'PrintScreen') {
+        e.preventDefault();
+        terminateForScreenshot('Screenshot attempt detected (Print Screen)');
+      }
+    };
+
+    // Listen for visibility change - if user switches away, they might be taking screenshot
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // User switched away - check clipboard when they return
+        lastClipboardCheckRef.current = Date.now();
+      } else if (lastClipboardCheckRef.current) {
+        // User returned - immediately check clipboard for new screenshots
+        setTimeout(checkClipboard, 100);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown, true);
+    document.addEventListener('keyup', handleKeyUp, true);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Initial clipboard check to establish baseline
+    checkClipboard();
+
+    return () => {
+      clearInterval(clipboardInterval);
+      document.removeEventListener('keydown', handleKeyDown, true);
+      document.removeEventListener('keyup', handleKeyUp, true);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isQuizStarted, isTerminated]);
   
   const handlePhotoCaptured = (status) => {
     setPhotoCaptured(status); // Update state when child notifies
@@ -210,17 +374,36 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   //   faceOffWarningCount,
   //   allowedDefaults
   // });
-  if (
-    !isTimeOut ||
-    !isFullScreen ||
-    !isFocused ||
-    !cameraPermission ||
-    !micPermission ||
-    (allowedDefaults > 0 && faceOffWarningCount >= allowedDefaults)
-  ) {
+  
+  let terminationMessage = null;
+  let reason = null;
+  
+  if (!isTimeOut) {
+    terminationMessage = 'Time limit exceeded.';
+    reason = 'timeout';
+  } else if (!isFullScreen) {
+    terminationMessage = 'Fullscreen mode was exited.';
+    reason = 'fullscreen';
+  } else if (!isFocused) {
+    terminationMessage = 'Window focus was lost.';
+    reason = 'window';
+  } else if (!cameraPermission) {
+    terminationMessage = 'Camera access was denied.';
+    reason = 'camera';
+  } else if (!micPermission) {
+    terminationMessage = 'Microphone access was denied.';
+    reason = 'mic';
+  } else if (allowedDefaults > 0 && faceOffWarningCount >= allowedDefaults) {
+    terminationMessage = 'Too many face detection warnings.';
+    reason = 'face';
+  }
+  
+  if (terminationMessage) {
     // Call the API if any of the conditions are not met
     //console.log("API call triggered - Test Terminated!");
     callAPI();
+    showToast('error', 'Test Terminated', terminationMessage);
+    setTerminationReason(reason);
     setIsTerminated(true); // Set the termination state to true 
   }}
 }, [
@@ -513,6 +696,7 @@ if (userUniqueID != '')
 
   return (
     <div style={{ background:"white", overflow: "hidden", minHeight: "100vh", fontFamily: "Roboto, Arial, sans-serif", padding: "0px" }}>
+      <Toast toasts={toasts} removeToast={removeToast} />
       { userUniqueIDPresent?
       <>
       <div
@@ -593,7 +777,7 @@ if (userUniqueID != '')
         {/* <p style={{ fontSize: '12px', color: 'black' }}>
           Score: {faceFocusScore >= 0 ? faceFocusScore.toFixed(2) : 'Loading...'} | Init: {faceDetectionInitialized ? 'YES' : 'NO'} | Warning: {showFaceWarning ? 'YES' : 'NO'}
         </p> */}
-        {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
+        {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && !isTerminated && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
         // {isTimeOut? 
           <>
           <FaceTracking 
@@ -675,10 +859,10 @@ if (userUniqueID != '')
           fontSize: '75px', // Much bigger font size
           fontFamily: 'fantasy', // Calculator-like font
           textAlign: 'center', // Center the text
-          margin: 'auto',
+          width: '100%',
           color: 'red'
        }}>
-        {!isTimeOut? 'Time Out' : 'Terminated' } 
+        {!isTimeOut ? 'Time Out' : 'Terminated'} 
         </div>
         }
       </div>
@@ -689,7 +873,7 @@ if (userUniqueID != '')
     { userUniqueIDPresent ?
     <>
     {/*     {faceOffWarningCount < 10? */} 
-    {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
+    {isTimeOut && isFullScreen && isFocused && cameraPermission && micPermission && !isTerminated && (!faceRecognition || faceOffWarningCount < allowedDefaults)? 
     <>
         {showFaceWarning && 
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
@@ -724,7 +908,7 @@ if (userUniqueID != '')
       </>
       :
       <div>
-        <WarningMessage />
+        <WarningMessage reason={terminationReason} />
       </div>
       }
 

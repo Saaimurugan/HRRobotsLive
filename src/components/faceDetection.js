@@ -110,65 +110,75 @@ const FaceTracking = ({userUniqueID, handleFaceScore, onTimerEnd, toleranceLevel
 
         // Start detecting faces at regular intervals
         intervalRef.current = setInterval(async () => {
-          const detections = await faceapi.detectAllFaces(videoRef.current)
-            .withFaceLandmarks()
-            .withFaceDescriptors();
-          const resizedDetections = faceapi.resizeResults(detections, displaySize);
+          // Guard: ensure video is still valid before detection
+          if (!videoRef.current || !videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+            return;
+          }
+          
+          try {
+            const detections = await faceapi.detectAllFaces(videoRef.current)
+              .withFaceLandmarks()
+              .withFaceDescriptors();
+            const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
-          // Clear canvas using the canvas.getContext method
-          const context = canvas.getContext('2d');  // Get the 2D context
-          context.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
-          //console.log(resizedDetections);
-          // Draw face landmarks manually with thin, light styling
-          resizedDetections.forEach(detection => {
-            const landmarks = detection.landmarks;
-            const positions = landmarks.positions;
-            
-            context.strokeStyle = 'rgba(173, 216, 230, 0.5)';
-            context.lineWidth = 1;
-            context.fillStyle = 'rgba(173, 216, 230, 0.4)';
-            
-            // Draw small dots for each landmark point
-            positions.forEach(point => {
-              context.beginPath();
-              context.arc(point.x, point.y, 1, 0, 2 * Math.PI);
-              context.fill();
+            // Clear canvas using the canvas.getContext method
+            const context = canvas.getContext('2d');  // Get the 2D context
+            context.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas
+            //console.log(resizedDetections);
+            // Draw face landmarks manually with thin, light styling
+            resizedDetections.forEach(detection => {
+              const landmarks = detection.landmarks;
+              const positions = landmarks.positions;
+              
+              context.strokeStyle = 'rgba(173, 216, 230, 0.5)';
+              context.lineWidth = 1;
+              context.fillStyle = 'rgba(173, 216, 230, 0.4)';
+              
+              // Draw small dots for each landmark point
+              positions.forEach(point => {
+                context.beginPath();
+                context.arc(point.x, point.y, 1, 0, 2 * Math.PI);
+                context.fill();
+              });
+              
+              // Draw connecting lines for face outline
+              const jawOutline = landmarks.getJawOutline();
+              const nose = landmarks.getNose();
+              const leftEye = landmarks.getLeftEye();
+              const rightEye = landmarks.getRightEye();
+              const mouth = landmarks.getMouth();
+              
+              const drawPath = (points) => {
+                if (points.length < 2) return;
+                context.beginPath();
+                context.moveTo(points[0].x, points[0].y);
+                points.slice(1).forEach(p => context.lineTo(p.x, p.y));
+                context.stroke();
+              };
+              
+              drawPath(jawOutline);
+              drawPath(nose);
+              drawPath(leftEye);
+              drawPath(rightEye);
+              drawPath(mouth);
             });
-            
-            // Draw connecting lines for face outline
-            const jawOutline = landmarks.getJawOutline();
-            const nose = landmarks.getNose();
-            const leftEye = landmarks.getLeftEye();
-            const rightEye = landmarks.getRightEye();
-            const mouth = landmarks.getMouth();
-            
-            const drawPath = (points) => {
-              if (points.length < 2) return;
-              context.beginPath();
-              context.moveTo(points[0].x, points[0].y);
-              points.slice(1).forEach(p => context.lineTo(p.x, p.y));
-              context.stroke();
-            };
-            
-            drawPath(jawOutline);
-            drawPath(nose);
-            drawPath(leftEye);
-            drawPath(rightEye);
-            drawPath(mouth);
-          });
-          const confidenceScore = detections.length > 0 ? detections[0].detection.score * 100 : 0;
-          handleFaceScore(confidenceScore);
+            const confidenceScore = detections.length > 0 ? detections[0].detection.score * 100 : 0;
+            handleFaceScore(confidenceScore);
 
-          // Increment waitTime using the ref
-          waitTimeRef.current += 1;
-          //setWaitTime(waitTimeRef.current); // Update state for UI purposes
+            // Increment waitTime using the ref
+            waitTimeRef.current += 1;
+            //setWaitTime(waitTimeRef.current); // Update state for UI purposes
 
-          //console.log("Current waitTime:", waitTimeRef.current);
+            //console.log("Current waitTime:", waitTimeRef.current);
 
-          if (confidenceScore < toleranceLevel && waitTimeRef.current >= 20) {
-             capturePhoto();		  
-             waitTimeRef.current = 0; // Reset waitTime after capturing photo
-            }
+            if (confidenceScore < toleranceLevel && waitTimeRef.current >= 20) {
+               capturePhoto();		  
+               waitTimeRef.current = 0; // Reset waitTime after capturing photo
+              }
+          } catch (error) {
+            // Silently handle detection errors (e.g., video not ready)
+            console.warn("Face detection error:", error.message);
+          }
         }, 100);
       }
     };

@@ -1,6 +1,15 @@
 import React from "react";
 
-const WarningMessage = () => {
+const WarningMessage = ({ reason }) => {
+  const reasons = [
+    { key: "camera", text: "Camera access is denied" },
+    { key: "mic", text: "Mic access is denied" },
+    { key: "fullscreen", text: "Fullscreen mode exited" },
+    { key: "window", text: "Another window opened" },
+    { key: "face", text: "Face not properly focused on the Camera" },
+    { key: "screenshot", text: "Screenshot Captured" },
+  ];
+
   const containerStyle = {
     backgroundColor: "#ffcccb",
     color: "#a94442",
@@ -10,34 +19,38 @@ const WarningMessage = () => {
     maxWidth: "400px",
     textAlign: "center",
     margin: "20px auto",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)"
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
   };
 
   const headerStyle = {
     fontSize: "18px",
     fontWeight: "bold",
-    marginBottom: "10px"
+    marginBottom: "10px",
   };
 
   const textStyle = {
     fontSize: "16px",
   };
 
-  const listStyle = {
+  const getListItemStyle = (isHighlighted) => ({
     fontSize: "16px",
     textAlign: "left",
-  };
+    color: isHighlighted ? "#a94442" : "#ccc",
+    fontWeight: isHighlighted ? "bold" : "normal",
+  });
 
   return (
     <div style={containerStyle}>
       <div style={headerStyle}>Warning</div>
-      <div style={textStyle}>Test terminates as one of the below is vilated:</div>
+      <div style={textStyle}>
+        Test terminates as one of the below is violated:
+      </div>
       <ul>
-        <li style={listStyle}>Camera access is denied</li>
-        <li style={listStyle}>Mic access is denied</li>
-        <li style={listStyle}>Fullscreen mode exited</li>
-        <li style={listStyle}>Another window opened</li>
-        <li style={listStyle}>Face not properly focused on the Camera</li>
+        {reasons.map((item) => (
+          <li key={item.key} style={getListItemStyle(item.key === reason)}>
+            {item.text}
+          </li>
+        ))}
       </ul>
     </div>
   );

@@ -10,6 +10,7 @@ const TestSetupWizard = ({
 }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [candidateName, setCandidateName] = useState('');
+  const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
   const [photoStage, setPhotoStage] = useState('photo'); // 'photo', 'id', 'done'
   const [photoImage, setPhotoImage] = useState(null);
   const [idCardImage, setIdCardImage] = useState(null);
@@ -99,7 +100,7 @@ const TestSetupWizard = ({
   }, [candidateName, onCandidateNameChange]);
 
   const canProceedToStep2 = cameraPermission && micPermission;
-  const canProceedToStep3 = candidateName.length > 3;
+  const canProceedToStep3 = candidateName.length > 3 && guidelinesAccepted;
   const canStartTest = photoStage === 'done';
 
   const handleNext = () => {
@@ -268,13 +269,14 @@ const TestSetupWizard = ({
             <b>Once the test begins, please follow these rules. The test can be <span style={{color:'red'}}>terminated</span> for:</b>
           </p>
           <ul style={{ paddingLeft: '20px', lineHeight: '1.8', color: '#555' }}>
-            <li>Camera must remain on and access should not be denied.</li>
-            <li>Microphone must remain on and access must not be denied.</li>
-            <li>Fullscreen mode must remain enabled and must not be exited.</li>
-            <li>No other window should be opened, window focus must remain unchanged.</li>
-            <li>Your face must be fully visible in the camera at all times.</li>
-            <li>The proctor will randomly capture photographs during the test.</li>
-            <li>Turn off all notification services to avoid fullscreen interruptions.</li>
+            <li>Keep your camera on at all times and do not block or deny access.</li>
+            <li>Keep your microphone on at all times and do not block or deny access.</li>
+            <li>Fullscreen mode must remain enabled throughout the test; do not exit fullscreen.</li>
+            <li>Do not open or switch to any other window; the test window must remain in focus.</li>
+            <li>Ensure your face is fully visible on the camera at all times.</li>
+            <li>The proctor may capture photographs at random during the test.</li>
+            <li>The proctor may capture photographs at random during the test.</li>
+            <li>Taking screenshots during the test will result in immediate termination.</li>
           </ul>
 
           <div style={{ marginTop: '25px' }}>
@@ -300,6 +302,30 @@ const TestSetupWizard = ({
                 Name must be at least 4 characters
               </p>
             )}
+          </div>
+
+          <div style={{ marginTop: '20px' }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              cursor: 'pointer',
+              fontSize: '15px',
+              color: '#333'
+            }}>
+              <input
+                type="checkbox"
+                checked={guidelinesAccepted}
+                onChange={(e) => setGuidelinesAccepted(e.target.checked)}
+                style={{
+                  width: '18px',
+                  height: '18px',
+                  marginRight: '10px',
+                  cursor: 'pointer',
+                  accentColor: '#1CBBB4'
+                }}
+              />
+              I have read and accept all the above instructions
+            </label>
           </div>
 
           <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'space-between' }}>
