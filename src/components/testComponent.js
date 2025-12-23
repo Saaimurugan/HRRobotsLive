@@ -237,7 +237,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     <div className="MCQOuterWrap">
       {currentQuestion ?
       <>
-      {(currentQuestionIndex + questionCount) < 50? 
+      {(currentQuestionIndex + questionCount) <= 50? 
         <div>{/* {currentQuestionIndex} - {questionCount} -  */}
           <h2>
             Question {questionCount === 0 ? currentQuestionIndex + 1 : currentQuestionIndex + questionCount}
@@ -252,13 +252,13 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
               <li key={index}>
                 <input
                   type="radio"
-                  id={`option-${index}`}
-                  name="options"
+                  id={`option-${currentQuestionIndex}-${index}`}
+                  name={`question-${currentQuestionIndex}`}
                   value={option}
                   checked={answers[currentQuestionIndex] === option}
                   onChange={() => saveAnswer(option)}
                 />
-                <label htmlFor={`option-${index}`}>
+                <label htmlFor={`option-${currentQuestionIndex}-${index}`}>
                   {option}
                 </label>
               </li>

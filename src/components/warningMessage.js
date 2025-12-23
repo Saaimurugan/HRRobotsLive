@@ -37,7 +37,7 @@ const WarningMessage = ({ reason }) => {
   const getListItemStyle = (isHighlighted) => ({
     fontSize: "16px",
     textAlign: "left",
-    color: isHighlighted ? "#a94442" : "#ccc",
+    color: isHighlighted ? "#a94442" : "#0e0d0dff",
     fontWeight: isHighlighted ? "bold" : "normal",
   });
 
