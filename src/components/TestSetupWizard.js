@@ -4,7 +4,8 @@ import DeviceWarning from './deviceWarning.js';
 const TestSetupWizard = ({ 
   userUniqueID, 
   cameraPermission, 
-  micPermission, 
+  micPermission,
+  clipboardPermission,
   onComplete,
   onCandidateNameChange 
 }) => {
@@ -99,7 +100,7 @@ const TestSetupWizard = ({
     onCandidateNameChange(candidateName);
   }, [candidateName, onCandidateNameChange]);
 
-  const canProceedToStep2 = cameraPermission && micPermission;
+  const canProceedToStep2 = cameraPermission && micPermission && clipboardPermission;
   const canProceedToStep3 = candidateName.length > 3 && guidelinesAccepted;
   const canStartTest = photoStage === 'done';
 
@@ -241,11 +242,18 @@ const TestSetupWizard = ({
                 {micPermission === null ? '⏳ Checking...' : micPermission ? '✓ Granted' : '✗ Denied'}
               </span>
             </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '16px', color: '#333' }}>📋 Clipboard Permission:</span>
+              <span style={statusBadgeStyle(clipboardPermission)}>
+                {clipboardPermission === null ? '⏳ Checking...' : clipboardPermission ? '✓ Granted' : '✗ Denied'}
+              </span>
+            </div>
           </div>
 
           {!canProceedToStep2 && (
             <p style={{ color: '#c62828', marginTop: '20px', fontSize: '14px' }}>
-              ⚠️ Both camera and microphone access are required to continue.
+              ⚠️ Camera, microphone, and clipboard access are required to continue.
             </p>
           )}
 

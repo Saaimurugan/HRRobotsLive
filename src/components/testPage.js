@@ -175,6 +175,7 @@ const TestPage = () => {
   const warningShownForCurrentPeriodRef = useRef(false); // Track if warning was shown for current no-face period
   const [cameraPermission, setCameraPermission] = useState(null);
   const [micPermission, setMicPermission] = useState(null);
+  const [clipboardPermission, setClipboardPermission] = useState(null);
   const [saveAnswers, setSaveAnswers] = useState([]);
   const { globalValue, setGlobalValue } = useGlobalContext("");
   const [ candidateName, setCandidateName ] = useState("");
@@ -560,7 +561,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
     setUserDetails({ ...userDetails, [name]: value });
   };*/
  
-  // Request camera and microphone permission
+  // Request camera, microphone, and clipboard permissions
 const requestCameraAndMic = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -573,6 +574,40 @@ const requestCameraAndMic = async () => {
     //console.log("Camera and Microphone access granted");
     //stream.getTracks().forEach((track) => track.stop()); 
     // Stop tracks after checking
+    
+    // Request clipboard permission upfront using Permissions API
+    try {
+      if (navigator.permissions && navigator.permissions.query) {
+        const result = await navigator.permissions.query({ name: 'clipboard-read' });
+        if (result.state === 'granted') {
+          setClipboardPermission(true);
+        } else if (result.state === 'prompt') {
+          // Try to trigger the permission prompt
+          try {
+            await navigator.clipboard.read();
+            setClipboardPermission(true);
+          } catch (e) {
+            // Check permission state again after prompt
+            const newResult = await navigator.permissions.query({ name: 'clipboard-read' });
+            setClipboardPermission(newResult.state === 'granted');
+          }
+        } else {
+          setClipboardPermission(false);
+        }
+        // Listen for permission changes
+        result.onchange = () => {
+          setClipboardPermission(result.state === 'granted');
+        };
+      } else if (navigator.clipboard && navigator.clipboard.read) {
+        // Fallback for browsers without Permissions API
+        await navigator.clipboard.read();
+        setClipboardPermission(true);
+      }
+    } catch (clipboardError) {
+      // Clipboard permission denied or not supported
+      setClipboardPermission(false);
+      console.log("Clipboard permission not granted");
+    }
   } catch (error) {
     setCameraPermission(false);
     setMicPermission(false);
@@ -710,6 +745,7 @@ if (userUniqueID != '')
           userUniqueID={userUniqueID}
           cameraPermission={cameraPermission}
           micPermission={micPermission}
+          clipboardPermission={clipboardPermission}
           onComplete={(status) => {
             handlePhotoCaptured(status);
             startQuiz();
