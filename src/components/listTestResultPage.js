@@ -57,6 +57,18 @@ const SkeletonTableRow = () => (
     </tr>
 );
 
+// Loading Overlay Component
+const LoadingOverlay = () => (
+    <div className="loading-overlay">
+        <div className="loading-spinner">
+            <svg className="spinner-icon" viewBox="0 0 50 50">
+                <circle className="spinner-path" cx="25" cy="25" r="20" fill="none" strokeWidth="4"></circle>
+            </svg>
+            <span className="loading-text">Loading...</span>
+        </div>
+    </div>
+);
+
 const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSearchChange }) => {
     const [items, setItems] = useState([]);
     const [currentPage, setCurrentPage] = useState(1); // Start from page 1
@@ -182,7 +194,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 const requestBody = {
                     globalValue: testGlobalValue,
                     pageSize,
-                    lastKey: currentLastKey
+                    lastKey: currentLastKey,
+                    sortKey: sortConfig.key,
+                    sortDirection: sortConfig.direction
                 };
                 
                 const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
@@ -231,7 +245,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             const requestBody = {
                 globalValue: testGlobalValue,
                 pageSize,
-                lastKey: isFirstLoad ? null : lastKey
+                lastKey: isFirstLoad ? null : lastKey,
+                sortKey: sortConfig.key,
+                sortDirection: sortConfig.direction
             };
 
             console.log("Making API call with requestBody:", requestBody);
@@ -310,7 +326,14 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ globalValue: testGlobalValue, pageSize, lastKey: null, searchName }),
+                body: JSON.stringify({ 
+                    globalValue: testGlobalValue, 
+                    pageSize, 
+                    lastKey: null, 
+                    searchName,
+                    sortKey: sortConfig.key,
+                    sortDirection: sortConfig.direction
+                }),
             });
 
             const data = await response.json();
@@ -346,7 +369,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     globalValue: testGlobalValue, 
                     pageSize, 
                     lastKey: null, 
-                    searchName: searchTerm 
+                    searchName: searchTerm,
+                    sortKey: sortConfig.key,
+                    sortDirection: sortConfig.direction
                 }),
             });
 
@@ -376,26 +401,64 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         return items;
     };
 
-    // Sorting function
-    const handleSort = (key) => {
+    // Sorting function - triggers server-side sort
+    const handleSort = async (key) => {
         let direction = "asc";
         if (sortConfig.key === key && sortConfig.direction === "asc") {
             direction = "desc";
         }
-        setSortConfig({ key, direction });
+        const newSortConfig = { key, direction };
+        setSortConfig(newSortConfig);
+        
+        // Fetch data with new sort configuration from server
+        await fetchDataWithSort(newSortConfig);
     };
 
-    // Apply filtering first, then sorting
+    // Fetch data with sort configuration
+    const fetchDataWithSort = async (sortCfg) => {
+        setLoading(true);
+        
+        try {
+            const requestBody = {
+                globalValue: testGlobalValue,
+                pageSize,
+                lastKey: null, // Reset to first page when sorting
+                sortKey: sortCfg.key,
+                sortDirection: sortCfg.direction
+            };
+
+            // Include search term if active
+            if (searchName && searchName.trim()) {
+                requestBody.searchName = searchName.trim();
+            }
+
+            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(requestBody),
+            });
+
+            const data = await response.json();
+            const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
+            const newItems = parsedBody.items || [];
+
+            setItems(newItems);
+            setLastKey(parsedBody.last_key);
+            setHasMore(parsedBody.has_more);
+            setTotalPages(Math.ceil(parsedBody.total_count / pageSize));
+            setCurrentPage(1); // Reset to first page
+        } catch (error) {
+            console.error("Error fetching sorted data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Items are already sorted by the server, no client-side sorting needed
     const filteredItems = getFilteredItems();
-    const sortedItems = [...filteredItems].sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-            return sortConfig.direction === "asc" ? -1 : 1;
-        }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-            return sortConfig.direction === "asc" ? 1 : -1;
-        }
-        return 0;
-    });
+    const sortedItems = filteredItems;
 
     // Update total pages based on server total or loaded items when no more data available
     const filteredTotalPages = hasMore 
@@ -464,6 +527,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
     return (
         <div className="results-page">
+            {/* Loading Overlay - shows when fetching data with existing items */}
+            {loading && items.length > 0 && <LoadingOverlay />}
+            
             {/* Mobile Search Panel */}
             <div className="mobile-search-panel">
                 <div className="mobile-search-container">
