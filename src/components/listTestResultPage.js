@@ -118,15 +118,15 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             setSearchName(searchFilter || "");
         }
 
-        // Reset to first page when search filter changes
+        // When search filter changes, fetch from server with search term
         if (searchFilter !== undefined) {
-            setCurrentPage(1);
-        }
-
-        // Notify parent component about filtered results
-        if (onSearchResults && searchFilter !== undefined) {
-            const filtered = getFilteredItems();
-            onSearchResults(filtered);
+            if (searchFilter && searchFilter.trim()) {
+                // Search with server-side filtering
+                fetchSearchDataWithTerm(searchFilter.trim());
+            } else {
+                // Clear search - reload all data
+                fetchData(true);
+            }
         }
     }, [searchFilter]);
 
@@ -159,6 +159,65 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         }
     };
 
+
+    // Fetch data until we have enough items for the target page
+    const fetchDataUntilPage = async (targetPage) => {
+        if (loading) return false;
+        
+        const requiredItems = targetPage * pageSize;
+        let currentItems = items;
+        let currentLastKey = lastKey;
+        let currentHasMore = hasMore;
+        
+        // If we already have enough items, no need to fetch
+        if (currentItems.length >= requiredItems || !currentHasMore) {
+            return true;
+        }
+        
+        setLoading(true);
+        let allNewItems = [];
+        
+        try {
+            while (currentItems.length + allNewItems.length < requiredItems && currentHasMore) {
+                const requestBody = {
+                    globalValue: testGlobalValue,
+                    pageSize,
+                    lastKey: currentLastKey
+                };
+                
+                const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+                
+                const data = await response.json();
+                const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
+                const newItems = parsedBody.items || [];
+                
+                if (newItems.length === 0) break;
+                
+                allNewItems = [...allNewItems, ...newItems];
+                currentLastKey = parsedBody.last_key;
+                currentHasMore = parsedBody.has_more;
+            }
+            
+            if (allNewItems.length > 0) {
+                setItems(prevItems => [...prevItems, ...allNewItems]);
+                setLastKey(currentLastKey);
+                setHasMore(currentHasMore);
+            }
+            
+            setLoading(false);
+            return true;
+        } catch (error) {
+            console.error("Error fetching data for page:", error);
+            setLoading(false);
+            return false;
+        }
+    };
 
     const fetchData = async (isFirstLoad = false) => {
         // Allow fresh loads even when hasMore is false, but prevent loading when already loading
@@ -273,18 +332,48 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         }
     };
 
-    // Filter items by candidate name or test ID
-    const getFilteredItems = () => {
-        if (!searchFilter || !searchFilter.trim()) {
-            return items;
-        }
+    // Fetch search results from server with a specific search term
+    const fetchSearchDataWithTerm = async (searchTerm) => {
+        setLoading(true);
 
-        const searchTerm = searchFilter.trim().toLowerCase();
-        return items.filter(item => {
-            const candidateName = (item.candidateName || "").toLowerCase();
-            const testID = (item.testID || "").toLowerCase();
-            return candidateName.includes(searchTerm) || testID.includes(searchTerm);
-        });
+        try {
+            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ 
+                    globalValue: testGlobalValue, 
+                    pageSize, 
+                    lastKey: null, 
+                    searchName: searchTerm 
+                }),
+            });
+
+            const data = await response.json();
+            const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
+            const newItems = parsedBody.items || [];
+
+            setItems(newItems);
+            setLastKey(parsedBody.last_key);
+            setHasMore(parsedBody.has_more);
+            setTotalPages(Math.ceil(parsedBody.total_count / pageSize));
+            setCurrentPage(1);
+
+            // Notify parent component about search results
+            if (onSearchResults) {
+                onSearchResults(newItems);
+            }
+        } catch (error) {
+            console.error("Error fetching search data:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Get items - filtering is now done server-side
+    const getFilteredItems = () => {
+        return items;
     };
 
     // Sorting function
@@ -308,11 +397,10 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         return 0;
     });
 
-    // Update total pages based on filtered items or server total
-    // When filtering locally, use filtered count; otherwise use server's total count
-    const filteredTotalPages = searchFilter && searchFilter.trim() 
-        ? Math.max(1, Math.ceil(filteredItems.length / pageSize))
-        : Math.max(1, totalPages);
+    // Update total pages based on server total or loaded items when no more data available
+    const filteredTotalPages = hasMore 
+        ? Math.max(1, totalPages)
+        : Math.max(1, Math.ceil(items.length / pageSize));
 
     // Pagination logic
     const startIndex = (currentPage - 1) * pageSize;
@@ -622,15 +710,10 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                                     // Check if we need to fetch more data from server
                                     const requiredItems = pageNum * pageSize;
                                     if (requiredItems > items.length && hasMore && !loading) {
-                                        const success = await fetchData(false);
-                                        // Only change page after data is fetched
-                                        if (success) {
-                                            setCurrentPage(pageNum);
-                                        }
-                                    } else {
-                                        // Data already loaded, just change page
-                                        setCurrentPage(pageNum);
+                                        // Fetch all required data for the target page
+                                        await fetchDataUntilPage(pageNum);
                                     }
+                                    setCurrentPage(pageNum);
                                 }}
                                 aria-label={`Go to page ${pageNum}`}
                                 aria-current={currentPage === pageNum ? 'page' : undefined}
