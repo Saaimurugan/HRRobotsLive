@@ -15,12 +15,13 @@ const LoginPage = () => {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async (e) => {
-        setLoading(true);
         e.preventDefault();
+        if (loading) return; // Prevent double submission
+        setLoading(true);
         setMessage("");
 
         try {
-            const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/validateCredentials", {
+            const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

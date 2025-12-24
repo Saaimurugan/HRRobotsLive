@@ -1,17 +1,36 @@
 # Token-based authorizer that validates tokens against DynamoDB
 # DynamoDB Table: authTable
-# Key: authId (S) - the token
+# Key: email (S) - the user's email
+# authId: the token
 # activeFor: 15 mins
 # createdTime: timestamp when token was created
 
 import json
 import boto3
-import os
+import base64
 from datetime import datetime, timezone
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
 TABLE_NAME = 'authTable'
+
+
+def decode_jwt_payload(token):
+    """Decode JWT payload without verification (verification done by matching stored token)."""
+    try:
+        parts = token.split('.')
+        if len(parts) != 3:
+            return None
+        # Add padding if needed
+        payload_b64 = parts[1]
+        padding = 4 - len(payload_b64) % 4
+        if padding != 4:
+            payload_b64 += '=' * padding
+        payload_json = base64.urlsafe_b64decode(payload_b64)
+        return json.loads(payload_json)
+    except Exception:
+        return None
+
 
 def lambda_handler(event, context):
     token = event.get('token', '')
@@ -21,15 +40,30 @@ def lambda_handler(event, context):
         raise Exception('Unauthorized')
     
     try:
-        # Check token in DynamoDB
+        # Decode JWT to get email
+        payload = decode_jwt_payload(token)
+        if not payload or 'email' not in payload:
+            print('Invalid token format or missing email')
+            return generatePolicy('user', 'Deny', event.get('methodArn', '*'))
+        
+        email = payload['email']
+        
+        # Check token in DynamoDB using email as primary key
         table = dynamodb.Table(TABLE_NAME)
-        response = table.get_item(Key={'authId': token})
+        response = table.get_item(Key={'email': email})
         
         if 'Item' not in response:
-            print(f'Token not found in database')
+            print(f'No auth record found for email')
             return generatePolicy('user', 'Deny', event.get('methodArn', '*'))
         
         item = response['Item']
+        
+        # Verify the token matches the stored token
+        stored_token = item.get('authId')
+        if stored_token != token:
+            print('Token does not match stored token')
+            return generatePolicy('user', 'Deny', event.get('methodArn', '*'))
+        
         created_time_str = item.get('createdTime')
         refresh_time_str = item.get('refreshTime')
         active_for_minutes = item.get('activeFor')
@@ -57,7 +91,7 @@ def lambda_handler(event, context):
         
         # Token is valid - update refreshTime
         table.update_item(
-            Key={'authId': token},
+            Key={'email': email},
             UpdateExpression='SET refreshTime = :rt',
             ExpressionAttributeValues={':rt': current_time.isoformat()}
         )
