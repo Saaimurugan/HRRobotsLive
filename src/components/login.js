@@ -11,7 +11,7 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [focusedField, setFocusedField] = useState(null);
     const navigate = useNavigate();
-    const { setGlobalValue } = useGlobalContext("");
+    const { setGlobalValue, setJWTValue } = useGlobalContext("");
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async (e) => {
@@ -33,8 +33,10 @@ const LoginPage = () => {
 
             if (data.statusCode === 200) {
                 setMessageType("success");
-                setMessage(data.message || "Login successful!");
+                const bodyData = JSON.parse(data.body);
+                setMessage(bodyData.message || "Login successful!");
                 setGlobalValue(email);
+                setJWTValue(bodyData.token);
                 navigate("/list");
             } else {
                 setMessageType("error");
