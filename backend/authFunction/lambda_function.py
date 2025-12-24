@@ -14,7 +14,7 @@ dynamodb = boto3.resource('dynamodb')
 TABLE_NAME = 'authTable'
 
 def lambda_handler(event, context):
-    token = event.get('authorizationToken', '')
+    token = event.get('token', '')
     
     if not token:
         print('No token provided')
@@ -27,7 +27,7 @@ def lambda_handler(event, context):
         
         if 'Item' not in response:
             print(f'Token not found in database')
-            return generatePolicy('user', 'Deny', event['methodArn'])
+            return generatePolicy('user', 'Deny', event.get('methodArn', '*'))
         
         item = response['Item']
         created_time_str = item.get('createdTime')
@@ -36,21 +36,24 @@ def lambda_handler(event, context):
         
         if not active_for_minutes:
             print('Token missing activeFor')
-            return generatePolicy('user', 'Deny', event['methodArn'])
+            return generatePolicy('user', 'Deny', event.get('methodArn', '*'))
         
         if not created_time_str:
             print('Token missing createdTime')
-            return generatePolicy('user', 'Deny', event['methodArn'])
+            return generatePolicy('user', 'Deny', event.get('methodArn', '*'))
         
         # Use refreshTime if available, otherwise use createdTime
         check_time_str = refresh_time_str if refresh_time_str else created_time_str
         check_time = datetime.fromisoformat(check_time_str.replace('Z', '+00:00'))
+        # Ensure check_time is timezone-aware (handle naive datetimes from DB)
+        if check_time.tzinfo is None:
+            check_time = check_time.replace(tzinfo=timezone.utc)
         current_time = datetime.now(timezone.utc)
         elapsed_minutes = (current_time - check_time).total_seconds() / 60
         
         if elapsed_minutes > active_for_minutes:
             print(f'Token expired. Elapsed: {elapsed_minutes:.2f} mins, Active for: {active_for_minutes} mins')
-            return generatePolicy('user', 'Deny', event['methodArn'])
+            return generatePolicy('user', 'Deny', event.get('methodArn', '*'))
         
         # Token is valid - update refreshTime
         table.update_item(
@@ -60,7 +63,7 @@ def lambda_handler(event, context):
         )
         
         print(f'Token valid. Elapsed: {elapsed_minutes:.2f} mins, Active for: {active_for_minutes} mins')
-        return generatePolicy('user', 'Allow', event['methodArn'])
+        return generatePolicy('user', 'Allow', event.get('methodArn', '*'))
         
     except Exception as e:
         print(f'Error validating token: {str(e)}')
