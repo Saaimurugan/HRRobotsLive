@@ -71,12 +71,13 @@ def lambda_handler(event, context):
 
             # Store token in authTable
             current_time = now.isoformat()
+
             auth_table.put_item(
                 Item={
+                    "email": email,
                     "authId": jwt_token,
                     "createdTime": current_time,
-                    "activeFor": 15,
-                    "email": email
+                    "activeFor": 15
                 }
             )
 
