@@ -9,6 +9,8 @@ const Profile = () => {
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // S3 Config
   const [bucketKey, setBucketKey] = useState('');
@@ -18,8 +20,7 @@ const Profile = () => {
   const [llmKey, setLlmKey] = useState('');
   const [selectedLLM, setSelectedLLM] = useState('');
 
-  const { globalAPIValue } = useGlobalContext();
-  const { globalValue } = useGlobalContext();
+  const { globalAPIValue, globalValue, JWTValue } = useGlobalContext();
   const navigate = useNavigate();
 
   const publicLLMs = [
@@ -30,33 +31,82 @@ const Profile = () => {
     { value: 'nova', label: 'AWS Nova' }
   ];
 
+  const validatePassword = (password) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    return passwordRegex.test(password);
+  };
+
   useEffect(() => {
     if (globalValue === "") {
       navigate("/login");
     }
   }, [globalValue, navigate]);
 
+  const handlePasswordInputChange = (e) => {
+    setPassword(e.target.value);
+    if (confirmPassword && e.target.value !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+    } else if (!validatePassword(e.target.value)) {
+      setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+    } else {
+      setPasswordError("");
+    }
+  };
+
+  const handleConfirmPasswordChange = (e) => {
+    setConfirmPassword(e.target.value);
+    if (password && e.target.value !== password) {
+      setPasswordError("Passwords do not match");
+    } else if (!validatePassword(e.target.value)) {
+      setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+    } else {
+      setPasswordError("");
+    }
+  };
+
   const handlePasswordChange = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setPasswordError("");
+
+    if (!validatePassword(password)) {
+      setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+      return;
+    }
+
     if (password !== confirmPassword) {
-      setMessage("Passwords do not match");
-      setMessageType("error");
+      setPasswordError("Passwords do not match");
       return;
     }
-    if (password.length < 6) {
-      setMessage("Password must be at least 6 characters");
-      setMessageType("error");
-      return;
-    }
+
     setLoading(true);
-    // Add your password change API call here
-    setTimeout(() => {
-      setMessage("Password updated successfully");
-      setMessageType("success");
+
+    try {
+      const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/resetPassword", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: globalValue, password, token: JWTValue }),
+      });
+
+      const data = await response.json();
+
+      if (data.statusCode === 200) {
+        setMessage("Password updated successfully!");
+        setMessageType("success");
+        setPassword('');
+        setConfirmPassword('');
+      } else {
+        setMessage(data.message || "Password update failed. Please try again.");
+        setMessageType("error");
+      }
+    } catch (error) {
+      setMessage("An error occurred. Please try again later.");
+      setMessageType("error");
+    } finally {
       setLoading(false);
-      setPassword('');
-      setConfirmPassword('');
-    }, 1000);
+    }
   };
 
   const handleSaveS3Config = () => {
@@ -98,24 +148,45 @@ const Profile = () => {
               <div className="config-form-row">
                 <div className="config-form-group">
                   <label>New Password</label>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Enter new password"
-                  />
+                  <div className="password-input-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={handlePasswordInputChange}
+                      placeholder="Enter new password"
+                    />
+                    <button 
+                      type="button" 
+                      className="password-toggle-btn" 
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label="Toggle password visibility"
+                    >
+                      {showPassword ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                          <line x1="1" y1="1" x2="23" y2="23" />
+                        </svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="config-form-group">
                   <label>Confirm Password</label>
                   <input
                     type="password"
                     value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    onChange={handleConfirmPasswordChange}
                     placeholder="Confirm new password"
                   />
                 </div>
               </div>
-              <button type="submit" className="save-btn" disabled={loading}>
+              {passwordError && <p className="password-error">{passwordError}</p>}
+              <button type="submit" className="save-btn" disabled={loading || passwordError !== ""}>
                 {loading ? "Updating..." : "Update Password"}
               </button>
             </form>

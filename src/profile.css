@@ -235,3 +235,48 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  padding-right: 45px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.password-toggle-btn svg {
+  width: 20px;
+  height: 20px;
+  color: var(--color-text-muted);
+  transition: color var(--transition-normal);
+}
+
+.password-toggle-btn:hover svg {
+  color: var(--color-primary);
+}
+
+/* Password Error */
+.password-error {
+  color: var(--color-error-text);
+  font-size: var(--font-size-sm);
+  margin: 0;
+  padding: 8px 12px;
+  background: var(--color-error-light);
+  border-radius: var(--radius-sm);
+}
