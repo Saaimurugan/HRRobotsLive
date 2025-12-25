@@ -11,7 +11,7 @@ const LoginPage = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [focusedField, setFocusedField] = useState(null);
     const navigate = useNavigate();
-    const { setGlobalValue, setJWTValue } = useGlobalContext("");
+    const { setGlobalValue, setJWTValue, getAndClearRedirectPath } = useGlobalContext("");
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async (e) => {
@@ -37,7 +37,9 @@ const LoginPage = () => {
                 setMessage(bodyData.message || "Login successful!");
                 setGlobalValue(email);
                 setJWTValue(bodyData.token);
-                navigate("/list");
+                // Redirect to saved path or default to /list
+                const redirectTo = getAndClearRedirectPath();
+                navigate(redirectTo);
             } else {
                 setMessageType("error");
                 setMessage(data.message || "Login failed! Email or password is incorrect.");

@@ -1,15 +1,48 @@
 import { useState, useImperativeHandle, forwardRef, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
 import "../analsticsOnResult.css";
 
-const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false }, ref) => {
-   const { globalValue, JWTValue } = useGlobalContext();
+const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false, showToast }, ref) => {
+   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
    const [analyticsData, setAnalyticsData] = useState("");
    const [loading, setLoading] = useState(false);
+   const navigate = useNavigate();
+   const location = useLocation();
+
+   // Session handler
+   const checkUnauthorized = useCallback((data) => {
+      if (data?.message === "Unauthorized" || 
+          data?.body === '{"message": "Unauthorized"}' ||
+          (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
+          data?.statusCode === 401) {
+         setRedirectPath(location.pathname);
+         if (showToast) {
+            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+         }
+         logout();
+         setTimeout(() => navigate('/login'), 1500);
+         return true;
+      }
+      if (data?.body) {
+         try {
+            const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+            if (parsedBody?.message === "Unauthorized") {
+               setRedirectPath(location.pathname);
+               if (showToast) {
+                  showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+               }
+               logout();
+               setTimeout(() => navigate('/login'), 1500);
+               return true;
+            }
+         } catch (e) {}
+      }
+      return false;
+   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
    const fetchAnalytics = useCallback(async () => {
       if (!searchTerm) {
-         //console.error("Search term is required to fetch analytics");
          return;
       }
 
@@ -25,18 +58,16 @@ const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false }
 
          if (response.ok) {
             const data = await response.json();
+            if (checkUnauthorized(data)) return;
             const htmlContent = data.body.match(/<!DOCTYPE html>.*?<\/html>/gs)[0];
-            //console.log(htmlContent);
             setAnalyticsData(htmlContent);
-         } else {
-            //console.error("Failed to fetch analytics");
          }
       } catch (error) {
-         //console.error("Error fetching analytics:", error);
+         // Silent error handling
       } finally {
          setLoading(false);
       }
-   }, [searchTerm, globalValue]);
+   }, [searchTerm, globalValue, JWTValue, checkUnauthorized]);
 
    // Expose fetchAnalytics function to parent component
    useImperativeHandle(ref, () => ({

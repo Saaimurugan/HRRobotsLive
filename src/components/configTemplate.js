@@ -1,11 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
 
-const ConfigTemplate =  ({ onConfig, onCancel, templateID }) => {
-  const { JWTValue } = useGlobalContext();
+const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
+  const { JWTValue, setRedirectPath, logout } = useGlobalContext();
   const [faceRecognition, setFaceRecognition] = useState(false);
   const [toleranceLevel, setToleranceLevel] = useState(0);
   const [allowedDefaults, setAllowedDefaults] = useState(0);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Session handler
+  const checkUnauthorized = useCallback((data) => {
+    if (data?.message === "Unauthorized" || 
+        data?.body === '{"message": "Unauthorized"}' ||
+        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
+        data?.statusCode === 401) {
+      setRedirectPath(location.pathname);
+      if (showToast) {
+        showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+      }
+      logout();
+      setTimeout(() => navigate('/login'), 1500);
+      return true;
+    }
+    if (data?.body) {
+      try {
+        const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        if (parsedBody?.message === "Unauthorized") {
+          setRedirectPath(location.pathname);
+          if (showToast) {
+            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+          }
+          logout();
+          setTimeout(() => navigate('/login'), 1500);
+          return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
   useEffect(() => {
     // Fetch initial config on component mount, passing templateID as a query param
@@ -18,6 +52,7 @@ const ConfigTemplate =  ({ onConfig, onCancel, templateID }) => {
     })
       .then(res => res.json())
       .then(data => {
+        if (checkUnauthorized(data)) return;
         if (data.statusCode === 200 && data.body) {
           // Parse the JSON string in body
           const body = JSON.parse(data.body);
@@ -34,7 +69,7 @@ const ConfigTemplate =  ({ onConfig, onCancel, templateID }) => {
       .catch(error => {
         console.error("Error fetching configuration:", error);
       });
-  }, [templateID]);
+  }, [templateID, JWTValue, checkUnauthorized]);
 
   return (
     <div className="overlay">

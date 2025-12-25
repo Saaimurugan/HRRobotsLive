@@ -1,12 +1,46 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import GaugeChart from "react-gauge-chart";
 import PhotoCatolog from "./photoCatolog";
 import { useGlobalContext } from "../globalContext";
 
-const ScoreChart = ({ message }) => {
-  const { JWTValue } = useGlobalContext();
+const ScoreChart = ({ message, showToast }) => {
+  const { JWTValue, setRedirectPath, logout } = useGlobalContext();
   const [topicScores, setTopicScores] = useState([]);
   const [loadingTopics, setLoadingTopics] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Session handler
+  const checkUnauthorized = useCallback((data) => {
+    if (data?.message === "Unauthorized" || 
+        data?.body === '{"message": "Unauthorized"}' ||
+        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
+        data?.statusCode === 401) {
+      setRedirectPath(location.pathname);
+      if (showToast) {
+        showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+      }
+      logout();
+      setTimeout(() => navigate('/login'), 1500);
+      return true;
+    }
+    if (data?.body) {
+      try {
+        const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        if (parsedBody?.message === "Unauthorized") {
+          setRedirectPath(location.pathname);
+          if (showToast) {
+            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+          }
+          logout();
+          setTimeout(() => navigate('/login'), 1500);
+          return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
   const parsedBody = message;
   const { testID, candidateName, templateName, submittedAt } = parsedBody || {};
@@ -53,6 +87,7 @@ const ScoreChart = ({ message }) => {
           body: JSON.stringify({ testID, token: JWTValue }),
         });
         const data = await response.json();
+        if (checkUnauthorized(data)) return;
         if (data.statusCode === 200) {
           const parsed = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
           setTopicScores(parsed || []);
@@ -64,7 +99,7 @@ const ScoreChart = ({ message }) => {
       }
     };
     fetchTopicScores();
-  }, [testID]);
+  }, [testID, JWTValue, checkUnauthorized]);
 
   if (!message) return null;
 
@@ -156,7 +191,7 @@ const ScoreChart = ({ message }) => {
 
         <div className="photo-section-inline">
           <div className="photo-section-title">Candidate Photographs</div>
-          <PhotoCatolog searchTerm={testID} />
+          <PhotoCatolog searchTerm={testID} showToast={showToast} />
         </div>
       </div>
       </div>

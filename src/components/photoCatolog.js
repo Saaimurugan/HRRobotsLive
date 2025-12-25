@@ -1,12 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
 import '../analsticsOnResult.css';
 
-const PhotoCatalog = ({ searchTerm }) => {
-   const { JWTValue } = useGlobalContext();
+const PhotoCatalog = ({ searchTerm, showToast }) => {
+   const { JWTValue, setRedirectPath, logout } = useGlobalContext();
    const [Photos, setPhotos] = useState([]);
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState("");
+   const navigate = useNavigate();
+   const location = useLocation();
+
+   // Session handler
+   const checkUnauthorized = useCallback((data) => {
+      if (data?.message === "Unauthorized" || 
+          data?.body === '{"message": "Unauthorized"}' ||
+          (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
+          data?.statusCode === 401) {
+         setRedirectPath(location.pathname);
+         if (showToast) {
+            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+         }
+         logout();
+         setTimeout(() => navigate('/login'), 1500);
+         return true;
+      }
+      if (data?.body) {
+         try {
+            const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+            if (parsedBody?.message === "Unauthorized") {
+               setRedirectPath(location.pathname);
+               if (showToast) {
+                  showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+               }
+               logout();
+               setTimeout(() => navigate('/login'), 1500);
+               return true;
+            }
+         } catch (e) {}
+      }
+      return false;
+   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
    useEffect(() => {
       const fetchPhotos = async () => {
@@ -31,6 +65,8 @@ const PhotoCatalog = ({ searchTerm }) => {
 
             const data = await response.json();
 
+            if (checkUnauthorized(data)) return;
+
             if (data.statusCode === 200) {
                setPhotos(JSON.parse(data.body) || []); 
             } else {
@@ -44,7 +80,7 @@ const PhotoCatalog = ({ searchTerm }) => {
       };
 
       fetchPhotos();
-   }, [searchTerm]);
+   }, [searchTerm, JWTValue, checkUnauthorized]);
 
    const getGridClass = () => {
       if (!Photos || Photos.length === 0) return '';

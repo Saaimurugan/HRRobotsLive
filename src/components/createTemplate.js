@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "../CreateTemplate.css";
 import { useGlobalContext } from "../globalContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSessionHandler } from "../useSessionHandler";
 
 // Helper function to parse topic from question
 const parseQuestionTopic = (questionText) => {
@@ -140,6 +141,29 @@ const CreateTemplate = () => {
   const [editingOriginalIndex, setEditingOriginalIndex] = useState(null); // Track original index in questionSet
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Toast functions
+  const showToast = (type, title, message) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, 300);
+    }, 4000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 300);
+  };
+
+  // Session handler for unauthorized responses
+  const { checkUnauthorized } = useSessionHandler(showToast);
 
   // Extract unique topics from questions
   const existingTopics = useMemo(() => {
@@ -214,25 +238,6 @@ const CreateTemplate = () => {
       navigate("/login");
     }
   }, [globalValue, navigate]);
-
-  // Toast functions
-  const showToast = (type, title, message) => {
-    const id = Date.now();
-    setToasts(prev => [...prev, { id, type, title, message }]);
-    setTimeout(() => {
-      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
-      setTimeout(() => {
-        setToasts(prev => prev.filter(t => t.id !== id));
-      }, 300);
-    }, 4000);
-  };
-
-  const removeToast = (id) => {
-    setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
-    setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 300);
-  };
 
   const addOption = () => {
     setFormData({
@@ -358,6 +363,8 @@ const CreateTemplate = () => {
 
       const data = await response.json();
 
+      if (checkUnauthorized(data)) return;
+
       if (data.statusCode === 200) {
         clearForm();
         showToast('success', 'Success', 'Questions saved successfully!');
@@ -389,6 +396,7 @@ const CreateTemplate = () => {
       });
 
       const data = await response.json();
+      if (checkUnauthorized(data)) return;
       const parsedBody = JSON.parse(data.body);
       const responseContent = parsedBody.data;
       const generatedQuestions = JSON.parse(responseContent);

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { GlobalProvider, useGlobalContext } from "../globalContext";
+import { useGlobalContext } from "../globalContext";
+import { useLocation } from "react-router-dom";
+import { useSessionHandler } from "../useSessionHandler";
 import "../TableStyles.css";
 import "../analsticsOnResult.css";
 import "../CreateTemplate.css";
@@ -78,6 +80,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
     const { globalValue, setGlobalValue, JWTValue } = useGlobalContext();
+    const location = useLocation();
     // Temporary test value for debugging
     const testGlobalValue = globalValue || "test-user-id";
     const [searchName, setSearchName] = useState("");
@@ -108,6 +111,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             setToasts(prev => prev.filter(t => t.id !== id));
         }, 300);
     };
+
+    // Session handler for unauthorized responses
+    const { checkUnauthorized } = useSessionHandler(showToast);
 
     // Handle item click with status check
     const handleItemClick = (item) => {
@@ -155,6 +161,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
             if (response.status === 200) {
                 const data = await response.json();
+                if (checkUnauthorized(data)) return;
 
             } else if (response.status === 404) {
                 console.warn("Error 404: Resource not found.");
@@ -209,6 +216,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 });
                 
                 const data = await response.json();
+                if (checkUnauthorized(data)) return false;
                 const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
                 const newItems = parsedBody.items || [];
                 
@@ -264,6 +272,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             console.log("API response status:", response.status);
             const data = await response.json();
             console.log("API response data:", data);
+
+            if (checkUnauthorized(data)) return false;
 
             // Ensure body is properly parsed
             const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
@@ -341,6 +351,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
             const data = await response.json();
 
+            if (checkUnauthorized(data)) return;
+
             // Ensure body is properly parsed
             const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
 
@@ -380,6 +392,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             });
 
             const data = await response.json();
+            if (checkUnauthorized(data)) return;
             const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
             const newItems = parsedBody.items || [];
 
@@ -446,6 +459,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             });
 
             const data = await response.json();
+            if (checkUnauthorized(data)) return;
             const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
             const newItems = parsedBody.items || [];
 

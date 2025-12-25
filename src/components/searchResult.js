@@ -1,33 +1,78 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGlobalContext } from "../globalContext";
 import { useNavigate } from "react-router-dom";
+import { useSessionHandler } from "../useSessionHandler";
 import ListTestResultPage from "./listTestResultPage"
 import ScoreChart from "./scoreChart";
-import PhotoCatolog from "./photoCatolog";
 import AnalsticsOnResult from "./analsticsOnResult";
 import "../App.css";
 import "../TableStyles.css";
 import "../analsticsOnResult.css";
 
+// Toast Component
+const Toast = ({ toasts, removeToast }) => {
+  return (
+    <div className="toast-container">
+      {toasts.map((toast) => (
+        <div key={toast.id} className={`toast ${toast.type} ${toast.exiting ? 'toast-exit' : ''}`}>
+          <svg className="toast-icon" viewBox="0 0 24 24">
+            {toast.type === 'error' && <path fill="#e53e3e" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>}
+            {toast.type === 'success' && <path fill="#38a169" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>}
+            {toast.type === 'warning' && <path fill="#dd6b20" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>}
+            {toast.type === 'info' && <path fill="#3182ce" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>}
+          </svg>
+          <div className="toast-content">
+            <div className="toast-title">{toast.title}</div>
+            <div className="toast-message">{toast.message}</div>
+          </div>
+          <button className="toast-close" onClick={() => removeToast(toast.id)}>
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 function SearchResult() {
   const [candidateName, setCandidateName] = useState("");
   const [fileContent, setFileContent] = useState("");
   const [candidateLoading, setCandidateLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [tableFilter, setTableFilter] = useState(""); // Separate filter for the table
+  const [toasts, setToasts] = useState([]);
   const analyticsRef = useRef(null);
   const { globalValue, JWTValue } = useGlobalContext("");
-  // Temporary test value for debugging
-  const testGlobalValue = globalValue || "test-user-id";
   const navigate = useNavigate();
 
+  // Toast functions
+  const showToast = (type, title, message) => {
+    const id = Date.now();
+    setToasts(prev => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+      setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+      }, 300);
+    }, 4000);
+  };
+
+  const removeToast = (id) => {
+    setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 300);
+  };
+
+  // Session handler
+  const { checkUnauthorized } = useSessionHandler(showToast);
+
   useEffect(() => {
-    // Temporarily disabled for testing
-    // if (globalValue === "") {
-    //   navigate("/login");
-    // }//else{console.log(globalValue);}
+    if (globalValue === "") {
+      navigate("/login");
+    }
   }, [globalValue, navigate]);
 
   // Debounced search effect - triggers search as user types
@@ -36,15 +81,11 @@ function SearchResult() {
       if (!candidateName.trim()) {
         // Clear search when input is empty
         setFileContent("");
-        setMessage("");
-        setMessageType("");
         setTableFilter("");
         return;
       }
 
       setFileContent("");
-      setMessage("");
-      setMessageType("");
 
       try {
         setCandidateLoading(true);
@@ -53,7 +94,6 @@ function SearchResult() {
         // Try test ID search first using the same logic as handleSearchFromList
         try {
           const searchUUID = searchValue.split('/').pop();
-
 
           const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult", {
             method: "POST",
@@ -65,12 +105,11 @@ function SearchResult() {
 
           const data = await response.json();
 
+          if (checkUnauthorized(data)) return;
 
           if (data.statusCode === 200) {
             const parsedBody = JSON.parse(data.body);
             setFileContent(parsedBody);
-            setMessage(""); // Clear any previous messages
-            setMessageType("");
             // Set table filter to candidate name so table shows tests for this candidate
             if (parsedBody.candidateName) {
               setTableFilter(parsedBody.candidateName);
@@ -78,11 +117,8 @@ function SearchResult() {
               setTableFilter(""); // Fallback to show all tests
             }
             return; // Success, exit early
-          } else {
-
           }
         } catch (error) {
-
           // Continue to candidate name search if test ID search fails
         }
 
@@ -95,17 +131,12 @@ function SearchResult() {
           // Don't filter table by test ID since the API can't search by test ID
           // Just show all tests
           setTableFilter("");
-          setMessage("");
-          setMessageType("");
         } else {
           // This looks like a candidate name, let the table handle the search
           setTableFilter(searchValue);
-          setMessage(`Searching for "${searchValue}"...`);
-          setMessageType("info");
         }
       } catch (error) {
-        setMessage("An error occurred while searching. Please check your connection and try again.");
-        setMessageType("error");
+        showToast('error', 'Search Error', 'An error occurred while searching. Please try again.');
       } finally {
         setCandidateLoading(false);
       }
@@ -113,15 +144,13 @@ function SearchResult() {
 
     const timeoutId = setTimeout(performSearch, 500); // 500ms delay
     return () => clearTimeout(timeoutId);
-  }, [candidateName, globalValue]);
+  }, [candidateName, globalValue, JWTValue, checkUnauthorized, showToast]);
 
 
 
   const handleBack = () => {
     setFileContent("");
     setCandidateName("");
-    setMessage("");
-    setMessageType("");
     setShowAnalytics(false);
     setTableFilter(""); // Clear table filter on back
   };
@@ -153,8 +182,6 @@ function SearchResult() {
     }
 
     setFileContent("");
-    setMessage("");
-    setMessageType("");
 
     try {
       setCandidateLoading(true);
@@ -172,11 +199,10 @@ function SearchResult() {
         });
 
         const data = await response.json();
+        if (checkUnauthorized(data)) return;
         if (data.statusCode === 200) {
           const parsedBody = JSON.parse(data.body);
           setFileContent(parsedBody);
-          setMessage("");
-          setMessageType("");
           if (parsedBody.candidateName) {
             setTableFilter(parsedBody.candidateName);
           } else {
@@ -190,12 +216,8 @@ function SearchResult() {
 
       // If test ID search failed, let the table handle candidate name search
       setTableFilter(searchValue);
-      setMessage("");
-      setMessageType("");
     } catch (error) {
       // Silent failure
-      setMessage("");
-      setMessageType("");
     } finally {
       setCandidateLoading(false);
     }
@@ -203,15 +225,11 @@ function SearchResult() {
 
   const handleResetCandidate = () => {
     setCandidateName("");
-    setMessage("");
-    setMessageType("");
     setTableFilter(""); // Clear table filter on reset
   };
 
   const handleSearchFromList = async (testID, itemData = {}) => {
     const searchUUID = testID.split('/').pop();
-    setMessage("");
-    setMessageType("");
 
     try {
       setCandidateLoading(true);
@@ -225,6 +243,8 @@ function SearchResult() {
 
       const data = await response.json();
 
+      if (checkUnauthorized(data)) return;
+
       if (data.statusCode === 200) {
         const parsedBody = JSON.parse(data.body);
         // Merge with additional data from list item (templateName, datetime)
@@ -234,20 +254,9 @@ function SearchResult() {
           submittedAt: parsedBody.submittedAt || itemData.datetime || null,
         };
         setFileContent(enrichedData);
-        setMessage(""); // Clear any previous messages
-        setMessageType("");
-      } else {
-        // Don't show error messages for any non-200 responses
-        // The test might exist but not be accessible via this API
-        // Let the table filtering handle it instead
-        setMessage("");
-        setMessageType("");
       }
     } catch (error) {
-      // Don't show error messages for API failures
-      // The table filtering will handle finding the test
-      setMessage("");
-      setMessageType("");
+      // Silent failure - table filtering will handle finding the test
     } finally {
       setCandidateLoading(false);
     }
@@ -555,6 +564,7 @@ function SearchResult() {
 
   return (
     <div className="modern-result-page">
+      <Toast toasts={toasts} removeToast={removeToast} />
       <div className="result-container">
 
 
@@ -683,7 +693,7 @@ function SearchResult() {
                     </div>
 
                     <div className="report-body">
-                      <ScoreChart message={fileContent} />
+                      <ScoreChart message={fileContent} showToast={showToast} />
                     </div>
                   </div>
                 </div>
@@ -697,6 +707,7 @@ function SearchResult() {
                       ref={analyticsRef}
                       searchTerm={fileContent?.testID || candidateName}
                       hideGenerateButton={true}
+                      showToast={showToast}
                     />
                   </div>
                 )}

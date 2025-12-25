@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { useGlobalContext } from "../globalContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "../profilerPage.css";
 import "../CreateTemplate.css";
 
@@ -42,11 +42,12 @@ const ProfilerPage = () => {
   const [report, setReport] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [toasts, setToasts] = useState([]);
-  const { globalValue, JWTValue } = useGlobalContext("");
+  const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Toast functions
-  const showToast = (type, title, message) => {
+  const showToast = useCallback((type, title, message) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, type, title, message }]);
     setTimeout(() => {
@@ -55,7 +56,7 @@ const ProfilerPage = () => {
         setToasts(prev => prev.filter(t => t.id !== id));
       }, 300);
     }, 4000);
-  };
+  }, []);
 
   const removeToast = (id) => {
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
@@ -63,6 +64,33 @@ const ProfilerPage = () => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 300);
   };
+
+  // Session handler
+  const checkUnauthorized = useCallback((data) => {
+    if (data?.message === "Unauthorized" || 
+        data?.body === '{"message": "Unauthorized"}' ||
+        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
+        data?.statusCode === 401) {
+      setRedirectPath(location.pathname);
+      showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+      logout();
+      setTimeout(() => navigate('/login'), 1500);
+      return true;
+    }
+    if (data?.body) {
+      try {
+        const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        if (parsedBody?.message === "Unauthorized") {
+          setRedirectPath(location.pathname);
+          showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
+          logout();
+          setTimeout(() => navigate('/login'), 1500);
+          return true;
+        }
+      } catch (e) {}
+    }
+    return false;
+  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
   useEffect(() => {
     if (globalValue === "") {
@@ -146,6 +174,10 @@ const ProfilerPage = () => {
         body: JSON.stringify({ jobDescription: jobDescriptionText, resume: resumeText, token: JWTValue })
       });
       const data = await response.json();
+      if (checkUnauthorized(data)) {
+        setIsGenerating(false);
+        return;
+      }
       const parsedBody = JSON.parse(data.body);
       const responseContent = parsedBody.data;
       setReport(responseContent);

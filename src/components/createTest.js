@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
 import "../App.css"; // Import the CSS or inline styles here
 import "../CreateTemplate.css"; // Import for toast styles
-import { GlobalProvider, useGlobalContext } from "../globalContext";
-import { useNavigate } from "react-router-dom";
+import { useGlobalContext } from "../globalContext";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSessionHandler } from "../useSessionHandler";
 import ConfirmationBox from './confirmationBox';
 import GetAPIKey from './getAPIKey';
 import AssignTemplate from "./assignTemplate";
@@ -37,7 +38,7 @@ const Toast = ({ toasts, removeToast }) => {
 
 const CreateTest = () => {
 const [popupVisible, setPopupVisible] = useState(false);
-const {globalValue, setGlobalValue, JWTValue } = useGlobalContext();
+const {globalValue, setGlobalValue, JWTValue, setRedirectPath } = useGlobalContext();
 const {globalAPIValue, setGlobalAPIValue } = useGlobalContext();
 const [loading, setLoading] = useState(false);
 const [loadingTemplate, setLoadingTemplate] = useState(false);
@@ -47,6 +48,7 @@ const [templates, setTemplates] = useState([]);
 const [templateStates, setTemplateStates] = useState({});
 const [uuid, setUuid] = useState("");
 const navigate = useNavigate();
+const location = useLocation();
 const [showConfirmation, setShowConfirmation] = useState(false);
 const [showAssignModal, setShowAssignModal] = useState(false);
 const [showConfigModal, setShowConfigModal] = useState(false);
@@ -67,6 +69,9 @@ const showToast = (type, title, message) => {
     }, 300);
   }, 4000);
 };
+
+// Session handler for unauthorized responses
+const { checkUnauthorized } = useSessionHandler(showToast);
 
 const removeToast = (id) => {
   setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
@@ -116,6 +121,7 @@ const handleConfigTemplate = (d) => {
       });
     response.then(res => res.json())
       .then(data => {
+        if (checkUnauthorized(data)) return;
         if (data.statusCode === 200) {
           fetchTemplates();
         } else {
@@ -178,6 +184,8 @@ try {
 
   const data = await response.json();
 
+  if (checkUnauthorized(data)) return;
+
   if (data.statusCode === 200) {
     const parsedBody = JSON.parse(data.body);
     setUuid(parsedBody.message);
@@ -239,6 +247,7 @@ const handleAssignTemplate = async (email) => {
        body: JSON.stringify({ templateIDSelectedToAssign, email, token: JWTValue }),
      });       
      const data = await response.json();
+     if (checkUnauthorized(data)) return;
      if (data.statusCode === 200) 
        {
          fetchTemplates();
@@ -264,6 +273,7 @@ const handleDeleteTemplate = async () => {
       body: JSON.stringify({ templateIDSelectedForDelete, token: JWTValue }),
     });       
     const data = await response.json();
+    if (checkUnauthorized(data)) return;
     if (data.statusCode === 200) 
       {
         fetchTemplates();
@@ -288,6 +298,7 @@ const fetchTemplates = async () => {
       body: JSON.stringify({ globalValue, token: JWTValue }),
     });       
     const data = await response.json();
+    if (checkUnauthorized(data)) return;
     if (data.statusCode === 200)
     { 
       setTemplates(data.body); // Use the parsed data
