@@ -15,6 +15,26 @@ auth_table = dynamodb.Table("authTable")
 # Secret key for JWT signing (in production, use AWS Secrets Manager)
 JWT_SECRET = "HRROBOTSKEYFORJWT"
 
+# Encryption settings (must match userCreate)
+ITERATIONS = 100000
+KEY_LENGTH = 32
+
+
+def verify_password(password, encrypted_password):
+    """Verify password against encrypted password from DynamoDB."""
+    try:
+        # Decode the stored encrypted password
+        decoded = base64.b64decode(encrypted_password.encode('utf-8'))
+        # Extract salt (first 32 bytes) and stored key
+        salt = decoded[:32]
+        stored_key = decoded[32:]
+        # Hash the provided password with the same salt
+        key = hashlib.pbkdf2_hmac('sha256', password.encode('utf-8'), salt, ITERATIONS, dklen=KEY_LENGTH)
+        # Compare keys using constant-time comparison
+        return hmac.compare_digest(key, stored_key)
+    except Exception:
+        return False
+
 
 def base64url_encode(data):
     """Base64 URL-safe encoding without padding."""
@@ -57,7 +77,8 @@ def lambda_handler(event, context):
                 "body": json.dumps({"message": "User not found"})
             }
 
-        if user["password"] == password:
+        # Verify password using decryption
+        if verify_password(password, user["password"]):
             # Generate JWT token
             now = datetime.datetime.utcnow()
             exp = now + datetime.timedelta(minutes=15)
