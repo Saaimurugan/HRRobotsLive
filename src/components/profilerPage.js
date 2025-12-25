@@ -41,6 +41,7 @@ const ProfilerPage = () => {
   const [resumeText, setResumeText] = useState("");
   const [report, setReport] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [showForm, setShowForm] = useState(true);
   const [toasts, setToasts] = useState([]);
   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
@@ -133,23 +134,97 @@ const ProfilerPage = () => {
     const printWindow = window.open("", "_blank");
     const styles = `
       <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-        .report-card { border: 1px solid #ddd; border-radius: 10px; overflow: hidden; }
-        .report-header { background: #1CBBB4; color: white; padding: 20px; text-align: center; }
-        .report-header h2 { margin: 0; }
-        .report-body { padding: 20px; }
-        .report-table { width: 100%; border-collapse: collapse; }
-        .report-table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: top; }
-        .report-table td:first-child { font-weight: bold; width: 200px; background: #f9f9f9; }
-        ul { margin: 0; padding-left: 20px; }
-        li { margin-bottom: 5px; }
-        .print-btn { display: none; }
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        body {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          line-height: 1.8;
+          color: #374151;
+          padding: 40px 50px;
+          max-width: 900px;
+          margin: 0 auto;
+        }
+        h1 {
+          color: #1CBBB4;
+          font-size: 1.75rem;
+          font-weight: 700;
+          margin: 0 0 1.5rem 0;
+          padding-bottom: 12px;
+          border-bottom: 3px solid #1CBBB4;
+        }
+        h2 {
+          color: #2d3748;
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin: 1.5rem 0 0.75rem 0;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #e2e8f0;
+        }
+        .report-card {
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          overflow: hidden;
+        }
+        .report-body {
+          padding: 20px;
+        }
+        .report-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        .report-table td {
+          padding: 12px 15px;
+          border-bottom: 1px solid #e2e8f0;
+          vertical-align: top;
+        }
+        .report-table tr:last-child td {
+          border-bottom: none;
+        }
+        .report-table td:first-child {
+          font-weight: 600;
+          width: 200px;
+          background: #f8fafc;
+          color: #2d3748;
+        }
+        ul {
+          margin: 0;
+          padding-left: 20px;
+        }
+        li {
+          margin-bottom: 5px;
+        }
+        .suitability-badge {
+          display: inline-block;
+          padding: 6px 14px;
+          background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+          color: white;
+          border-radius: 20px;
+          font-weight: 600;
+        }
+        .footer {
+          margin-top: 40px;
+          padding-top: 20px;
+          border-top: 1px solid #e2e8f0;
+          text-align: center;
+          color: #6b7280;
+          font-size: 0.9rem;
+        }
+        @media print {
+          body { padding: 20px 30px; }
+        }
       </style>
     `;
     printWindow.document.write(`
       <html>
-        <head><title>Candidate Profiler Report</title>${styles}</head>
-        <body>${printableContent.innerHTML}<p style="text-align: center; margin-top: 30px; color: #888;">Powered by HR Robots | www.hrrobots.com</p></body>
+        <head><title>Suitability Report - ${report?.CandidateName || 'Candidate'}</title>${styles}</head>
+        <body>
+          <h1>Suitability Report: ${report?.CandidateName || 'Candidate'}</h1>
+          ${printableContent.innerHTML}
+          <div class="footer">Powered by HR Robots | www.hrrobots.com</div>
+        </body>
       </html>
     `);
     printWindow.document.close();
@@ -181,6 +256,7 @@ const ProfilerPage = () => {
       const parsedBody = JSON.parse(data.body);
       const responseContent = parsedBody.data;
       setReport(responseContent);
+      setShowForm(false);
     } catch (error) {
       console.error(error);
       showToast('error', 'Error', 'Error generating suitability report.');
@@ -201,6 +277,8 @@ const ProfilerPage = () => {
     <div className="profiler-page">
       <Toast toasts={toasts} removeToast={removeToast} />
       <div className="profiler-container">
+        {showForm ? (
+        <>
         <div className="profiler-header">
           <button onClick={() => navigate(-1)} className="profiler-back-btn" title="Back">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -285,34 +363,52 @@ const ProfilerPage = () => {
         </div>
 
         <div className="btn-wrapper">
-          <button className="generate-btn" onClick={generateReport} disabled={isGenerating}>
+          <button className="submit-btn" onClick={generateReport} disabled={isGenerating}>
             {isGenerating ? (
               <>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spinner">
                   <path d="M21 12a9 9 0 11-6.219-8.56" />
                 </svg>
-                Generating Report...
+                Generating...
               </>
             ) : (
               <>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                   <polyline points="14 2 14 8 20 8" />
-                  <line x1="12" y1="18" x2="12" y2="12" />
-                  <line x1="9" y1="15" x2="15" y2="15" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <polyline points="10 9 9 9 8 9" />
                 </svg>
                 Generate Suitability Report
               </>
             )}
           </button>
         </div>
+        </>
+        ) : (
+        <div className="profiler-header">
+          <button onClick={() => navigate(-1)} className="profiler-back-btn" title="Back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 12H5" />
+              <path d="M12 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <h1>Candidate Suitability Report</h1>
+          <button className="print-btn" onClick={handlePrint}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M6 9V2h12v7" />
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+              <rect x="6" y="14" width="12" height="8" />
+            </svg>
+            Print
+          </button>
+        </div>
+        )}
 
         {report && (
           <div className="report-section" id="printableContent">
             <div className="report-card">
-              <div className="report-header">
-                <h2>Candidate Suitability Report</h2>
-              </div>
               <div className="report-body">
                 <table className="report-table">
                   <tbody>
@@ -351,16 +447,6 @@ const ProfilerPage = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
-            <div className="report-actions">
-              <button className="print-btn" onClick={handlePrint}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 9V2h12v7" />
-                  <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                  <rect x="6" y="14" width="12" height="8" />
-                </svg>
-                Print Report
-              </button>
             </div>
           </div>
         )}

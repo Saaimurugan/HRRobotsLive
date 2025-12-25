@@ -43,6 +43,13 @@
   color: var(--color-text-primary);
   font-weight: var(--font-weight-bold);
   margin: 0;
+  flex: 1;
+}
+
+.profiler-header .print-btn {
+  margin-left: auto;
+  margin-top: 0;
+  padding: 10px 16px;
 }
 
 /* Back button */
@@ -180,7 +187,41 @@
   color: var(--color-primary);
 }
 
-/* Generate Button */
+/* Generate Button - same style as Create JD */
+.submit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-primary-gradient);
+  color: var(--color-bg-primary);
+  border: none;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all var(--transition-slow);
+  margin-top: 10px;
+  box-shadow: var(--shadow-primary);
+}
+
+.submit-btn .spinner {
+  animation: spin 1s linear infinite;
+}
+
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary-hover);
+}
+
+.submit-btn:disabled {
+  background: linear-gradient(135deg, var(--color-text-light) 0%, #8a9aab 100%);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
 .generate-btn {
   display: inline-flex;
   align-items: center;

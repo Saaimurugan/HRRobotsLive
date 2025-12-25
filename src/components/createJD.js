@@ -97,6 +97,7 @@ const CreateJD = () => {
 
    const [jobDescription, setJobDescription] = useState('');
    const [loading, setLoading] = useState(false);
+   const [showForm, setShowForm] = useState(true);
 
    const handleChange = (e) => {
       const { name, value } = e.target;
@@ -145,9 +146,14 @@ const CreateJD = () => {
             .replace(/```[\s\S]*$/i, '')           // Remove ``` and everything after
             .replace(/^[\s\S]*?(?=<!DOCTYPE|<html|<body|<div|<h1|<h2|<p|<ul|<ol)/i, '') // Remove intro text
             .replace(/This HTML job description[\s\S]*$/i, '') // Remove trailing explanation
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove style tags
+            .replace(/body\s*\{[^}]*\}/gi, '') // Remove body CSS rules
+            .replace(/[a-z0-9,\s]+\{[^}]*\}/gi, '') // Remove any remaining CSS rules
+            .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '') // Remove title tags
             .trim();
          
          setJobDescription(htmlContent);
+         setShowForm(false);
       } catch (error) {
          console.error('Error generating job description:', error);
          alert('Failed to generate job description. Please try again.');
@@ -281,6 +287,7 @@ const CreateJD = () => {
    return (
       <div className="create-jd-page">
          <Toast toasts={toasts} removeToast={removeToast} />
+         {showForm ? (
          <div className="create-jd-form-container">
             <div className="create-jd-header">
                <button
@@ -375,21 +382,35 @@ const CreateJD = () => {
                </button>
             </form>
          </div>
+         ) : (
+         <div className="create-jd-header">
+            <button
+               onClick={() => navigate(-1)}
+               className="modern-button--outline"
+               title="Back"
+            >
+               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 12H5" />
+                  <path d="M12 19l-7-7 7-7" />
+               </svg>
+            </button>
+            <h1>Generated Job Description</h1>
+            <button className="print-btn" onClick={handlePrint}>
+               <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6 9V2H18V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M6 18H4C3.46957 18 2.96086 17.7893 2.58579 17.4142C2.21071 17.0391 2 16.5304 2 16V11C2 10.4696 2.21071 9.96086 2.58579 9.58579C2.96086 9.21071 3.46957 9 4 9H20C20.5304 9 21.0391 9.21071 21.4142 9.58579C21.7893 9.96086 22 10.4696 22 11V16C22 16.5304 21.7893 17.0391 21.4142 17.4142C21.0391 17.7893 20.5304 18 20 18H18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M18 14H6V22H18V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+               </svg>
+               Print
+            </button>
+         </div>
+         )}
 
          {jobDescription && (
             <div className="jd-result-container">
-               <h2>Generated Job Description</h2>
                <div id="printableContent" className="jd-content">
                   <div dangerouslySetInnerHTML={{ __html: jobDescription }} />
                </div>
-               <button className="print-btn" onClick={handlePrint}>
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                     <path d="M6 9V2H18V9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                     <path d="M6 18H4C3.46957 18 2.96086 17.7893 2.58579 17.4142C2.21071 17.0391 2 16.5304 2 16V11C2 10.4696 2.21071 9.96086 2.58579 9.58579C2.96086 9.21071 3.46957 9 4 9H20C20.5304 9 21.0391 9.21071 21.4142 9.58579C21.7893 9.96086 22 10.4696 22 11V16C22 16.5304 21.7893 17.0391 21.4142 17.4142C21.0391 17.7893 20.5304 18 20 18H18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                     <path d="M18 14H6V22H18V14Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                  Print
-               </button>
             </div>
          )}
       </div>
