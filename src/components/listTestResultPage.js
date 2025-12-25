@@ -77,7 +77,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const [sortConfig, setSortConfig] = useState({ key: "datetime", direction: "asc" });
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
-    const { globalValue, setGlobalValue } = useGlobalContext();
+    const { globalValue, setGlobalValue, JWTValue } = useGlobalContext();
     // Temporary test value for debugging
     const testGlobalValue = globalValue || "test-user-id";
     const [searchName, setSearchName] = useState("");
@@ -150,7 +150,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ testID, globalValue: testGlobalValue }),
+                body: JSON.stringify({ testID, globalValue: testGlobalValue, token: JWTValue }),
             });
 
             if (response.status === 200) {
@@ -196,7 +196,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     pageSize,
                     lastKey: currentLastKey,
                     sortKey: sortConfig.key,
-                    sortDirection: sortConfig.direction
+                    sortDirection: sortConfig.direction,
+                    token: JWTValue
                 };
                 
                 const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
@@ -247,7 +248,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 pageSize,
                 lastKey: isFirstLoad ? null : lastKey,
                 sortKey: sortConfig.key,
-                sortDirection: sortConfig.direction
+                sortDirection: sortConfig.direction,
+                token: JWTValue
             };
 
             console.log("Making API call with requestBody:", requestBody);
@@ -332,7 +334,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     lastKey: null, 
                     searchName,
                     sortKey: sortConfig.key,
-                    sortDirection: sortConfig.direction
+                    sortDirection: sortConfig.direction,
+                    token: JWTValue
                 }),
             });
 
@@ -371,7 +374,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     lastKey: null, 
                     searchName: searchTerm,
                     sortKey: sortConfig.key,
-                    sortDirection: sortConfig.direction
+                    sortDirection: sortConfig.direction,
+                    token: JWTValue
                 }),
             });
 
@@ -424,7 +428,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 pageSize,
                 lastKey: null, // Reset to first page when sorting
                 sortKey: sortCfg.key,
-                sortDirection: sortCfg.direction
+                sortDirection: sortCfg.direction,
+                token: JWTValue
             };
 
             // Include search term if active

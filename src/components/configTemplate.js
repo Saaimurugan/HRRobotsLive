@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useGlobalContext } from "../globalContext";
 
 const ConfigTemplate =  ({ onConfig, onCancel, templateID }) => {
+  const { JWTValue } = useGlobalContext();
   const [faceRecognition, setFaceRecognition] = useState(false);
   const [toleranceLevel, setToleranceLevel] = useState(0);
   const [allowedDefaults, setAllowedDefaults] = useState(0);
@@ -12,7 +14,7 @@ const ConfigTemplate =  ({ onConfig, onCancel, templateID }) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ templateID }),
+      body: JSON.stringify({ templateID, token: JWTValue }),
     })
       .then(res => res.json())
       .then(data => {

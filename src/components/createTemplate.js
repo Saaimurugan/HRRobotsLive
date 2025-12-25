@@ -120,7 +120,7 @@ const MobileWarningModal = ({ isOpen, onClose }) => {
 
 const CreateTemplate = () => {
   const [questionSet, setQuestionSet] = useState([]);
-  const { globalValue } = useGlobalContext("");
+  const { globalValue, JWTValue } = useGlobalContext("");
   const [ttname, setTtname] = useState("");
   const [toasts, setToasts] = useState([]);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
@@ -353,7 +353,7 @@ const CreateTemplate = () => {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateID: "", templateName: ttname, globalValue: globalValue, questions: questionSet }),
+        body: JSON.stringify({ templateID: "", templateName: ttname, globalValue: globalValue, questions: questionSet, token: JWTValue }),
       });
 
       const data = await response.json();
@@ -385,7 +385,7 @@ const CreateTemplate = () => {
       const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, level, formattedQuestions }),
+        body: JSON.stringify({ topic, level, formattedQuestions, token: JWTValue }),
       });
 
       const data = await response.json();

@@ -18,7 +18,7 @@ function SearchResult() {
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [tableFilter, setTableFilter] = useState(""); // Separate filter for the table
   const analyticsRef = useRef(null);
-  const { globalValue } = useGlobalContext("");
+  const { globalValue, JWTValue } = useGlobalContext("");
   // Temporary test value for debugging
   const testGlobalValue = globalValue || "test-user-id";
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ function SearchResult() {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ searchTerm: searchUUID }),
+            body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
           });
 
           const data = await response.json();
@@ -168,7 +168,7 @@ function SearchResult() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ searchTerm: searchUUID }),
+          body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
         });
 
         const data = await response.json();
@@ -220,7 +220,7 @@ function SearchResult() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ searchTerm: searchUUID }),
+        body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
       });
 
       const data = await response.json();

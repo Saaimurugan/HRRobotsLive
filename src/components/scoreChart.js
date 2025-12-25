@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import GaugeChart from "react-gauge-chart";
 import PhotoCatolog from "./photoCatolog";
+import { useGlobalContext } from "../globalContext";
 
 const ScoreChart = ({ message }) => {
+  const { JWTValue } = useGlobalContext();
   const [topicScores, setTopicScores] = useState([]);
   const [loadingTopics, setLoadingTopics] = useState(false);
 
@@ -48,7 +50,7 @@ const ScoreChart = ({ message }) => {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ testID }),
+          body: JSON.stringify({ testID, token: JWTValue }),
         });
         const data = await response.json();
         if (data.statusCode === 200) {

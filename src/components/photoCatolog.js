@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useGlobalContext } from "../globalContext";
 import '../analsticsOnResult.css';
 
 const PhotoCatalog = ({ searchTerm }) => {
+   const { JWTValue } = useGlobalContext();
    const [Photos, setPhotos] = useState([]);
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState("");
@@ -20,7 +22,7 @@ const PhotoCatalog = ({ searchTerm }) => {
                headers: {
                   "Content-Type": "application/json",
                },
-               body: JSON.stringify({ searchTerm: searchTerm }),
+               body: JSON.stringify({ searchTerm: searchTerm, token: JWTValue }),
             });
 
             if (!response.ok) {

@@ -42,7 +42,7 @@ const ProfilerPage = () => {
   const [report, setReport] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [toasts, setToasts] = useState([]);
-  const { globalValue } = useGlobalContext("");
+  const { globalValue, JWTValue } = useGlobalContext("");
   const navigate = useNavigate();
 
   // Toast functions
@@ -143,7 +143,7 @@ const ProfilerPage = () => {
       const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/matchJDResume", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobDescription: jobDescriptionText, resume: resumeText })
+        body: JSON.stringify({ jobDescription: jobDescriptionText, resume: resumeText, token: JWTValue })
       });
       const data = await response.json();
       const parsedBody = JSON.parse(data.body);

@@ -3,7 +3,7 @@ import { useGlobalContext } from "../globalContext";
 import "../analsticsOnResult.css";
 
 const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false }, ref) => {
-   const { globalValue } = useGlobalContext();
+   const { globalValue, JWTValue } = useGlobalContext();
    const [analyticsData, setAnalyticsData] = useState("");
    const [loading, setLoading] = useState(false);
 
@@ -20,7 +20,7 @@ const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false }
             headers: {
                "Content-Type": "application/json",
             },
-            body: JSON.stringify({ globalValue, searchTerm }),
+            body: JSON.stringify({ globalValue, searchTerm, token: JWTValue }),
          });
 
          if (response.ok) {

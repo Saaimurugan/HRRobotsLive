@@ -37,7 +37,7 @@ const Toast = ({ toasts, removeToast }) => {
 
 const CreateTest = () => {
 const [popupVisible, setPopupVisible] = useState(false);
-const {globalValue, setGlobalValue } = useGlobalContext();
+const {globalValue, setGlobalValue, JWTValue } = useGlobalContext();
 const {globalAPIValue, setGlobalAPIValue } = useGlobalContext();
 const [loading, setLoading] = useState(false);
 const [loadingTemplate, setLoadingTemplate] = useState(false);
@@ -112,7 +112,7 @@ const handleConfigTemplate = (d) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ templateIDSelectedToAssign, d }),
+        body: JSON.stringify({ templateIDSelectedToAssign, d, token: JWTValue }),
       });
     response.then(res => res.json())
       .then(data => {
@@ -173,7 +173,7 @@ try {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ globalValue, templateID }),
+    body: JSON.stringify({ globalValue, templateID, token: JWTValue }),
   });
 
   const data = await response.json();
@@ -236,7 +236,7 @@ const handleAssignTemplate = async (email) => {
        headers: {
          "Content-Type": "application/json",
        },
-       body: JSON.stringify({ templateIDSelectedToAssign, email }),
+       body: JSON.stringify({ templateIDSelectedToAssign, email, token: JWTValue }),
      });       
      const data = await response.json();
      if (data.statusCode === 200) 
@@ -261,7 +261,7 @@ const handleDeleteTemplate = async () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ templateIDSelectedForDelete }),
+      body: JSON.stringify({ templateIDSelectedForDelete, token: JWTValue }),
     });       
     const data = await response.json();
     if (data.statusCode === 200) 
@@ -285,7 +285,7 @@ const fetchTemplates = async () => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ globalValue }),
+      body: JSON.stringify({ globalValue, token: JWTValue }),
     });       
     const data = await response.json();
     if (data.statusCode === 200)

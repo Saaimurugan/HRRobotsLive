@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGlobalContext } from "../globalContext";
 import '../createJD.css';
 
 const CreateJD = () => {
    const navigate = useNavigate();
+   const {globalValue, setGlobalValue, JWTValue } = useGlobalContext();
    const [formData, setFormData] = useState({
       roleName: '',
       yearsOfExperience: '',
@@ -11,6 +13,12 @@ const CreateJD = () => {
       languages: '',
       additionalSkills: '',
    });
+
+   useEffect(() => {
+	if (globalValue === "") {
+		navigate("/login"); // Redirect to login if globalValue is false
+    }
+   }, [globalValue]);
 
    const [jobDescription, setJobDescription] = useState('');
    const [loading, setLoading] = useState(false);
@@ -29,7 +37,7 @@ const CreateJD = () => {
             headers: {
                'Content-Type': 'application/json',
             },
-            body: JSON.stringify(formData),
+            body: JSON.stringify({ ...formData, token: JWTValue }),
          });
 
          if (!response.ok) {
