@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import ReCAPTCHA from "react-google-recaptcha";
+import React, { useState, useEffect, useCallback } from 'react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import "../login.css";
 import { useNavigate } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
@@ -7,9 +7,6 @@ import { useGlobalContext } from "../globalContext";
 // Storage key for failed attempts
 const FAILED_ATTEMPTS_KEY = "loginFailedAttempts";
 const MAX_FAILED_ATTEMPTS = 3;
-
-// Replace with your actual reCAPTCHA site key
-const RECAPTCHA_SITE_KEY = "6Lcb8jYsAAAAAGX87VEDrxMu8TZzAUL7jOwh9pqZ"; // Test key - replace with your own
 
 const LoginPage = () => {
     const [email, setEmail] = useState("");
@@ -22,18 +19,19 @@ const LoginPage = () => {
     const { setGlobalValue, setJWTValue, getAndClearRedirectPath } = useGlobalContext("");
     const [loading, setLoading] = useState(false);
     
-    // CAPTCHA state
+    // reCAPTCHA v3
+    const { executeRecaptcha } = useGoogleReCaptcha();
+    
+    // Failed attempts tracking
     const [failedAttempts, setFailedAttempts] = useState(() => {
         const stored = sessionStorage.getItem(FAILED_ATTEMPTS_KEY);
         return stored ? parseInt(stored, 10) : 0;
     });
-    const [captchaToken, setCaptchaToken] = useState(null);
-    const [showCaptcha, setShowCaptcha] = useState(false);
-    const recaptchaRef = useRef(null);
+    const [requireCaptcha, setRequireCaptcha] = useState(false);
 
-    // Update showCaptcha when failedAttempts changes
+    // Update requireCaptcha when failedAttempts changes
     useEffect(() => {
-        setShowCaptcha(failedAttempts >= MAX_FAILED_ATTEMPTS);
+        setRequireCaptcha(failedAttempts >= MAX_FAILED_ATTEMPTS);
     }, [failedAttempts]);
 
     // Persist failed attempts to sessionStorage
@@ -41,26 +39,32 @@ const LoginPage = () => {
         sessionStorage.setItem(FAILED_ATTEMPTS_KEY, failedAttempts.toString());
     }, [failedAttempts]);
 
-    const handleCaptchaChange = (token) => {
-        setCaptchaToken(token);
-    };
-
-    const resetCaptcha = () => {
-        if (recaptchaRef.current) {
-            recaptchaRef.current.reset();
-        }
-        setCaptchaToken(null);
-    };
-
-    const handleLogin = async (e) => {
+    const handleLogin = useCallback(async (e) => {
         e.preventDefault();
-        if (loading) return; // Prevent double submission
+        if (loading) return;
         
-        // Check if CAPTCHA is required but not completed
-        if (showCaptcha && !captchaToken) {
-            setMessageType("error");
-            setMessage("Please complete the CAPTCHA verification.");
-            return;
+        // Execute reCAPTCHA v3 if required (after 3 failed attempts)
+        if (requireCaptcha) {
+            if (!executeRecaptcha) {
+                setMessageType("error");
+                setMessage("reCAPTCHA not ready. Please try again.");
+                return;
+            }
+            
+            try {
+                const token = await executeRecaptcha('login');
+                if (!token) {
+                    setMessageType("error");
+                    setMessage("reCAPTCHA verification failed. Please try again.");
+                    return;
+                }
+                // Token obtained successfully - in production, verify this token on your backend
+                console.log("reCAPTCHA token obtained for login");
+            } catch (error) {
+                setMessageType("error");
+                setMessage("reCAPTCHA verification failed. Please try again.");
+                return;
+            }
         }
         
         setLoading(true);
@@ -88,34 +92,21 @@ const LoginPage = () => {
                 setFailedAttempts(0);
                 sessionStorage.removeItem(FAILED_ATTEMPTS_KEY);
                 
-                // Redirect to saved path or default to /list
                 const redirectTo = getAndClearRedirectPath();
                 navigate(redirectTo);
             } else {
                 setMessageType("error");
                 setMessage(data.message || "Login failed! Email or password is incorrect.");
-                
-                // Increment failed attempts
-                const newAttempts = failedAttempts + 1;
-                setFailedAttempts(newAttempts);
-                
-                // Reset CAPTCHA after failed attempt
-                resetCaptcha();
+                setFailedAttempts(prev => prev + 1);
             }
         } catch (error) {
             setMessageType("error");
             setMessage("An error occurred. Please try again later.");
-            
-            // Increment failed attempts on error too
-            const newAttempts = failedAttempts + 1;
-            setFailedAttempts(newAttempts);
-            
-            // Reset CAPTCHA after failed attempt
-            resetCaptcha();
+            setFailedAttempts(prev => prev + 1);
         } finally {
             setLoading(false);
         }
-    };
+    }, [loading, requireCaptcha, executeRecaptcha, email, password, setGlobalValue, setJWTValue, getAndClearRedirectPath, navigate]);
 
     return (
         <div className="login-page">
@@ -237,21 +228,18 @@ const LoginPage = () => {
                             </span>
                         </div>
                         
-                        {/* CAPTCHA - shown after 3 failed attempts */}
-                        {showCaptcha && (
-                            <div className="captcha-container">
-                                <p className="captcha-message">
-                                    Too many failed attempts. Please verify you're human.
-                                </p>
-                                <ReCAPTCHA
-                                    ref={recaptchaRef}
-                                    sitekey={RECAPTCHA_SITE_KEY}
-                                    onChange={handleCaptchaChange}
-                                />
+                        {/* Show message when CAPTCHA is active */}
+                        {requireCaptcha && (
+                            <div className="captcha-notice">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="2"/>
+                                    <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                </svg>
+                                <span>Security verification active due to multiple failed attempts</span>
                             </div>
                         )}
                         
-                        <button type="submit" className="login-btn" disabled={loading || (showCaptcha && !captchaToken)}>
+                        <button type="submit" className="login-btn" disabled={loading}>
                             {loading ? (
                                 <>
                                     <svg className="spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

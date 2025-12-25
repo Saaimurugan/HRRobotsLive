@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import "../login.css";
 import { useNavigate } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
@@ -12,6 +13,9 @@ const ForgotPasswordPage = () => {
     const navigate = useNavigate();
     const { globalValue } = useGlobalContext(false);
     const [loading, setLoading] = useState(false);
+    
+    // reCAPTCHA v3
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     useEffect(() => {
         if (globalValue !== "") {
@@ -19,9 +23,31 @@ const ForgotPasswordPage = () => {
         }
     }, [globalValue, navigate]);
 
-    const handleForgotPassword = async (e) => {
-        setLoading(true);
+    const handleForgotPassword = useCallback(async (e) => {
         e.preventDefault();
+        
+        // Execute reCAPTCHA v3 (required from first attempt)
+        if (!executeRecaptcha) {
+            setMessageType("error");
+            setMessage("reCAPTCHA not ready. Please try again.");
+            return;
+        }
+        
+        try {
+            const token = await executeRecaptcha('forgot_password');
+            if (!token) {
+                setMessageType("error");
+                setMessage("reCAPTCHA verification failed. Please try again.");
+                return;
+            }
+            console.log("reCAPTCHA token obtained for forgot password");
+        } catch (error) {
+            setMessageType("error");
+            setMessage("reCAPTCHA verification failed. Please try again.");
+            return;
+        }
+        
+        setLoading(true);
         setMessage("");
 
         try {
@@ -48,7 +74,7 @@ const ForgotPasswordPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [executeRecaptcha, email]);
 
     return (
         <div className="login-page">

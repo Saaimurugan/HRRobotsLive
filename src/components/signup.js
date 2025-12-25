@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import "../login.css";
 import { useNavigate } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
@@ -17,6 +18,9 @@ const SignUp = () => {
     const navigate = useNavigate();
     const { setGlobalValue } = useGlobalContext();
     const [loading, setLoading] = useState(false);
+    
+    // reCAPTCHA v3
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     const personalEmailDomains = [
         "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "aol.com",
@@ -42,9 +46,31 @@ const SignUp = () => {
         return personalEmailDomains.includes(domain);
     };
 
-    const handleSignUp = async (e) => {
-        setLoading(true);
+    const handleSignUp = useCallback(async (e) => {
         e.preventDefault();
+        
+        // Execute reCAPTCHA v3 (required from first attempt for signup)
+        if (!executeRecaptcha) {
+            setMessageType("error");
+            setMessage("reCAPTCHA not ready. Please try again.");
+            return;
+        }
+        
+        try {
+            const token = await executeRecaptcha('signup');
+            if (!token) {
+                setMessageType("error");
+                setMessage("reCAPTCHA verification failed. Please try again.");
+                return;
+            }
+            console.log("reCAPTCHA token obtained for signup");
+        } catch (error) {
+            setMessageType("error");
+            setMessage("reCAPTCHA verification failed. Please try again.");
+            return;
+        }
+        
+        setLoading(true);
         setMessage("");
 
         try {
@@ -110,7 +136,7 @@ const SignUp = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [executeRecaptcha, email, password, confirmPassword, setGlobalValue, navigate]);
 
     const handlePasswordChange = (e) => {
         const value = e.target.value;
