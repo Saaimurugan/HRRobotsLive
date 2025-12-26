@@ -44,6 +44,10 @@ const Profile = () => {
   const [bucketKey, setBucketKey] = useState('');
   const [bucketId, setBucketId] = useState('');
 
+  // Invite User
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteLoading, setInviteLoading] = useState(false);
+
   // LLM Config
   const [llmKey, setLlmKey] = useState('');
   const [selectedLLM, setSelectedLLM] = useState('');
@@ -198,6 +202,79 @@ const Profile = () => {
     setMessageType("success");
   };
 
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleInviteUser = async (e) => {
+    e.preventDefault();
+    
+    if (!inviteEmail.trim()) {
+      showToast('error', 'Validation Error', 'Please enter an email address');
+      return;
+    }
+
+    if (!validateEmail(inviteEmail)) {
+      showToast('error', 'Validation Error', 'Please enter a valid email address');
+      return;
+    }
+
+    setInviteLoading(true);
+
+    try {
+      const inviteBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #1cbbb4;">You're Invited to HR Robots!</h2>
+          <p>Hello,</p>
+          <p><strong>${globalValue}</strong> has invited you to join HR Robots platform.</p>
+          <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
+          <p style="margin-top: 20px;">
+            <a href="${window.location.origin}/login" 
+               style="background: linear-gradient(135deg, #1cbbb4 0%, #0d9488 100%); 
+                      color: white; 
+                      padding: 12px 24px; 
+                      text-decoration: none; 
+                      border-radius: 6px; 
+                      display: inline-block;">
+              Get Started
+            </a>
+          </p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">
+            If you have any questions, please contact the person who invited you.
+          </p>
+        </div>
+      `;
+
+      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTPLabmda", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipient_email: inviteEmail,
+          subject: `${globalValue} invited you to join HR Robots`,
+          body: inviteBody
+        }),
+      });
+
+      const data = await response.json();
+
+      if (checkUnauthorized(data)) return;
+
+      if (data.statusCode === 200) {
+        showToast('success', 'Invitation Sent', `Invitation email sent to ${inviteEmail}`);
+        setInviteEmail('');
+      } else {
+        showToast('error', 'Failed to Send', data.body || 'Failed to send invitation. Please try again.');
+      }
+    } catch (error) {
+      showToast('error', 'Error', 'An error occurred while sending the invitation.');
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   return (
     <div className="profile-page">
       <Toast toasts={toasts} removeToast={removeToast} />
@@ -266,6 +343,33 @@ const Profile = () => {
               {passwordError && <p className="password-error">{passwordError}</p>}
               <button type="submit" className="save-btn" disabled={loading || passwordError !== ""}>
                 {loading ? "Updating..." : "Update Password"}
+              </button>
+            </form>
+          </div>
+
+          {/* Invite User Section */}
+          <div className="config-card">
+            <div className="config-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <line x1="20" y1="8" x2="20" y2="14" />
+                <line x1="23" y1="11" x2="17" y2="11" />
+              </svg>
+              <h3>Invite User</h3>
+            </div>
+            <form className="config-form" onSubmit={handleInviteUser}>
+              <div className="config-form-group">
+                <label>Email Address</label>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  placeholder="Enter email address to invite"
+                />
+              </div>
+              <button type="submit" className="save-btn" disabled={inviteLoading || !inviteEmail.trim()}>
+                {inviteLoading ? "Sending..." : "Send Invitation"}
               </button>
             </form>
           </div>
