@@ -122,10 +122,8 @@ const SignUp = () => {
             const data = await response.json();
 
             if (data.statusCode === 200) {
-                setMessageType("success");
-                setMessage(data.message || "Account created successfully!");
-                setGlobalValue(email);
-                navigate("/list");
+                // Redirect to signup success page
+                navigate("/signup-success");
             } else {
                 setMessageType("error");
                 setMessage(data.message || "Sign up failed. Please try again.");

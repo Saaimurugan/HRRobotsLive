@@ -69,7 +69,6 @@ const LoginPage = () => {
         
         setLoading(true);
         setMessage("");
-
         try {
             const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/login", {
                 method: "POST",
@@ -94,9 +93,15 @@ const LoginPage = () => {
                 
                 const redirectTo = getAndClearRedirectPath();
                 navigate(redirectTo);
+            } else if (data.statusCode === 403) {
+                // User not verified
+                const bodyData = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+                setMessageType("error");
+                setMessage(bodyData?.message || "Please verify your email before logging in.");
             } else {
                 setMessageType("error");
-                setMessage(data.message || "Login failed! Email or password is incorrect.");
+                const bodyData = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+                setMessage(bodyData?.message || data.message || "Login failed! Email or password is incorrect.");
                 setFailedAttempts(prev => prev + 1);
             }
         } catch (error) {

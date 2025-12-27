@@ -246,7 +246,7 @@ const Profile = () => {
         </div>
       `;
 
-      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTPLabmda", {
+      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

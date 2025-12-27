@@ -91,6 +91,13 @@ def lambda_handler(event, context):
                 "body": json.dumps({"message": "User not found"})
             }
 
+        # Check if user is verified
+        if not user.get("isVerified", True):  # Default True for legacy users
+            return {
+                "statusCode": 403,
+                "body": json.dumps({"message": "Please verify your email before logging in. Check your inbox for the verification link."})
+            }
+
         # Verify password using decryption
         stored_pwd = user["password"]
         is_enc = is_encrypted(stored_pwd)
