@@ -20,7 +20,7 @@ KEY_LENGTH = 32
 SEND_EMAIL_API = "https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP"
 
 # Frontend URL for verification
-FRONTEND_URL = "https://hrrobots.com"
+FRONTEND_URL = "https://www.hrrobots.click"
 
 
 def encrypt_password(password):
