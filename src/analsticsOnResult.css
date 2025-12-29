@@ -1055,12 +1055,14 @@
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.5px;
+  color: #ffffff;
 }
 
 .termination-banner__reason {
   margin: 0;
   font-size: 14px;
   opacity: 0.95;
+  color: #ffffff;
 }
 
 /* Adjust report header when termination banner is present */

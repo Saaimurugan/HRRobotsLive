@@ -301,6 +301,19 @@ const TestPage = () => {
             terminationReason: 'screenshot',
           }),
         });
+        
+        // Calculate and save the score for attempted questions
+        try {
+          await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ testID: userUniqueID }),
+          });
+        } catch (scoreError) {
+          // Silent fail for score calculation
+        }
       } catch (error) {
         // Silent fail - termination will still happen locally
       }
@@ -457,6 +470,7 @@ const TestPage = () => {
 useEffect(() => {
   const callAPI = async (reason) => {
     try {
+      // First, change the test status to Terminated
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/changeTestStatus", {
         method: "POST",
         headers: {
@@ -474,6 +488,20 @@ useEffect(() => {
       //console.log("API called successfully", userUniqueID);
       const data = await response.json();
       //console.log("API Response:", data);
+      
+      // Then, calculate and save the score for attempted questions
+      try {
+        await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ testID: userUniqueID }),
+        });
+      } catch (scoreError) {
+        // Silent fail for score calculation - status change is more important
+        //console.error("Failed to calculate score:", scoreError);
+      }
     } catch (error) {
       //console.error("Failed to call API:", error);
     }
