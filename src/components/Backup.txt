@@ -94,7 +94,7 @@ const CreateTemplate = () => {
         //console.log('JSON file fixed and saved successfully.');
         return prettyJSON
     } catch (error) {
-        console.error('Error auto-fixing JSON:', error.message);
+        //console.error('Error auto-fixing JSON:', error.message);
     }
 }
   const saveJSON = async (e) => {
@@ -237,7 +237,7 @@ const CreateTemplate = () => {
       setQuestionSet([...questionSet, ...generatedQuestions]);
       setTtname(topic + " - " + level);
     } catch (error) {
-      console.error(error);
+      //console.error(error);
       alert("Error generating questions. Please try again later.");
     } finally {
       setIsGenerating(false);

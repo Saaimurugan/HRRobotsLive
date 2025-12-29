@@ -26,7 +26,7 @@ const TestPage = () => {
       const data = await response.json();
       setCurrentQuestion(data.body.question);
     } catch (error) {
-      console.error("Error fetching question:", error);
+      //console.error("Error fetching question:", error);
     }
   };
 
@@ -45,7 +45,7 @@ const TestPage = () => {
         }),
       });
     } catch (error) {
-      console.error("Error saving answer:", error);
+      //console.error("Error saving answer:", error);
     }
 
     setCurrentQuestionIndex((prevIndex) => prevIndex + 1);

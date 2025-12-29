@@ -34,13 +34,13 @@ const TestSetupWizard = ({
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           videoRef.current.play().catch((error) => {
-            console.error('Error playing video:', error);
+            //console.error('Error playing video:', error);
           });
           setVideoReady(true);
         };
       }
     } catch (error) {
-      console.error('Error accessing webcam:', error);
+      //console.error('Error accessing webcam:', error);
     }
   };
 
@@ -81,7 +81,7 @@ const TestSetupWizard = ({
         body: JSON.stringify({ image: imageData, userUniqueID }),
       });
     } catch (error) {
-      console.error('Error calling API:', error);
+      //console.error('Error calling API:', error);
     }
   };
 

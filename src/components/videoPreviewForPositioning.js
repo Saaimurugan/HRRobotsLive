@@ -15,13 +15,13 @@ const VideoPreviewForPositioning = ({userUniqueID, onComplete }) => { // Add onC
             videoRef.current.srcObject = stream;
             videoRef.current.onloadedmetadata = () => {
                videoRef.current.play().catch((error) => {
-                  console.error('Error playing video:', error);
+                  //console.error('Error playing video:', error);
                });
                setVideoReady(true); // Set video as ready when metadata is loaded
             };
          }
       } catch (error) {
-         console.error('Error accessing webcam:', error);
+         //console.error('Error accessing webcam:', error);
       }
    };
 

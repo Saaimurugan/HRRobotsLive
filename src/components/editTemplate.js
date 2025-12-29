@@ -405,16 +405,16 @@ const EditTemplate = () => {
             setQuestionSet(parsedBody.questions);
             setTtname(parsedBody.templateName);
           } else {
-            console.error("Invalid questions format in response:", parsedBody);
+            //console.error("Invalid questions format in response:", parsedBody);
           }
         } catch (parseError) {
-          console.error("Error parsing response body:", parseError);
+          //console.error("Error parsing response body:", parseError);
         }
       } else {
-        console.error("Unexpected API response:", data);
+        //console.error("Unexpected API response:", data);
       }
     } catch (error) {
-      console.error("Error fetching templates:", error);
+      //console.error("Error fetching templates:", error);
     } finally {
       setLoadingTemplate(false);
     }
@@ -452,7 +452,7 @@ const EditTemplate = () => {
         setTtname(topic + " - " + level);
       }
     } catch (error) {
-      console.error(error);
+      //console.error(error);
       showToast('error', 'Generation Failed', 'Error generating questions. Please try again later.');
     } finally {
       setIsGenerating(false);

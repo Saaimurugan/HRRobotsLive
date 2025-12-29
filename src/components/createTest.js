@@ -125,14 +125,14 @@ const handleConfigTemplate = (d) => {
         if (data.statusCode === 200) {
           fetchTemplates();
         } else {
-          console.error("Error configuring template:", data);
+          //console.error("Error configuring template:", data);
         }
       })
       .catch(error => {
-        console.error("Error configuring template:", error);
+        //console.error("Error configuring template:", error);
       });
   } catch (error) { 
-    console.error("Error configuring template:", error);
+    //console.error("Error configuring template:", error);
   } finally {
     setLoadingTemplate(false);
   }
@@ -204,7 +204,7 @@ try {
     setMessage("Test link generation failed.");
   }
 } catch (error) {
-  console.error("Fetch error: ", error);
+  //console.error("Fetch error: ", error);
   const newTemplateStates = {
     ...templateStates,
     [templateID]: { uuid: null, message: "An error occurred. Please try again later." },
@@ -225,7 +225,7 @@ const handleCopyToClipboard = (templateID) => {
         showToast('info', 'Copied to Clipboard', `The test URL has been copied. Paste it into an email and send it to the candidate. ${url}`);
       })
       .catch((err) => {
-        console.error("Clipboard write failed: ", err);
+        //console.error("Clipboard write failed: ", err);
         showToast('error', 'Copy Failed', 'Failed to copy the URL to the clipboard. Please try again.');
       }).finally(() => { 
         setClicked(""); 
@@ -303,7 +303,7 @@ const handleAssignTemplate = async (email) => {
        }
      }
   } catch (error) {
-    console.error("Error assigning template:", error);
+    //console.error("Error assigning template:", error);
     showToast('error', 'Error', 'An error occurred while assigning the template.');
   }
   finally
@@ -329,7 +329,7 @@ const handleDeleteTemplate = async () => {
         fetchTemplates();
       }
   } catch (error) {
-    console.error("Error fetching templates:", error);
+    //console.error("Error fetching templates:", error);
   }
   finally
   {
@@ -362,7 +362,7 @@ const fetchTemplates = async () => {
       setMessage("No templates found.");
     }
   } catch (error) {
-    console.error("Error fetching templates:", error);
+    //console.error("Error fetching templates:", error);
   }
   finally
   {

@@ -101,7 +101,7 @@ const useAudioDetection = ({
 
       analyze();
     } catch (err) {
-      console.error('Error accessing microphone:', err);
+      //console.error('Error accessing microphone:', err);
       setError(err.message || 'Failed to access microphone');
       setIsListening(false);
     }

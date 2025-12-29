@@ -40,7 +40,7 @@ const ForgotPasswordPage = () => {
                 setMessage("reCAPTCHA verification failed. Please try again.");
                 return;
             }
-            console.log("reCAPTCHA token obtained for forgot password");
+            //console.log("reCAPTCHA token obtained for forgot password");
         } catch (error) {
             setMessageType("error");
             setMessage("reCAPTCHA verification failed. Please try again.");

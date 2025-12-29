@@ -19,7 +19,7 @@ function MediaPermissions() {
     } catch (error) {
       setCameraPermission(false);
       setMicPermission(false);
-      console.error("Camera and Microphone access denied", error);
+      //console.error("Camera and Microphone access denied", error);
     }
   };
 
@@ -34,7 +34,7 @@ function MediaPermissions() {
       stream.getTracks().forEach((track) => track.stop()); // Stop tracks after checking
     } catch (error) {
       setScreenPermission(false);
-      console.error("Screen recording access denied", error);
+      //console.error("Screen recording access denied", error);
     }
   };
 

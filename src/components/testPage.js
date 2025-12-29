@@ -141,11 +141,11 @@ const TestPage = () => {
           setToleranceLevel(Number(config.toleranceLevel) || 0);
           setAllowedDefaults(Number(config.allowedDefaults) || 10); // Default to 10 if not set
         } else {
-          console.error("Error fetching configuration:", data);
+          //console.error("Error fetching configuration:", data);
         }
       })
       .catch(error => {
-        console.error("Error fetching configuration:", error);
+        //console.error("Error fetching configuration:", error);
       });
   }, [userUniqueID]);
 
@@ -194,7 +194,7 @@ const TestPage = () => {
         }
         setStatusChecked(true);
       } catch (error) {
-        console.error("Error checking test status:", error);
+        //console.error("Error checking test status:", error);
         setStatusMessage('Unable to verify test status. Please try again.');
         setCanStartTest(false);
         setStatusChecked(true);
@@ -464,7 +464,7 @@ const TestPage = () => {
         const data = await response.json();
         return data; // Returning response data for further use
     } catch (error) {
-        console.error("Failed to update test score:", error);
+        //console.error("Failed to update test score:", error);
         return null;
     }
 };
@@ -721,7 +721,7 @@ const requestCameraAndMic = async () => {
     } catch (clipboardError) {
       // Clipboard permission denied or not supported
       setClipboardPermission(false);
-      console.log("Clipboard permission not granted");
+      //console.log("Clipboard permission not granted");
     }
   } catch (error) {
     setCameraPermission(false);

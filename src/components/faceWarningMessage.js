@@ -6,7 +6,7 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
 
   const capturePhoto = async () => {
     if (!userUniqueID) {
-      console.error("userUniqueID is required");
+      //console.error("userUniqueID is required");
       return;
     }
 
@@ -33,7 +33,7 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
         body: JSON.stringify({ image: imageData, userUniqueID }),
       });
     } catch (error) {
-      console.error('Error sending image:', error);
+      //console.error('Error sending image:', error);
     }
   };
 

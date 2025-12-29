@@ -63,11 +63,11 @@ const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
           setToleranceLevel(Number(config.toleranceLevel) || 0);
           setAllowedDefaults(Number(config.allowedDefaults) || 0);
         } else {
-          console.error("Error fetching configuration:", data);
+          //console.error("Error fetching configuration:", data);
         }
       })
       .catch(error => {
-        console.error("Error fetching configuration:", error);
+        //console.error("Error fetching configuration:", error);
       });
   }, [templateID, JWTValue, checkUnauthorized]);
 

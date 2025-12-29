@@ -125,7 +125,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       }
       else if (data.statusCode === 404) {
         setMessage(data.body);
-        console.error(data.body);
+        //console.error(data.body);
       } else {
         setMessage("Failed to fetch question: " + data.statusCode + " - " + JSON.stringify(data.body));
         //console.error("Failed to fetch question", data);
@@ -169,11 +169,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
 
       if (data.statusCode !== 200) {
         setMessage("Failed to save answer: " + data.statusCode + "-" + data.body);
-        console.error("Failed to save answer", data);
+        //console.error("Failed to save answer", data);
       }
     } catch (error) {
       setMessage("Failed to save answer: " + error.message);
-      console.error("Error saving answer:", error);
+      //console.error("Error saving answer:", error);
     } finally {
       setIsSavingAnswer(false);
     }
@@ -246,7 +246,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       }
     } catch (error) {
       setMessage("Error submitting test.");
-      console.error("Error submitting test:", error);
+      //console.error("Error submitting test:", error);
     }
     finally {
       setIsSubmitting(false);

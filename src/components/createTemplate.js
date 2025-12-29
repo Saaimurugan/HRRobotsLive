@@ -409,7 +409,7 @@ const CreateTemplate = () => {
       setQuestionSet([...questionSet, ...questionsWithTopic]);
       setTtname(topic + " - " + level);
     } catch (error) {
-      console.error(error);
+      //console.error(error);
       showToast('error', 'Generation Failed', 'Error generating questions. Please try again later.');
     } finally {
       setIsGenerating(false);

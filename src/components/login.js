@@ -59,7 +59,7 @@ const LoginPage = () => {
                     return;
                 }
                 // Token obtained successfully - in production, verify this token on your backend
-                console.log("reCAPTCHA token obtained for login");
+                //console.log("reCAPTCHA token obtained for login");
             } catch (error) {
                 setMessageType("error");
                 setMessage("reCAPTCHA verification failed. Please try again.");

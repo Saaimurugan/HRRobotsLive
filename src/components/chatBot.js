@@ -36,7 +36,7 @@ const ChatBot = () => {
       const botMessage = { sender: 'bot', text: response.data.choices[0].message.content };
       setMessages(prevMessages => [...prevMessages, botMessage]);
     } catch (error) {
-      console.error('Error fetching response from ChatGPT:', error);
+      //console.error('Error fetching response from ChatGPT:', error);
       const errorMessage = { sender: 'bot', text: 'Sorry, I encountered an error. Please try again later.' };
       setMessages(prevMessages => [...prevMessages, errorMessage]);
     }

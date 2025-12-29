@@ -230,6 +230,16 @@ td.status-not-started {
   backdrop-filter: blur(2px);
 }
 
+/* Desktop results needs relative positioning for overlay */
+.desktop-results {
+  position: relative;
+}
+
+/* Table container needs relative positioning for overlay */
+.table-container {
+  position: relative;
+}
+
 .loading-spinner {
   display: flex;
   flex-direction: column;
@@ -274,9 +284,4 @@ td.status-not-started {
     stroke-dasharray: 90, 150;
     stroke-dashoffset: -124;
   }
-}
-
-/* Ensure results-page has relative positioning for overlay */
-.results-page {
-  position: relative;
 }

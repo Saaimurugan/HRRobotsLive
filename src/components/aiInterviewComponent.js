@@ -89,14 +89,14 @@ const AIInterviewComponent = () => {
     if (data.choices && data.choices.length > 0) {
       const question = data.choices[0]?.message?.content || "No question generated.";
       setInterviewQuestions(question); // Set the questions
-      // console.log("question:", question);
+      //console.log("question:", question);
       setInterviewComplete(true);
       setInterviewStarted(true);
     } else {
-      console.error("Unexpected API response structure:", data);
+      //console.error("Unexpected API response structure:", data);
     }
    } catch (error) {
-      console.error("Error fetching interview questions:", error);
+      //console.error("Error fetching interview questions:", error);
    }
   };
 

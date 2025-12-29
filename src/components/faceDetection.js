@@ -49,7 +49,7 @@ const FaceTracking = ({
           onLoadComplete(true);
         }
       } catch (error) {
-        console.error("Error loading models:", error);
+        //console.error("Error loading models:", error);
         setIsLoading(false);
         if (onLoadComplete) {
           onLoadComplete(false);
@@ -68,14 +68,14 @@ const FaceTracking = ({
           videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.error("Error starting video:", error);
+        //console.error("Error starting video:", error);
       }
     };
 
     const capturePhoto = async () => {
 
       if (!userUniqueID) {
-        console.error("userUniqueID is required");
+        //console.error("userUniqueID is required");
         return;
       }
 
@@ -102,7 +102,7 @@ const FaceTracking = ({
           body: JSON.stringify({ image: imageData, userUniqueID }),
         });
       } catch (error) {
-        console.error('Error sending image:', error);
+        //console.error('Error sending image:', error);
       }
     };
 
@@ -216,7 +216,7 @@ const FaceTracking = ({
               }
           } catch (error) {
             // Silently handle detection errors (e.g., video not ready)
-            console.warn("Face detection error:", error.message);
+            //console.warn("Face detection error:", error.message);
           }
         }, 100);
       }

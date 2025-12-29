@@ -94,7 +94,7 @@ const ScoreChart = ({ message, showToast }) => {
           setTopicScores(parsed || []);
         }
       } catch (error) {
-        console.error("Error fetching topic scores:", error);
+        //console.error("Error fetching topic scores:", error);
       } finally {
         setLoadingTopics(false);
       }

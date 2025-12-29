@@ -125,7 +125,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     };
 
     useEffect(() => {
-        console.log("ListTestResultPage: Initial load, testGlobalValue:", testGlobalValue);
+        //console.log("ListTestResultPage: Initial load, testGlobalValue:", testGlobalValue);
         fetchData(true); // Fetch data when page loads (first call)
     }, []);
 
@@ -164,14 +164,14 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 if (checkUnauthorized(data)) return;
 
             } else if (response.status === 404) {
-                console.warn("Error 404: Resource not found.");
+                //console.warn("Error 404: Resource not found.");
             } else if (response.status === 500) {
-                console.error("Error 500: Server error.");
+                //console.error("Error 500: Server error.");
             } else {
-                console.warn(`Unexpected status code: ${response.status}`);
+                //console.warn(`Unexpected status code: ${response.status}`);
             }
         } catch (error) {
-            console.error("Error fetching data:", error);
+            //console.error("Error fetching data:", error);
             // Network or parsing error
         } finally {
             setLoading(false); // Reset loading state
@@ -236,7 +236,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             setLoading(false);
             return true;
         } catch (error) {
-            console.error("Error fetching data for page:", error);
+            //console.error("Error fetching data for page:", error);
             setLoading(false);
             return false;
         }
@@ -246,7 +246,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         // Allow fresh loads even when hasMore is false, but prevent loading when already loading
         if (loading || (!isFirstLoad && !hasMore)) return false;
 
-        console.log("fetchData called, isFirstLoad:", isFirstLoad, "testGlobalValue:", testGlobalValue);
+        //console.log("fetchData called, isFirstLoad:", isFirstLoad, "testGlobalValue:", testGlobalValue);
         setLoading(true); // Indicate fetching state
 
         try {
@@ -260,7 +260,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 token: JWTValue
             };
 
-            console.log("Making API call with requestBody:", requestBody);
+            //console.log("Making API call with requestBody:", requestBody);
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
@@ -269,9 +269,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 body: JSON.stringify(requestBody),
             });
 
-            console.log("API response status:", response.status);
+            //console.log("API response status:", response.status);
             const data = await response.json();
-            console.log("API response data:", data);
+            //console.log("API response data:", data);
 
             if (checkUnauthorized(data)) return false;
 
@@ -298,11 +298,11 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             setLoading(false);
             return true;
         } catch (error) {
-            console.error("Error fetching data:", error);
+            //console.error("Error fetching data:", error);
 
             // Add mock data for testing when API fails
             if (isFirstLoad) {
-                console.log("Adding mock data for testing");
+                //console.log("Adding mock data for testing");
                 const mockData = [
                     {
                         datetime: new Date().toISOString(),
@@ -364,7 +364,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             setTotalPages(Math.ceil(parsedBody.total_count / pageSize));
             setCurrentPage(1); // Reset to first page for search results
         } catch (error) {
-            console.error("Error fetching data:", error);
+            //console.error("Error fetching data:", error);
         } finally {
             setLoading(false); // Reset loading state
         }
@@ -407,7 +407,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 onSearchResults(newItems);
             }
         } catch (error) {
-            console.error("Error fetching search data:", error);
+            //console.error("Error fetching search data:", error);
         } finally {
             setLoading(false);
         }
@@ -469,7 +469,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             setTotalPages(Math.ceil(parsedBody.total_count / pageSize));
             setCurrentPage(1); // Reset to first page
         } catch (error) {
-            console.error("Error fetching sorted data:", error);
+            //console.error("Error fetching sorted data:", error);
         } finally {
             setLoading(false);
         }
@@ -546,8 +546,6 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
     return (
         <div className="results-page">
-            {/* Loading Overlay - shows when fetching data with existing items */}
-            {loading && items.length > 0 && <LoadingOverlay />}
             
             {/* Mobile Search Panel */}
             <div className="mobile-search-panel">
@@ -650,6 +648,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
             {/* Desktop Table Layout */}
             <div className="desktop-results">
+                {/* Loading Overlay - shows when fetching data with existing items */}
+                {loading && items.length > 0 && <LoadingOverlay />}
                 <div className="table-container">
                     <table className="table">
                         <thead>

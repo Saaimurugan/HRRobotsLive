@@ -155,7 +155,7 @@ const CreateJD = () => {
          setJobDescription(htmlContent);
          setShowForm(false);
       } catch (error) {
-         console.error('Error generating job description:', error);
+         //console.error('Error generating job description:', error);
          alert('Failed to generate job description. Please try again.');
       } finally {
          setLoading(false);

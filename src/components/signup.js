@@ -63,7 +63,7 @@ const SignUp = () => {
                 setMessage("reCAPTCHA verification failed. Please try again.");
                 return;
             }
-            console.log("reCAPTCHA token obtained for signup");
+            //console.log("reCAPTCHA token obtained for signup");
         } catch (error) {
             setMessageType("error");
             setMessage("reCAPTCHA verification failed. Please try again.");

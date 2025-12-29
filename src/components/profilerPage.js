@@ -258,7 +258,7 @@ const ProfilerPage = () => {
       setReport(responseContent);
       setShowForm(false);
     } catch (error) {
-      console.error(error);
+      //console.error(error);
       showToast('error', 'Error', 'Error generating suitability report.');
     } finally {
       setIsGenerating(false);

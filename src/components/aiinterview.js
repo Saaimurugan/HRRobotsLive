@@ -68,7 +68,7 @@ const AIInterview = () => {
 
       return response.data;
     } catch (error) {
-      console.error('Error uploading file:', error);
+      //console.error('Error uploading file:', error);
       throw error;
     }
   };
@@ -162,7 +162,7 @@ const AIInterview = () => {
           setTimeout(() => setPopupVisible(false), 6000); // Hide popup after 6 seconds
         })
         .catch((err) => {
-          console.error("Clipboard write failed: ", err);
+          //console.error("Clipboard write failed: ", err);
           setMessage("Failed to copy the URL to the clipboard. Please try again.");
         });
     }
