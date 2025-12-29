@@ -94,6 +94,13 @@ const TestPage = () => {
   const [toleranceLevel, setToleranceLevel] = useState(0);
   const [allowedDefaults, setAllowedDefaults] = useState(10); // Default to 10 allowed deviations
 
+  // Status check states
+  const [statusChecked, setStatusChecked] = useState(false);
+  const [testStatus, setTestStatus] = useState(null);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [canStartTest, setCanStartTest] = useState(true);
+  const [redirectCountdown, setRedirectCountdown] = useState(5);
+
   // Toast functions
   const showToast = (type, title, message) => {
     const id = Date.now();
@@ -154,6 +161,66 @@ const TestPage = () => {
       setUserUniqueIDPresent(true);
     }
   }, []); // Run only once on component mount
+
+  // Check test status upfront when testID is available
+  useEffect(() => {
+    if (!userUniqueID || statusChecked) return;
+
+    const checkTestStatus = async () => {
+      try {
+        const response = await fetch(
+          "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkTestStatus",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ testID: userUniqueID }),
+          }
+        );
+
+        const data = await response.json();
+        
+        if (data.statusCode === 200 && data.body) {
+          const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+          setTestStatus(body.status);
+          setStatusMessage(body.message);
+          setCanStartTest(body.canStart);
+        } else if (data.body) {
+          const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+          setTestStatus(body.status || 'Error');
+          setStatusMessage(body.error || body.message || 'Unable to verify test status');
+          setCanStartTest(false);
+        }
+        setStatusChecked(true);
+      } catch (error) {
+        console.error("Error checking test status:", error);
+        setStatusMessage('Unable to verify test status. Please try again.');
+        setCanStartTest(false);
+        setStatusChecked(true);
+      }
+    };
+
+    checkTestStatus();
+  }, [userUniqueID, statusChecked]);
+
+  // Countdown and redirect for invalid test status
+  useEffect(() => {
+    if (!statusChecked || canStartTest) return;
+
+    const countdownInterval = setInterval(() => {
+      setRedirectCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          window.location.href = 'https://www.hrrobots.com';
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(countdownInterval);
+  }, [statusChecked, canStartTest]);
   
   // const [userDetails, setUserDetails] = useState({ name: "", email: "", phone: "" });
   const [isQuizStarted, setIsQuizStarted] = useState(false);
@@ -737,6 +804,140 @@ const handleNext = () => {
 
 if (userUniqueID != '')
 {
+    // Show status message if test cannot be started
+    if (statusChecked && !canStartTest) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          fontFamily: 'Roboto, Arial, sans-serif',
+          padding: '20px'
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: '20px',
+            padding: '50px',
+            textAlign: 'center',
+            boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
+            maxWidth: '500px',
+            width: '100%'
+          }}>
+            <div style={{
+              width: '80px',
+              height: '80px',
+              borderRadius: '50%',
+              background: testStatus === 'Completed' ? '#28a745' : '#dc3545',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              margin: '0 auto 25px'
+            }}>
+              {testStatus === 'Completed' ? (
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              ) : (
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="white">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                </svg>
+              )}
+            </div>
+            <h1 style={{
+              fontSize: '28px',
+              color: '#333',
+              marginBottom: '15px',
+              fontWeight: '600'
+            }}>
+              Test {testStatus}
+            </h1>
+            <p style={{
+              fontSize: '16px',
+              color: '#666',
+              marginBottom: '30px',
+              lineHeight: '1.6'
+            }}>
+              {statusMessage}
+            </p>
+            <div style={{
+              background: '#f8f9fa',
+              borderRadius: '10px',
+              padding: '20px',
+              marginBottom: '20px'
+            }}>
+              <p style={{
+                fontSize: '14px',
+                color: '#888',
+                margin: '0 0 10px 0'
+              }}>
+                Redirecting to HRRobots in
+              </p>
+              <div style={{
+                fontSize: '48px',
+                fontWeight: 'bold',
+                color: '#667eea'
+              }}>
+                {redirectCountdown}
+              </div>
+              <p style={{
+                fontSize: '12px',
+                color: '#aaa',
+                margin: '10px 0 0 0'
+              }}>
+                seconds
+              </p>
+            </div>
+            <a 
+              href="https://www.hrrobots.com"
+              style={{
+                display: 'inline-block',
+                padding: '12px 30px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                textDecoration: 'none',
+                borderRadius: '25px',
+                fontSize: '14px',
+                fontWeight: '500',
+                transition: 'transform 0.2s, box-shadow 0.2s'
+              }}
+            >
+              Go to HRRobots Now
+            </a>
+          </div>
+        </div>
+      );
+    }
+
+    // Show loading while checking status
+    if (!statusChecked) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          fontFamily: 'Roboto, Arial, sans-serif'
+        }}>
+          <div style={{
+            width: '50px',
+            height: '50px',
+            border: '4px solid rgba(255, 255, 255, 0.3)',
+            borderTop: '4px solid white',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+          <p style={{ marginTop: '20px', fontSize: '18px', color: 'white' }}>
+            Verifying test status...
+          </p>
+        </div>
+      );
+    }
+
     if (!isQuizStarted) 
       {
       requestCameraAndMic();
