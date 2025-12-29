@@ -25,6 +25,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [questionCount, setQuestionCount] = useState(0);
   const [savedQuestions, setSavedQuestions] = useState([]);
+  const questionCountSetRef = React.useRef(false); // Track if questionCount has been set
 
   /* const router = useRouter();
  */
@@ -76,7 +77,9 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     if (navigateToQuestionRef) {
       navigateToQuestionRef.current = (questionNum) => {
         // questionNum is 1-based (1-50), convert to index based on questionCount
-        const targetIndex = questionNum - questionCount;
+        // questionCount is the number of previously answered questions
+        // So question (questionCount + 1) is at index 0
+        const targetIndex = questionNum - questionCount - 1;
         // Only navigate if the question has been loaded
         if (targetIndex >= 0 && targetIndex < questions.length) {
           setCurrentQuestionIndex(targetIndex);
@@ -110,7 +113,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         const parsedBody = JSON.parse(data.body);
         const question = parsedBody.new_question;
         setQuestions((prevQuestions) => [...prevQuestions, question]);
-        if (questionCount === 0) {
+        // Only set questionCount on the very first fetch
+        // This represents the starting question number and should not change
+        // Using a ref to ensure this only happens once, regardless of React re-renders
+        if (!questionCountSetRef.current) {
+          questionCountSetRef.current = true;
           setQuestionCount(parsedBody.question_count);
         }
       }
@@ -237,10 +244,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     <div className="MCQOuterWrap">
       {currentQuestion ?
       <>
-      {(currentQuestionIndex + questionCount) <= 50? 
+      {(currentQuestionIndex + questionCount + 1) <= 50? 
         <div>{/* {currentQuestionIndex} - {questionCount} -  */}
           <h2>
-            Question {questionCount === 0 ? currentQuestionIndex + 1 : currentQuestionIndex + questionCount}
+            Question {currentQuestionIndex + questionCount + 1}
             /50
             {parseQuestionTopic(currentQuestion.question).topic && (
               <span className="question-topic-tag">{parseQuestionTopic(currentQuestion.question).topic}</span>
@@ -258,10 +265,15 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                   checked={answers[currentQuestionIndex] === option}
                   onChange={(e) => {
                     e.stopPropagation();
-                    saveAnswer(option);
+                    // Don't call saveAnswer here - it's already called by the li onClick
+                    // This prevents duplicate API calls
                   }}
+                  onClick={(e) => e.stopPropagation()}
                 />
-                <label htmlFor={`option-${currentQuestionIndex}-${index}`}>
+                <label 
+                  htmlFor={`option-${currentQuestionIndex}-${index}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {option}
                 </label>
               </li>
@@ -275,7 +287,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
             >
               Previous
             </button>&ensp;
-            {(currentQuestionIndex + questionCount) >= 50 ? (
+            {(currentQuestionIndex + questionCount + 1) >= 50 ? (
               <button
                 onClick={handleSubmit}
                 style={{ backgroundColor: "#007bff" }}

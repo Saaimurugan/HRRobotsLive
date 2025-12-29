@@ -906,6 +906,12 @@
   .results-header {
     flex-direction: column;
     align-items: flex-start;
+    gap: 12px;
+    padding: 0 12px 16px;
+  }
+
+  .results-header h2 {
+    font-size: var(--font-size-xl);
   }
 
   .results-actions {
@@ -931,6 +937,169 @@
 
   .pagination {
     flex-wrap: wrap;
+  }
+
+  /* Test Report Card Mobile */
+  .test-report-card {
+    border-radius: var(--radius-md);
+    margin: 0 8px 16px;
+  }
+
+  .report-header-section {
+    padding: 14px 16px;
+  }
+
+  .report-header-section h2 {
+    font-size: var(--font-size-base);
+    letter-spacing: 0.5px;
+  }
+
+  .test-id {
+    font-size: 10px;
+    word-break: break-all;
+  }
+
+  .report-body {
+    padding: 12px;
+  }
+
+  /* Candidate Info Bar Mobile - Stack vertically */
+  .candidate-info-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px 14px;
+    gap: 8px;
+  }
+
+  .info-item {
+    width: 100%;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-border-light);
+  }
+
+  .info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .info-label {
+    font-size: 11px;
+  }
+
+  .info-value {
+    font-size: var(--font-size-xs);
+    text-align: right;
+    max-width: 60%;
+    word-break: break-word;
+  }
+
+  /* Score Chart Container Mobile - Stack vertically */
+  .score-chart-container {
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* Gauge Details Card Mobile */
+  .gauge-details-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: unset;
+    padding: 16px;
+  }
+
+  .gauge-wrapper {
+    width: 160px;
+  }
+
+  .score-summary {
+    font-size: var(--font-size-xs);
+    margin: 4px 0 12px 0;
+    padding-bottom: 12px;
+  }
+
+  .candidate-details-inline .detail-row {
+    padding: 8px 0;
+  }
+
+  .candidate-details-inline .detail-label,
+  .candidate-details-inline .detail-value {
+    font-size: 11px;
+  }
+
+  /* Topic Photos Column Mobile */
+  .topic-photos-column {
+    width: 100%;
+    gap: 12px;
+  }
+
+  /* Topic Table Mobile */
+  .topic-table-section {
+    padding: 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .topic-score-table {
+    font-size: 11px;
+    min-width: 280px;
+  }
+
+  .topic-score-table th,
+  .topic-score-table td {
+    padding: 6px 8px;
+  }
+
+  .topic-score-table th {
+    font-size: 9px;
+  }
+
+  /* Photo Section Mobile */
+  .photo-section-inline {
+    padding: 12px;
+  }
+
+  .photo-section-title {
+    font-size: var(--font-size-xs);
+    margin-bottom: 12px;
+  }
+
+  /* Termination Banner Mobile */
+  .termination-banner {
+    flex-direction: column;
+    text-align: center;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+
+  .termination-banner__icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .termination-banner__icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .termination-banner__title {
+    font-size: 15px;
+  }
+
+  .termination-banner__reason {
+    font-size: 12px;
+  }
+
+  /* Analytics Section Mobile */
+  .analytics-section {
+    margin: 8px;
+    padding: 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .analytics-header h3 {
+    font-size: var(--font-size-base);
   }
 }
 
@@ -1015,7 +1184,142 @@
 @media (max-width: 600px) {
   .photo-catalog-container.photo-grid-3 {
     grid-template-columns: repeat(2, 1fr);
-    max-width: 400px;
+    max-width: 100%;
+  }
+
+  .photo-catalog-container.photo-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 100%;
+    gap: 10px;
+  }
+
+  .photo-catalog-container.photo-grid-1 {
+    max-width: 200px;
+  }
+
+  .photo-catalog-container {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .photo-card {
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* Extra small screens (under 400px) */
+@media (max-width: 400px) {
+  .modern-result-page {
+    padding-top: 56px;
+  }
+
+  .test-report-card {
+    margin: 0 4px 12px;
+    border-radius: 8px;
+  }
+
+  .report-header-section {
+    padding: 12px;
+  }
+
+  .report-header-section h2 {
+    font-size: 13px;
+  }
+
+  .test-id {
+    font-size: 9px;
+  }
+
+  .report-body {
+    padding: 10px;
+  }
+
+  .candidate-info-bar {
+    padding: 10px 12px;
+  }
+
+  .info-label {
+    font-size: 10px;
+  }
+
+  .info-value {
+    font-size: 11px;
+  }
+
+  .gauge-details-card {
+    padding: 12px;
+  }
+
+  .gauge-wrapper {
+    width: 140px;
+  }
+
+  .score-summary {
+    font-size: 11px;
+  }
+
+  .candidate-details-inline .detail-label,
+  .candidate-details-inline .detail-value {
+    font-size: 10px;
+  }
+
+  .topic-score-table {
+    font-size: 10px;
+    min-width: 260px;
+  }
+
+  .topic-score-table th {
+    font-size: 8px;
+    padding: 5px 6px;
+  }
+
+  .topic-score-table td {
+    padding: 5px 6px;
+  }
+
+  .photo-section-title {
+    font-size: 11px;
+  }
+
+  .photo-catalog-container.photo-grid-2,
+  .photo-catalog-container.photo-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .results-header {
+    padding: 0 8px 12px;
+  }
+
+  .results-header h2 {
+    font-size: var(--font-size-lg);
+  }
+
+  .modern-button {
+    padding: 8px 12px;
+    font-size: var(--font-size-xs);
+  }
+
+  .termination-banner {
+    padding: 12px;
+  }
+
+  .termination-banner__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .termination-banner__title {
+    font-size: 14px;
+  }
+
+  .termination-banner__reason {
+    font-size: 11px;
+  }
+
+  .analytics-section {
+    margin: 4px;
+    padding: 12px;
   }
 }
 
