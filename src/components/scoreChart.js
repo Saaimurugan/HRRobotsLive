@@ -46,14 +46,15 @@ const ScoreChart = ({ message, showToast }) => {
   const { testID, candidateName, templateName, submittedAt } = parsedBody || {};
   
   // Calculate totals from topic scores when available, otherwise fall back to message data
+  // totalQuestions is always 50 (hardcoded test length)
   const calculatedTotals = topicScores.length > 0 
-    ? topicScores.reduce((acc, topic) => ({
-        totalQuestions: acc.totalQuestions + (topic.totalQuestions || 0),
-        correctAnswers: acc.correctAnswers + (topic.correct || 0),
-        submittedAnswers: acc.submittedAnswers + (topic.attempted || 0),
-      }), { totalQuestions: 0, correctAnswers: 0, submittedAnswers: 0 })
+    ? {
+        totalQuestions: 50,
+        correctAnswers: topicScores.reduce((acc, topic) => acc + (topic.correct || 0), 0),
+        submittedAnswers: topicScores.reduce((acc, topic) => acc + (topic.attempted || 0), 0),
+      }
     : {
-        totalQuestions: parsedBody?.totalQuestions || 0,
+        totalQuestions: parsedBody?.totalQuestions || 50,
         correctAnswers: parsedBody?.correctAnswers || 0,
         submittedAnswers: parsedBody?.submittedAnswers || 0,
       };
@@ -168,7 +169,6 @@ const ScoreChart = ({ message, showToast }) => {
               <thead>
                 <tr>
                   <th>Topic</th>
-                  <th>No of Questions</th>
                   <th>Attempted</th>
                   <th>Correct</th>
                   <th>Percentage</th>
@@ -178,10 +178,9 @@ const ScoreChart = ({ message, showToast }) => {
                 {topicScores.map((topic, index) => (
                   <tr key={index}>
                     <td>{topic.topic}</td>
-                    <td>{topic.totalQuestions}</td>
                     <td>{topic.attempted}</td>
                     <td>{topic.correct}</td>
-                    <td>{topic.percentage}%</td>
+                    <td>{((topic.correct / 50) * 100).toFixed(0)}%</td>
                   </tr>
                 ))}
               </tbody>
