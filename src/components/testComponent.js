@@ -20,6 +20,8 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
+  const [isLoadingPrev, setIsLoadingPrev] = useState(false);
+  const [isSavingAnswer, setIsSavingAnswer] = useState(false);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -135,7 +137,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   };
 
   const saveAnswer = async (answer) => {
+    if (isSavingAnswer || isLoadingNext || isLoadingPrev) return; // Prevent saving during navigation
+    
     const currentQuestion = questions[currentQuestionIndex];
+    setIsSavingAnswer(true);
 
     // Save the answer locally
     const newAnswers = [...answers];
@@ -169,17 +174,25 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     } catch (error) {
       setMessage("Failed to save answer: " + error.message);
       console.error("Error saving answer:", error);
+    } finally {
+      setIsSavingAnswer(false);
     }
   };
 
-  const handlePrev = () => {
+  const handlePrev = async () => {
+    if (isLoadingPrev || isLoadingNext || isSavingAnswer) return; // Prevent during other operations
     if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setIsLoadingPrev(true);
+      try {
+        setCurrentQuestionIndex(currentQuestionIndex - 1);
+      } finally {
+        setIsLoadingPrev(false);
+      }
     }
   };
 
   const handleNext = async () => {
-    if (isLoadingNext) return; // Prevent double-clicks
+    if (isLoadingNext || isLoadingPrev || isSavingAnswer) return; // Prevent double-clicks and during other operations
     setIsLoadingNext(true);
     try {
       //check whether setSavedQuestionCount has the currentQuestion.questionID
@@ -206,6 +219,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Save the current answer before submitting if not already saved
+      if (currentQuestion && !savedQuestions.includes(currentQuestion.questionID)) {
+        await saveAnswer(answers[currentQuestionIndex] || "");
+      }
 /*       const correctAnswers = answers.reduce((total, answer, index) => {
         return answer === questions[index].correctAnswer ? total + 1 : total;
       }, 0);
@@ -255,40 +272,44 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           </h2>
           <p>{parseQuestionTopic(currentQuestion.question).question}</p>
           <ul className="MCQUL">
-            {currentQuestion.options.map((option, index) => (
-              <li key={index} onClick={() => saveAnswer(option)} style={{ cursor: 'pointer' }}>
+            {currentQuestion.options.map((option, index) => {
+              const isDisabled = isLoadingNext || isLoadingPrev || isSavingAnswer;
+              return (
+              <li key={index} onClick={() => !isDisabled && saveAnswer(option)} className={isDisabled ? 'disabled' : ''}>
                 <input
                   type="radio"
                   id={`option-${currentQuestionIndex}-${index}`}
                   name={`question-${currentQuestionIndex}`}
                   value={option}
                   checked={answers[currentQuestionIndex] === option}
-                  onChange={() => saveAnswer(option)}
+                  onChange={() => !isDisabled && saveAnswer(option)}
                   onClick={(e) => e.stopPropagation()}
+                  disabled={isDisabled}
                 />
                 <label 
                   htmlFor={`option-${currentQuestionIndex}-${index}`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    saveAnswer(option);
+                    if (!isDisabled) saveAnswer(option);
                   }}
                 >
                   {option}
                 </label>
               </li>
-            ))}
+            )})}
           </ul>
           <div>
             <button
               onClick={handlePrev}
-              disabled={currentQuestionIndex === 0}
+              disabled={currentQuestionIndex === 0 || isLoadingNext || isLoadingPrev || isSavingAnswer}
               style={{ backgroundColor: "#6c757d" }}
             >
-              Previous
+              {isLoadingPrev ? "Loading..." : "Previous"}
             </button>&ensp;
             {(currentQuestionIndex + questionCount + 1) >= 50 ? (
               <button
                 onClick={handleSubmit}
+                disabled={isSubmitting || isSavingAnswer}
                 style={{ backgroundColor: "#007bff" }}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
@@ -296,7 +317,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
             ) : (
               <button
                 onClick={handleNext}
-                disabled={isLoadingNext}
+                disabled={isLoadingNext || isLoadingPrev || isSavingAnswer}
               >{isLoadingNext ? "Loading..." : "Next"}
               </button>
             )}
