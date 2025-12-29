@@ -1,35 +1,49 @@
 import boto3
 import json
 from decimal import Decimal
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Key, Attr
 
-# Custom JSON encoder to handle Decimal types from DynamoDB
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
             return int(obj) if obj % 1 == 0 else float(obj)
         return super(DecimalEncoder, self).default(obj)
 
-# Initialize DynamoDB client
+# Initialize clients OUTSIDE handler for connection reuse (Lambda best practice)
 dynamodb = boto3.resource('dynamodb')
-
-# Tables
 table = dynamodb.Table("testTransactions")
 savedResult_table = dynamodb.Table("savedResult_table_name")
-
-# Initialize Lambda client
 lambda_client = boto3.client('lambda')
 
 def lambda_handler(event, context):
     try:
         test_id = event.get('searchTerm')
         
-        # Check if test exists
-        response = table.scan(
-            FilterExpression=Attr('testID').eq(test_id)
-        )
+        if not test_id:
+            return {
+                'statusCode': 400,
+                'body': json.dumps('Missing required parameter: searchTerm')
+            }
         
-        items = response.get('Items', [])
+        # Try GSI first, fall back to full scan if GSI doesn't exist
+        items = []
+        try:
+            response = table.query(
+                IndexName="testID-index",
+                KeyConditionExpression=Key('testID').eq(test_id)
+            )
+            items = response.get('Items', [])
+        except dynamodb.meta.client.exceptions.ResourceNotFoundException:
+            # GSI doesn't exist, use scan
+            print("GSI testID-index not found, using scan")
+            response = table.scan(FilterExpression=Attr('testID').eq(test_id))
+            items = response.get('Items', [])
+        except Exception as e:
+            # Other GSI error (e.g., ValidationException), fall back to scan
+            print(f"GSI query failed: {e}, falling back to scan")
+            response = table.scan(FilterExpression=Attr('testID').eq(test_id))
+            items = response.get('Items', [])
+        
         if not items:
             return {
                 'statusCode': 404,
@@ -37,22 +51,29 @@ def lambda_handler(event, context):
             }
         
         status = items[0].get('status')
-        # Allow fetching results for Completed or Terminated tests
         if status not in ["Completed", "Terminated"]:
             return {
                 'statusCode': 404,
                 'body': json.dumps(f'Test {test_id} not yet completed!')
             }
 
-        # Fetch saved result from savedResult table
-        result_response = savedResult_table.scan(
-            FilterExpression=Attr('testID').eq(test_id)
-        )
+        # Fetch saved result - try GSI first, fall back to scan
+        saved_results = []
+        try:
+            result_response = savedResult_table.query(
+                IndexName="testID-index",
+                KeyConditionExpression=Key('testID').eq(test_id)
+            )
+            saved_results = result_response.get('Items', [])
+        except Exception:
+            result_response = savedResult_table.scan(
+                FilterExpression=Attr('testID').eq(test_id)
+            )
+            saved_results = result_response.get('Items', [])
         
-        saved_results = result_response.get('Items', [])
         result_summary = saved_results[0].get('resultSummary', {}) if saved_results else {}
         
-        # If no saved results or resultSummary is empty, invoke doSubmitAndCalculateScore to calculate
+        # If no saved results, calculate them
         if not saved_results or not result_summary:
             invoke_response = lambda_client.invoke(
                 FunctionName='doSubmitAndCalculateScore',
@@ -62,18 +83,24 @@ def lambda_handler(event, context):
             
             payload = json.loads(invoke_response['Payload'].read())
             if payload.get('statusCode') == 200:
-                # Try to get result directly from the response
                 body = payload.get('body', '{}')
                 if isinstance(body, str):
                     body = json.loads(body)
                 if body.get('result'):
                     result_summary = body.get('result')
                 else:
-                    # Fallback: fetch from DB
-                    result_response = savedResult_table.scan(
-                        FilterExpression=Attr('testID').eq(test_id)
-                    )
-                    saved_results = result_response.get('Items', [])
+                    # Fetch from DB
+                    try:
+                        result_response = savedResult_table.query(
+                            IndexName="testID-index",
+                            KeyConditionExpression=Key('testID').eq(test_id)
+                        )
+                        saved_results = result_response.get('Items', [])
+                    except Exception:
+                        result_response = savedResult_table.scan(
+                            FilterExpression=Attr('testID').eq(test_id)
+                        )
+                        saved_results = result_response.get('Items', [])
                     if saved_results:
                         result_summary = saved_results[0].get('resultSummary', {})
             

@@ -207,7 +207,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     token: JWTValue
                 };
                 
-                const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+                const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -261,7 +261,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             };
 
             console.log("Making API call with requestBody:", requestBody);
-            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -333,7 +333,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         setLoading(true); // Indicate fetching state
 
         try {
-            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -375,7 +375,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         setLoading(true);
 
         try {
-            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -450,7 +450,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 requestBody.searchName = searchName.trim();
             }
 
-            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus", {
+            const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

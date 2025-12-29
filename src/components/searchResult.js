@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useGlobalContext } from "../globalContext";
 import { useNavigate } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
 import ListTestResultPage from "./listTestResultPage"
 import ScoreChart from "./scoreChart";
 import AnalsticsOnResult from "./analsticsOnResult";
+import { resultCache, cacheKeys } from "../resultCache";
 import "../App.css";
 import "../TableStyles.css";
 import "../analsticsOnResult.css";
@@ -47,8 +48,8 @@ function SearchResult() {
   const { globalValue, JWTValue } = useGlobalContext("");
   const navigate = useNavigate();
 
-  // Toast functions
-  const showToast = (type, title, message) => {
+  // Toast functions - memoized to prevent re-renders
+  const showToast = useCallback((type, title, message) => {
     const id = Date.now();
     setToasts(prev => [...prev, { id, type, title, message }]);
     setTimeout(() => {
@@ -57,14 +58,14 @@ function SearchResult() {
         setToasts(prev => prev.filter(t => t.id !== id));
       }, 300);
     }, 4000);
-  };
+  }, []);
 
-  const removeToast = (id) => {
+  const removeToast = useCallback((id) => {
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 300);
-  };
+  }, []);
 
   // Session handler
   const { checkUnauthorized } = useSessionHandler(showToast);
@@ -95,7 +96,7 @@ function SearchResult() {
         try {
           const searchUUID = searchValue.split('/').pop();
 
-          const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult", {
+          const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult_", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -190,7 +191,7 @@ function SearchResult() {
       // Try test ID search first
       try {
         const searchUUID = searchValue.split('/').pop();
-        const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult", {
+        const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult_", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -228,12 +229,27 @@ function SearchResult() {
     setTableFilter(""); // Clear table filter on reset
   };
 
-  const handleSearchFromList = async (testID, itemData = {}) => {
+  const handleSearchFromList = useCallback(async (testID, itemData = {}) => {
     const searchUUID = testID.split('/').pop();
+    const cacheKey = cacheKeys.testResult(searchUUID);
+    
+    // Check cache first
+    const cachedResult = resultCache.get(cacheKey);
+    if (cachedResult) {
+      const enrichedData = {
+        ...cachedResult,
+        templateName: cachedResult.templateName || itemData.templateName || "N/A",
+        submittedAt: cachedResult.submittedAt || itemData.datetime || null,
+        status: itemData.status || cachedResult.status || "Unknown",
+        terminationReason: itemData.terminationReason || cachedResult.terminationReason || null,
+      };
+      setFileContent(enrichedData);
+      return;
+    }
 
     try {
       setCandidateLoading(true);
-      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult", {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult_", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -247,6 +263,9 @@ function SearchResult() {
 
       if (data.statusCode === 200) {
         const parsedBody = JSON.parse(data.body);
+        // Cache the result
+        resultCache.set(cacheKey, parsedBody);
+        
         // Merge with additional data from list item (templateName, datetime, status, terminationReason)
         const enrichedData = {
           ...parsedBody,
@@ -279,7 +298,7 @@ function SearchResult() {
     } finally {
       setCandidateLoading(false);
     }
-  };
+  }, [JWTValue, checkUnauthorized, showToast]);
 
   const handlePrint = () => {
     const printableContent = document.getElementById("printableContent");
