@@ -207,6 +207,20 @@ const Profile = () => {
     return emailRegex.test(email);
   };
 
+  const personalEmailDomains = [
+    "gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "aol.com",
+    "icloud.com", "protonmail.com", "zohomail.in.com", "mail.com", "gmx.com",
+    "yandex.com", "tutanota.com", "fastmail.com", "live.com", "msn.com",
+    "qq.com", "naver.com", "rediffmail.com", "rambler.ru", "seznam.cz",
+    "freenet.de", "web.de", "orange.fr", "libero.it", "virgilio.it",
+    "hushmail.com", "163.com", "126.com", "sina.com", "lycos.com"
+  ];
+
+  const isPersonalEmail = (email) => {
+    const domain = email.split('@')[1]?.toLowerCase();
+    return personalEmailDomains.includes(domain);
+  };
+
   const handleInviteUser = async (e) => {
     e.preventDefault();
     
@@ -220,9 +234,31 @@ const Profile = () => {
       return;
     }
 
+    if (isPersonalEmail(inviteEmail)) {
+      showToast('error', 'Validation Error', 'Personal emails are not allowed. Please use a business email address.');
+      return;
+    }
+
     setInviteLoading(true);
 
     try {
+      // Check if email is already registered
+      const checkEmailResponse = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/checkEmail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: inviteEmail }),
+      });
+
+      const checkData = await checkEmailResponse.json();
+
+      if (checkData.statusCode !== 200) {
+        // Email is already registered
+        showToast('warning', 'Already Registered', `${inviteEmail} is already registered on HR Robots.`);
+        setInviteLoading(false);
+        return;
+      }
+
+      // Email not registered, send invitation
       const inviteBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <h2 style="color: #1cbbb4;">You're Invited to HR Robots!</h2>
@@ -230,7 +266,7 @@ const Profile = () => {
           <p><strong>${globalValue}</strong> has invited you to join HR Robots platform.</p>
           <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
           <p style="margin-top: 20px;">
-            <a href="${window.location.origin}/login" 
+            <a href="${window.location.origin}/signup" 
                style="background: linear-gradient(135deg, #1cbbb4 0%, #0d9488 100%); 
                       color: white; 
                       padding: 12px 24px; 

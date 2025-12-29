@@ -235,10 +235,19 @@ const handleCopyToClipboard = (templateID) => {
 };
 
 const handleAssignTemplate = async (email) => {
-  setLoading(false);
+  setLoading(true);
   try {
-    //console.log("Assigning template to:", email);
-    //console.log("Template ID:", templateIDSelectedToAssign);
+    // Check if email is registered
+    const checkEmailResponse = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/checkEmail", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    const checkData = await checkEmailResponse.json();
+    const isUserRegistered = checkData.statusCode !== 200;
+
+    // Assign the template regardless of registration status
     const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/Assignedto", {
        method: "POST",
        headers: {
@@ -248,17 +257,58 @@ const handleAssignTemplate = async (email) => {
      });       
      const data = await response.json();
      if (checkUnauthorized(data)) return;
-     if (data.statusCode === 200) 
-       {
-         fetchTemplates();
+     if (data.statusCode === 200) {
+       fetchTemplates();
+       
+       // If user is not registered, send an invite email
+       if (!isUserRegistered) {
+         const inviteBody = `
+           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+             <h2 style="color: #1cbbb4;">You're Invited to HR Robots!</h2>
+             <p>Hello,</p>
+             <p><strong>${globalValue}</strong> has assigned you a screening test template and invited you to join HR Robots platform.</p>
+             <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
+             <p style="margin-top: 20px;">
+               <a href="https://www.hrrobots.click/signup" 
+                  style="background: linear-gradient(135deg, #1cbbb4 0%, #0d9488 100%); 
+                         color: white; 
+                         padding: 12px 24px; 
+                         text-decoration: none; 
+                         border-radius: 6px; 
+                         display: inline-block;">
+                 Get Started
+               </a>
+             </p>
+             <p style="margin-top: 20px; color: #666; font-size: 14px;">
+               Sign up to access the template that has been assigned to you.
+             </p>
+           </div>
+         `;
+
+         await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
+           method: "POST",
+           headers: {
+             "Content-Type": "application/json",
+           },
+           body: JSON.stringify({
+             recipient_email: email,
+             subject: `${globalValue} assigned you a template on HR Robots`,
+             body: inviteBody
+           }),
+         });
+         
+         showToast('success', 'Template Assigned', `Template assigned to ${email}. An invitation email has been sent since they are not registered.`);
+       } else {
+         showToast('success', 'Template Assigned', `Template assigned successfully to ${email}.`);
        }
+     }
   } catch (error) {
-    console.error("Error fetching templates:", error);
+    console.error("Error assigning template:", error);
+    showToast('error', 'Error', 'An error occurred while assigning the template.');
   }
   finally
   {
     setLoading(false);
-    setMessage("Template assigned successfully!");
   }
 };
 
