@@ -117,7 +117,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
     // Handle item click with status check
     const handleItemClick = (item) => {
-        if (item.status === "Completed" || item.status === "Complete") {
+        if (item.status === "Completed" || item.status === "Complete" || item.status === "Terminated") {
             onItemClick(item.testID, item);
         } else {
             showToast("error", "Test Incomplete", "This test is not completed and therefore the report can't be generated.");
@@ -612,6 +612,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                                     <p className="result-card__title">{item.templateName}</p>
                                     <p className="result-card__candidate">Candidate: {item.candidateName}</p>
                                     <p className="result-card__id">Test ID: {item.testID}</p>
+                                    {item.status === "Terminated" && item.terminationReason && (
+                                        <p className="result-card__termination-reason">Reason: {item.terminationReason}</p>
+                                    )}
                                 </div>
                                 <div className="result-card__actions">
                                     {confirmationRowIndex === index ? (
@@ -700,8 +703,12 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                                         <td className={`status-cell ${(item.status === "Completed" || item.status === "Complete") ? "status-completed" :
                                             item.status === "Terminated" ? "status-terminated" :
                                                 "status-not-started"
-                                            }`}>
+                                            }`}
+                                            title={item.status === "Terminated" && item.terminationReason ? `Reason: ${item.terminationReason}` : ""}>
                                             {item.status}
+                                            {item.status === "Terminated" && item.terminationReason && (
+                                                <span className="termination-reason-hint"> ⓘ</span>
+                                            )}
                                         </td>
 
                                         <td className="table-actions-cell">

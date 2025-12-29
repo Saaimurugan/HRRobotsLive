@@ -77,6 +77,20 @@ td.status-not-started {
   color: var(--color-warning-text);
 }
 
+/* Termination Reason Styles */
+.termination-reason-hint {
+  margin-left: 4px;
+  cursor: help;
+  opacity: 0.7;
+}
+
+.result-card__termination-reason {
+  font-size: 0.75rem;
+  color: var(--color-error-text, #dc3545);
+  margin-top: 4px;
+  font-style: italic;
+}
+
 
 /* ===================================
    Skeleton Loader Styles

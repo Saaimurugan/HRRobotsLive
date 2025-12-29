@@ -285,9 +285,26 @@ const TestPage = () => {
 
     let hasTerminated = false; // Local guard to prevent multiple terminations
 
-    const terminateForScreenshot = (reason) => {
+    const terminateForScreenshot = async (reason) => {
       if (hasTerminated) return; // Prevent multiple calls
       hasTerminated = true;
+      
+      // Call the API to update status in DB with termination reason
+      try {
+        await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/changeTestStatus", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            testID: userUniqueID,
+            terminationReason: 'screenshot',
+          }),
+        });
+      } catch (error) {
+        // Silent fail - termination will still happen locally
+      }
+      
       setTerminationReason('screenshot');
       showToast('error', 'Test Terminated', 'Taking screenshots during the test is not allowed.');
       setIsTerminated(true);
@@ -438,7 +455,7 @@ const TestPage = () => {
 };
 
 useEffect(() => {
-  const callAPI = async () => {
+  const callAPI = async (reason) => {
     try {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/changeTestStatus", {
         method: "POST",
@@ -447,6 +464,7 @@ useEffect(() => {
         },
         body: JSON.stringify({
           testID: userUniqueID,
+          terminationReason: reason,
         }),
       });
 
@@ -500,7 +518,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   if (terminationMessage) {
     // Call the API if any of the conditions are not met
     //console.log("API call triggered - Test Terminated!");
-    callAPI();
+    callAPI(reason);
     showToast('error', 'Test Terminated', terminationMessage);
     setTerminationReason(reason);
     setIsTerminated(true); // Set the termination state to true 

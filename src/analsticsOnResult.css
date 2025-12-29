@@ -1018,3 +1018,52 @@
     max-width: 400px;
   }
 }
+
+
+/* Termination Banner Styles */
+.termination-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: #ffffff;
+  padding: 16px 24px;
+  border-radius: 8px 8px 0 0;
+}
+
+.termination-banner__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+.termination-banner__icon svg {
+  stroke: #ffffff;
+}
+
+.termination-banner__content {
+  flex: 1;
+}
+
+.termination-banner__title {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.termination-banner__reason {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+/* Adjust report header when termination banner is present */
+.test-report-card .termination-banner + .report-header-section {
+  border-radius: 0;
+}

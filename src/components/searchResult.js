@@ -79,12 +79,12 @@ function SearchResult() {
   useEffect(() => {
     const performSearch = async () => {
       if (!candidateName.trim()) {
-        // Clear search when input is empty
-        setFileContent("");
+        // Clear search when input is empty - but don't clear fileContent if it was set by clicking an item
         setTableFilter("");
         return;
       }
 
+      // Only clear fileContent when user is actively typing in search
       setFileContent("");
 
       try {
@@ -144,7 +144,7 @@ function SearchResult() {
 
     const timeoutId = setTimeout(performSearch, 500); // 500ms delay
     return () => clearTimeout(timeoutId);
-  }, [candidateName, globalValue, JWTValue, checkUnauthorized, showToast]);
+  }, [candidateName, JWTValue]);
 
 
 
@@ -247,16 +247,35 @@ function SearchResult() {
 
       if (data.statusCode === 200) {
         const parsedBody = JSON.parse(data.body);
-        // Merge with additional data from list item (templateName, datetime)
+        // Merge with additional data from list item (templateName, datetime, status, terminationReason)
         const enrichedData = {
           ...parsedBody,
           templateName: parsedBody.templateName || itemData.templateName || "N/A",
           submittedAt: parsedBody.submittedAt || itemData.datetime || null,
+          status: itemData.status || parsedBody.status || "Unknown",
+          terminationReason: itemData.terminationReason || parsedBody.terminationReason || null,
         };
         setFileContent(enrichedData);
+      } else if (data.statusCode === 404 && itemData.status === "Terminated") {
+        // For terminated tests without saved results, show basic info from list data
+        const basicData = {
+          testID: searchUUID,
+          candidateName: itemData.candidateName || "N/A",
+          templateName: itemData.templateName || "N/A",
+          submittedAt: itemData.datetime || null,
+          status: "Terminated",
+          terminationReason: itemData.terminationReason || "Unknown reason",
+          totalQuestions: 0,
+          correctAnswers: 0,
+          submittedAnswers: 0,
+        };
+        setFileContent(basicData);
+      } else {
+        // Handle other non-200 responses - show error toast
+        showToast('error', 'Error Loading Results', `Unable to load test results. Status: ${data.statusCode}`);
       }
     } catch (error) {
-      // Silent failure - table filtering will handle finding the test
+      showToast('error', 'Network Error', 'Failed to fetch test results. Please try again.');
     } finally {
       setCandidateLoading(false);
     }
@@ -289,6 +308,40 @@ function SearchResult() {
           border-radius: 12px;
           overflow: hidden;
           margin-bottom: 24px;
+        }
+        .termination-banner {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+          color: #ffffff;
+          padding: 16px 24px;
+        }
+        .termination-banner__icon {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 48px;
+          height: 48px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+        }
+        .termination-banner__icon svg {
+          stroke: #ffffff;
+        }
+        .termination-banner__content {
+          flex: 1;
+        }
+        .termination-banner__title {
+          margin: 0 0 4px 0;
+          font-size: 18px;
+          font-weight: 600;
+        }
+        .termination-banner__reason {
+          margin: 0;
+          font-size: 14px;
+          opacity: 0.95;
         }
         .report-header-section {
           background: linear-gradient(135deg, #6ba3ae 0%, #5a929d 100%);
@@ -687,8 +740,25 @@ function SearchResult() {
               <div className="results-content">
                 <div id="printableContent">
                   <div className="test-report-card">
+                    {fileContent.status === "Terminated" && (
+                      <div className="termination-banner">
+                        <div className="termination-banner__icon">
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <line x1="15" y1="9" x2="9" y2="15"/>
+                            <line x1="9" y1="9" x2="15" y2="15"/>
+                          </svg>
+                        </div>
+                        <div className="termination-banner__content">
+                          <h3 className="termination-banner__title">Test Terminated</h3>
+                          <p className="termination-banner__reason">
+                            Reason: {fileContent.terminationReason || "Unknown reason"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                     <div className="report-header-section">
-                      <h2>Assessment Test Report</h2>
+                      <h2>{fileContent.status === "Terminated" ? "Terminated Test Report" : "Assessment Test Report"}</h2>
                       <div className="test-id">Test ID: {fileContent.testID}</div>
                     </div>
 
