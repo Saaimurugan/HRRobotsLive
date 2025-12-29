@@ -263,16 +263,15 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                   name={`question-${currentQuestionIndex}`}
                   value={option}
                   checked={answers[currentQuestionIndex] === option}
-                  onChange={(e) => {
-                    e.stopPropagation();
-                    // Don't call saveAnswer here - it's already called by the li onClick
-                    // This prevents duplicate API calls
-                  }}
+                  onChange={() => saveAnswer(option)}
                   onClick={(e) => e.stopPropagation()}
                 />
                 <label 
                   htmlFor={`option-${currentQuestionIndex}-${index}`}
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    saveAnswer(option);
+                  }}
                 >
                   {option}
                 </label>
