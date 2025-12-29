@@ -14,7 +14,9 @@ const FaceTracking = ({
   audioVolume = 0,
   isTalking = false,
   speechCount = 0,
-  isAudioListening = false
+  isAudioListening = false,
+  // Timer control
+  isFirstQuestionLoaded = false
 }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -298,7 +300,7 @@ const handleTimerEnd = () => {
       {isLoading ? 
         <p style={{ color: 'red', fontSize: '20px', marginTop: '15px' }}>Loading...</p>
         :
-        <TimerComponent onTimerEnd={handleTimerEnd} />
+        isFirstQuestionLoaded ? <TimerComponent onTimerEnd={handleTimerEnd} /> : null
         }
     </>
     );

@@ -249,14 +249,17 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           <p>{parseQuestionTopic(currentQuestion.question).question}</p>
           <ul className="MCQUL">
             {currentQuestion.options.map((option, index) => (
-              <li key={index}>
+              <li key={index} onClick={() => saveAnswer(option)} style={{ cursor: 'pointer' }}>
                 <input
                   type="radio"
                   id={`option-${currentQuestionIndex}-${index}`}
                   name={`question-${currentQuestionIndex}`}
                   value={option}
                   checked={answers[currentQuestionIndex] === option}
-                  onChange={() => saveAnswer(option)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    saveAnswer(option);
+                  }}
                 />
                 <label htmlFor={`option-${currentQuestionIndex}-${index}`}>
                   {option}

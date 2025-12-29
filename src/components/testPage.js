@@ -1114,6 +1114,7 @@ if (userUniqueID != '')
         isTalking={audioDetection.isTalking}
         speechCount={speechCount}
         isAudioListening={audioDetection.isListening}
+        isFirstQuestionLoaded={testProgress.questionsLoaded > 0}
         />
         {/* Progress dots for larger screens */}
         <div className="progress-dots-desktop" style={{
