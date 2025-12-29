@@ -43,7 +43,10 @@ def lambda_handler(event, context):
             # Update existing answer instead of creating a new one
             answer_ID = existing_answers[0]['answerID']
             answers_table.update_item(
-                Key={'answerID': answer_ID},
+                Key={
+                    'answerID': answer_ID,
+                    'questionID': question_id
+                },
                 UpdateExpression='SET answer = :answer, #ts = :timestamp',
                 ExpressionAttributeNames={'#ts': 'timestamp'},
                 ExpressionAttributeValues={
