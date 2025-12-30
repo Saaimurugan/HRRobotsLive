@@ -13,6 +13,7 @@
     "face-api.js": "^0.22.2",
     "file-system": "^2.2.2",
     "fs": "0.0.1-security",
+    "html2canvas": "^1.4.1",
     "pdfjs-dist": "^2.16.105",
     "react": "^19.0.0",
     "react-avatar": "^5.0.3",
