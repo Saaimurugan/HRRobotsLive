@@ -265,6 +265,7 @@ const TestPage = () => {
   // Refs to track current state for event listeners
   const isQuizStartedRef = useRef(false);
   const isTerminatedRef = useRef(false);
+  const showProctorWarningRef = useRef(false);
 
   // Keep refs in sync with state for event listeners
   useEffect(() => {
@@ -274,6 +275,10 @@ const TestPage = () => {
   useEffect(() => {
     isTerminatedRef.current = isTerminated;
   }, [isTerminated]);
+
+  useEffect(() => {
+    showProctorWarningRef.current = showProctorWarning;
+  }, [showProctorWarning]);
 
   // Audio detection state
   const [isTalking, setIsTalking] = useState(false);
@@ -655,7 +660,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   // Detect window focus and blur
   useEffect(() => {
     const handleBlur = () => {
-      if (isQuizStartedRef.current && !isTerminatedRef.current) {
+      if (isQuizStartedRef.current && !isTerminatedRef.current && !showProctorWarningRef.current) {
         // Window lost focus during test - show warning modal
         setFocusAttempts(prev => prev + 1);
         setProctorWarningType('focus');
@@ -798,6 +803,7 @@ const handleReturnToTest = () => {
   
   // Restore focus
   setIsFocused(true);
+  setIsFullScreen(true);
   setProctorWarningType(null);
 };
 
@@ -805,6 +811,17 @@ const handleReturnToTest = () => {
 const handleMaxProctorAttemptsReached = () => {
   setShowProctorWarning(false);
   // The termination will be handled by the useEffect that checks attempts
+};
+
+// Handler when timer expires without returning to test
+const handleTimerExpired = () => {
+  setShowProctorWarning(false);
+  // Set max attempts to force termination
+  if (proctorWarningType === 'fullscreen') {
+    setFullscreenAttempts(maxProctorAttempts);
+  } else {
+    setFocusAttempts(maxProctorAttempts);
+  }
 };
 
 // const saveAnswer = (answer) => {
@@ -1076,15 +1093,19 @@ if (userUniqueID != '')
       <Toast toasts={toasts} removeToast={removeToast} />
       
       {/* Proctor Warning Modal for Fullscreen/Focus violations */}
-      <ProctorWarningModal
-        isVisible={showProctorWarning}
-        warningType={proctorWarningType}
-        attemptCount={proctorWarningType === 'fullscreen' ? fullscreenAttempts : focusAttempts}
-        maxAttempts={maxProctorAttempts}
-        userUniqueID={userUniqueID}
-        onReturnToTest={handleReturnToTest}
-        onMaxAttemptsReached={handleMaxProctorAttemptsReached}
-      />
+      {showProctorWarning && (
+        <ProctorWarningModal
+          key={`${proctorWarningType}-${proctorWarningType === 'fullscreen' ? fullscreenAttempts : focusAttempts}`}
+          isVisible={showProctorWarning}
+          warningType={proctorWarningType}
+          attemptCount={proctorWarningType === 'fullscreen' ? fullscreenAttempts : focusAttempts}
+          maxAttempts={maxProctorAttempts}
+          userUniqueID={userUniqueID}
+          onReturnToTest={handleReturnToTest}
+          onMaxAttemptsReached={handleMaxProctorAttemptsReached}
+          onTimerExpired={handleTimerExpired}
+        />
+      )}
       
       { userUniqueIDPresent?
       <>
@@ -1281,10 +1302,10 @@ if (userUniqueID != '')
     {/*     {faceOffWarningCount < 10? */} 
     {isTimeOut && (isFullScreen || fullscreenAttempts < maxProctorAttempts) && (isFocused || focusAttempts < maxProctorAttempts) && cameraPermission && micPermission && !isTerminated && (!faceRecognition || (faceOffWarningCount < allowedDefaults && multipleFacesWarningCount < allowedDefaults))? 
     <>
-        {showFaceWarning && 
+        {showFaceWarning && !showProctorWarning && 
         <FaceWarningMessage userUniqueID={userUniqueID} count={faceOffWarningCount} offFocus={faceOffFocusCount}/>
         }
-        {showMultipleFacesWarning && 
+        {showMultipleFacesWarning && !showProctorWarning && 
         <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
         {isFaceDetectionLoaded ? (

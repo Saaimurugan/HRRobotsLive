@@ -3,49 +3,60 @@ import html2canvas from "html2canvas";
 
 const ProctorWarningModal = ({
   isVisible,
-  warningType, // 'fullscreen' or 'focus'
+  warningType,
   attemptCount,
   maxAttempts = 3,
   userUniqueID,
   onReturnToTest,
-  onMaxAttemptsReached
+  onMaxAttemptsReached,
+  onTimerExpired // New prop for when timer reaches 0
 }) => {
-  const [countdown, setCountdown] = useState(15);
-  const screenshotTakenRef = useRef(false);
+  const isLimitExceeded = attemptCount >= maxAttempts;
+  const initialTime = isLimitExceeded ? 5 : 15;
+  
+  const [seconds, setSeconds] = useState(initialTime);
+  const intervalRef = useRef(null);
+  const hasTriggeredRef = useRef(false);
 
-  // Capture screenshot when modal becomes visible
+  // Start timer on mount
   useEffect(() => {
-    if (isVisible && !screenshotTakenRef.current) {
-      captureScreenshot();
-      screenshotTakenRef.current = true;
-    }
+    // Capture screenshot
+    captureScreenshot();
+    hasTriggeredRef.current = false;
     
-    if (!isVisible) {
-      screenshotTakenRef.current = false;
-      setCountdown(15);
-    }
-  }, [isVisible]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (!isVisible) return;
-
-    const timer = setInterval(() => {
-      setCountdown((prev) => {
+    // Start countdown interval
+    intervalRef.current = window.setInterval(() => {
+      setSeconds(prev => {
         if (prev <= 1) {
-          clearInterval(timer);
-          // Auto-trigger max attempts if countdown reaches 0
-          if (attemptCount >= maxAttempts) {
-            onMaxAttemptsReached && onMaxAttemptsReached();
-          }
+          window.clearInterval(intervalRef.current);
+          intervalRef.current = null;
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [isVisible, attemptCount, maxAttempts, onMaxAttemptsReached]);
+    // Cleanup on unmount
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
+
+  // Handle timer expiry separately to avoid closure issues
+  useEffect(() => {
+    if (seconds === 0 && !hasTriggeredRef.current) {
+      hasTriggeredRef.current = true;
+      if (isLimitExceeded) {
+        onMaxAttemptsReached && onMaxAttemptsReached();
+      } else {
+        // Timer expired without clicking Return to Test - terminate
+        onTimerExpired && onTimerExpired();
+      }
+    }
+  }, [seconds, isLimitExceeded, onMaxAttemptsReached, onTimerExpired]);
 
   const captureScreenshot = async () => {
     try {
@@ -53,52 +64,37 @@ const ProctorWarningModal = ({
         useCORS: true,
         allowTaint: true,
         logging: false,
-        scale: 0.5 // Reduce size for faster capture
+        scale: 0.5
       });
-      
       const imageData = canvas.toDataURL("image/jpeg", 0.7);
-      await sendScreenshotToAPI(imageData);
+      
+      if (userUniqueID) {
+        fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            image: imageData,
+            userUniqueID,
+            captureType: warningType,
+            attemptNumber: attemptCount
+          }),
+        }).catch(() => {});
+      }
     } catch (error) {
-      console.error("Screenshot capture failed:", error);
-    }
-  };
-
-  const sendScreenshotToAPI = async (imageData) => {
-    if (!userUniqueID) return;
-    
-    try {
-      await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: imageData,
-          userUniqueID,
-          captureType: warningType,
-          attemptNumber: attemptCount
-        }),
-      });
-    } catch (error) {
-      console.error("Error sending screenshot:", error);
+      // Silent fail
     }
   };
 
   const handleReturnToTest = () => {
-    if (attemptCount >= maxAttempts) {
-      onMaxAttemptsReached && onMaxAttemptsReached();
-    } else {
-      onReturnToTest && onReturnToTest();
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
     }
+    hasTriggeredRef.current = true;
+    onReturnToTest && onReturnToTest();
   };
 
   if (!isVisible) return null;
-
-  const warningTitle = warningType === "fullscreen" 
-    ? "Full Screen Mode Exited" 
-    : "Window Focus Lost";
-
-  const warningMessage = warningType === "fullscreen"
-    ? "You have exited full screen mode. Please return to full screen to continue the test."
-    : "You have switched away from the test window. Please return focus to continue.";
 
   const overlayStyle = {
     position: "fixed",
@@ -110,7 +106,7 @@ const ProctorWarningModal = ({
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    zIndex: 9999
+    zIndex: 10000 // Higher than other modals
   };
 
   const containerStyle = {
@@ -123,107 +119,107 @@ const ProctorWarningModal = ({
     boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)"
   };
 
-  const iconStyle = {
-    width: "70px",
-    height: "70px",
-    borderRadius: "50%",
-    backgroundColor: attemptCount >= maxAttempts ? "#dc3545" : "#ffc107",
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    margin: "0 auto 20px"
-  };
+  // Limit exceeded modal
+  if (isLimitExceeded) {
+    return (
+      <div style={overlayStyle}>
+        <div style={containerStyle}>
+          <div style={{
+            width: "70px",
+            height: "70px",
+            borderRadius: "50%",
+            backgroundColor: "#dc3545",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            margin: "0 auto 20px"
+          }}>
+            <svg width="35" height="35" viewBox="0 0 24 24" fill="white">
+              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            </svg>
+          </div>
+          
+          <div style={{ fontSize: "22px", fontWeight: "bold", color: "#dc3545", marginBottom: "15px" }}>
+            Attempt Limit Exceeded
+          </div>
+          
+          <div style={{ fontSize: "15px", color: "#666", marginBottom: "20px", lineHeight: "1.5" }}>
+            You have exceeded the maximum allowed attempts for {warningType === "fullscreen" ? "exiting full screen mode" : "losing window focus"}.
+            Your test will be terminated.
+          </div>
+          
+          <div style={{ backgroundColor: "#f8d7da", borderRadius: "10px", padding: "20px" }}>
+            <div style={{ fontSize: "14px", color: "#721c24", marginBottom: "10px" }}>
+              Test terminating in
+            </div>
+            <div style={{ fontSize: "48px", fontWeight: "bold", color: "#dc3545" }}>
+              {seconds}
+            </div>
+            <div style={{ fontSize: "14px", color: "#721c24", marginTop: "5px" }}>
+              seconds
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const titleStyle = {
-    fontSize: "22px",
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: "15px"
-  };
-
-  const messageStyle = {
-    fontSize: "15px",
-    color: "#666",
-    marginBottom: "20px",
-    lineHeight: "1.5"
-  };
-
-  const countdownContainerStyle = {
-    backgroundColor: "#f8f9fa",
-    borderRadius: "10px",
-    padding: "20px",
-    marginBottom: "20px"
-  };
-
-  const countdownNumberStyle = {
-    fontSize: "48px",
-    fontWeight: "bold",
-    color: countdown <= 5 ? "#dc3545" : "#007bff"
-  };
-
-  const countdownLabelStyle = {
-    fontSize: "14px",
-    color: "#888",
-    marginTop: "5px"
-  };
-
-  const attemptStyle = {
-    fontSize: "14px",
-    color: attemptCount >= maxAttempts ? "#dc3545" : "#666",
-    marginBottom: "20px",
-    fontWeight: attemptCount >= maxAttempts ? "bold" : "normal"
-  };
-
-  const buttonStyle = {
-    padding: "14px 40px",
-    fontSize: "16px",
-    fontWeight: "600",
-    color: "#fff",
-    backgroundColor: attemptCount >= maxAttempts ? "#6c757d" : "#007bff",
-    border: "none",
-    borderRadius: "25px",
-    cursor: attemptCount >= maxAttempts ? "not-allowed" : "pointer",
-    transition: "all 0.3s ease",
-    boxShadow: "0 4px 15px rgba(0, 123, 255, 0.3)"
-  };
+  // Normal warning modal
+  const warningTitle = warningType === "fullscreen" ? "Full Screen Mode Exited" : "Window Focus Lost";
+  const warningMessage = warningType === "fullscreen"
+    ? "You have exited full screen mode. Please return to full screen to continue the test."
+    : "You have switched away from the test window. Please return focus to continue.";
 
   return (
     <div style={overlayStyle}>
       <div style={containerStyle}>
-        <div style={iconStyle}>
+        <div style={{
+          width: "70px",
+          height: "70px",
+          borderRadius: "50%",
+          backgroundColor: "#ffc107",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          margin: "0 auto 20px"
+        }}>
           <svg width="35" height="35" viewBox="0 0 24 24" fill="white">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
           </svg>
         </div>
         
-        <div style={titleStyle}>{warningTitle}</div>
-        <div style={messageStyle}>{warningMessage}</div>
-        
-        <div style={countdownContainerStyle}>
-          <div style={countdownNumberStyle}>{countdown}</div>
-          <div style={countdownLabelStyle}>seconds remaining</div>
+        <div style={{ fontSize: "22px", fontWeight: "bold", color: "#333", marginBottom: "15px" }}>
+          {warningTitle}
         </div>
         
-        <div style={attemptStyle}>
+        <div style={{ fontSize: "15px", color: "#666", marginBottom: "20px", lineHeight: "1.5" }}>
+          {warningMessage}
+        </div>
+        
+        <div style={{ backgroundColor: "#f8f9fa", borderRadius: "10px", padding: "20px", marginBottom: "20px" }}>
+          <div style={{ fontSize: "48px", fontWeight: "bold", color: seconds <= 5 ? "#dc3545" : "#007bff" }}>
+            {seconds}
+          </div>
+          <div style={{ fontSize: "14px", color: "#888", marginTop: "5px" }}>
+            seconds remaining
+          </div>
+        </div>
+        
+        <div style={{ fontSize: "14px", color: "#666", marginBottom: "20px" }}>
           Attempt {attemptCount} of {maxAttempts}
-          {attemptCount >= maxAttempts && " - Maximum attempts reached!"}
         </div>
         
         <button
-          style={buttonStyle}
           onClick={handleReturnToTest}
-          disabled={attemptCount >= maxAttempts}
-          onMouseOver={(e) => {
-            if (attemptCount < maxAttempts) {
-              e.target.style.backgroundColor = "#0056b3";
-              e.target.style.transform = "translateY(-2px)";
-            }
-          }}
-          onMouseOut={(e) => {
-            if (attemptCount < maxAttempts) {
-              e.target.style.backgroundColor = "#007bff";
-              e.target.style.transform = "translateY(0)";
-            }
+          style={{
+            padding: "14px 40px",
+            fontSize: "16px",
+            fontWeight: "600",
+            color: "#fff",
+            backgroundColor: "#007bff",
+            border: "none",
+            borderRadius: "25px",
+            cursor: "pointer"
           }}
         >
           Return to Test
