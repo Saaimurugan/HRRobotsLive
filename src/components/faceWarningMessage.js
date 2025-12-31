@@ -1,16 +1,14 @@
-import React, { useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
-const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "noface"}) => {
-  const videoRef = useRef(null);
+const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "noface", maxAttempts = 10, onReturnToTest}) => {
+  const [seconds, setSeconds] = useState(15);
+  const intervalRef = useRef(null);
   const photoCapturedRef = useRef(false);
+  const hasTriggeredRef = useRef(false);
 
   const capturePhoto = async () => {
-    if (!userUniqueID) {
-      //console.error("userUniqueID is required");
-      return;
-    }
+    if (!userUniqueID) return;
 
-    // Get video element from the existing face detection video
     const existingVideo = document.querySelector('video');
     if (existingVideo) {
       const canvas = document.createElement('canvas');
@@ -33,8 +31,45 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
         body: JSON.stringify({ image: imageData, userUniqueID }),
       });
     } catch (error) {
-      //console.error('Error sending image:', error);
+      // Silent fail
     }
+  };
+
+  // Start timer and capture photo on mount
+  useEffect(() => {
+    if (!photoCapturedRef.current) {
+      capturePhoto();
+      photoCapturedRef.current = true;
+    }
+    
+    hasTriggeredRef.current = false;
+    
+    intervalRef.current = window.setInterval(() => {
+      setSeconds(prev => {
+        if (prev <= 1) {
+          window.clearInterval(intervalRef.current);
+          intervalRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleReturnToTest = () => {
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    hasTriggeredRef.current = true;
+    onReturnToTest && onReturnToTest();
   };
 
   const overlayStyle = {
@@ -69,63 +104,96 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
 
   const textStyle = {
     fontSize: "16px",
+    marginBottom: "15px"
   };
 
   const listStyle = {
     fontSize: "16px",
     textAlign: "left",
+    marginBottom: "5px"
   };
 
-  // Capture photo when warning message is displayed
-  useEffect(() => {
-    if (!photoCapturedRef.current) {
-      capturePhoto();
-      photoCapturedRef.current = true;
-    }
-  }, [userUniqueID]);
+  const countdownStyle = {
+    fontSize: "14px",
+    marginTop: "15px",
+    marginBottom: "15px"
+  };
 
-  const renderWarningContent = () => {
-    if (warningType === "multiplefaces") {
-      return (
-        <>
-          <div style={headerStyle}>Warning</div>
-          <div style={textStyle}>Multiple faces have been detected on the camera.</div>
-          <ul>
-            <li style={listStyle}>The total number of allowed deviations is 10. Multiple faces have been detected {count} times.</li>
-            <li style={listStyle}>Please ensure only one person is visible in the camera frame.</li>
-          </ul>
-        </>
-      );
-    }
-    
-    // Default: no face warning
-    if (offFocus <= 1 && count === 0) {
-      return (
-        <>
+  const countdownNumberStyle = {
+    fontSize: "32px",
+    fontWeight: "bold",
+    color: seconds <= 5 ? "#dc3545" : "#a94442"
+  };
+
+  const buttonStyle = {
+    padding: "10px 30px",
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#fff",
+    backgroundColor: "#a94442",
+    border: "none",
+    borderRadius: "5px",
+    cursor: "pointer",
+    marginTop: "10px"
+  };
+
+  // Loading state - no countdown needed
+  if (offFocus <= 1 && count === 0) {
+    return (
+      <div style={overlayStyle}>
+        <div style={containerStyle}>
           <div style={headerStyle}>Please Wait</div>
           <div style={textStyle}>The test will begin once the facial recognition process has finished loading.</div>
           <ul>
             <li style={listStyle}>Please ensure your face is centered in the video capture.</li>
           </ul>
-        </>
-      );
-    }
-    
-    return (
-      <>
-        <div style={headerStyle}>Warning</div>
-        <div style={textStyle}>The test is passed because the face is not properly focused on the screen.</div>
-        <ul>
-          <li style={listStyle}>The total number of allowed focus deviations is 10. You have been out of focus {count} times.</li>
-        </ul>
-      </>
+        </div>
+      </div>
     );
-  };
+  }
 
+  // Multiple faces warning
+  if (warningType === "multiplefaces") {
+    return (
+      <div style={overlayStyle}>
+        <div style={containerStyle}>
+          <div style={headerStyle}>Warning</div>
+          <div style={textStyle}>Multiple faces have been detected on the camera.</div>
+          <ul>
+            <li style={listStyle}>The total number of allowed deviations is {maxAttempts}. Multiple faces have been detected {count} time{count > 1 ? 's' : ''}.</li>
+            <li style={listStyle}>Please ensure only one person is visible in the camera frame.</li>
+          </ul>
+          <div style={countdownStyle}>
+            Time remaining: <span style={countdownNumberStyle}>{seconds}</span> seconds
+          </div>
+          {onReturnToTest && (
+            <button onClick={handleReturnToTest} style={buttonStyle}>
+              Return to Test
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+  
+  // Face not focused warning
   return (
     <div style={overlayStyle}>
       <div style={containerStyle}>
-        {renderWarningContent()}
+        <div style={headerStyle}>Warning</div>
+        <div style={textStyle}>The test is paused because the face is not properly focused on the screen.</div>
+        <ul>
+          <li style={listStyle}>The total number of allowed focus deviations is {maxAttempts}. You have been out of focus {count} time{count > 1 ? 's' : ''}.</li>
+          <li style={listStyle}>Please ensure your face is visible and centered in the camera.</li>
+        </ul>
+        <div style={countdownStyle}>
+          Time remaining: <span style={countdownNumberStyle}>{seconds}</span> seconds
+        </div>
+        {onReturnToTest && (
+          <button onClick={handleReturnToTest} style={buttonStyle}>
+            Return to Test
+          </button>
+        )}
       </div>
     </div>
   );
