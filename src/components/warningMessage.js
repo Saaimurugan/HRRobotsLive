@@ -19,7 +19,7 @@ const WarningMessage = ({ reason }) => {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -27,60 +27,86 @@ const WarningMessage = ({ reason }) => {
   };
 
   const containerStyle = {
-    backgroundColor: "#ffcccb",
-    color: "#a94442",
-    border: "1px solid #ebccd1",
-    padding: "20px",
-    borderRadius: "5px",
-    maxWidth: "400px",
+    backgroundColor: "#fff",
+    borderRadius: "12px",
+    padding: "30px 40px",
+    maxWidth: "450px",
+    width: "90%",
     textAlign: "center",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)"
+    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)"
+  };
+
+  const iconStyle = {
+    width: "70px",
+    height: "70px",
+    borderRadius: "50%",
+    backgroundColor: "#dc3545",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    margin: "0 auto 20px"
   };
 
   const headerStyle = {
-    fontSize: "18px",
+    fontSize: "22px",
     fontWeight: "bold",
-    marginBottom: "10px",
-  };
-
-  const textStyle = {
-    fontSize: "16px",
+    color: "#333",
     marginBottom: "15px"
   };
 
-  const getListItemStyle = (isHighlighted) => ({
-    fontSize: "16px",
-    textAlign: "left",
-    color: isHighlighted ? "#dc3545" : "#a94442",
+  const textStyle = {
+    fontSize: "15px",
+    color: "#666",
+    marginBottom: "20px",
+    lineHeight: "1.5"
+  };
+
+  const infoBoxStyle = {
+    backgroundColor: "#f8f9fa",
+    borderRadius: "10px",
+    padding: "15px 20px",
+    textAlign: "left"
+  };
+
+  const getBulletItemStyle = (isHighlighted) => ({
+    display: "flex",
+    fontSize: "14px",
+    color: isHighlighted ? "#dc3545" : "#666",
     fontWeight: isHighlighted ? "bold" : "normal",
-    marginBottom: "5px"
+    marginBottom: "8px",
+    lineHeight: "1.4"
   });
 
-  const terminatedTextStyle = {
-    fontSize: "14px",
-    marginTop: "15px",
-    padding: "10px",
-    backgroundColor: "rgba(220, 53, 69, 0.1)",
-    borderRadius: "5px",
-    fontWeight: "bold"
+  const bulletStyle = {
+    marginRight: "8px",
+    flexShrink: 0
   };
 
   return (
     <div style={overlayStyle}>
       <div style={containerStyle}>
+        <div style={iconStyle}>
+          <svg width="35" height="35" viewBox="0 0 24 24" fill="white">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </div>
         <div style={headerStyle}>Test Terminated</div>
         <div style={textStyle}>
-          Your test has been terminated due to a violation:
+          Your test has been terminated due to a violation.
         </div>
-        <ul>
-          {reasons.map((item) => (
-            <li key={item.key} style={getListItemStyle(item.key === reason)}>
-              {item.text}
-            </li>
+        <div style={infoBoxStyle}>
+          {reasons.map((item, index) => (
+            <div 
+              key={item.key} 
+              style={{
+                ...getBulletItemStyle(item.key === reason),
+                marginBottom: index === reasons.length - 1 ? 0 : "8px"
+              }}
+            >
+              <span style={bulletStyle}>•</span>
+              <span>{item.text}</span>
+            </div>
           ))}
-        </ul>
-        <div style={terminatedTextStyle}>
-          Please contact the administrator if you believe this was an error.
         </div>
       </div>
     </div>

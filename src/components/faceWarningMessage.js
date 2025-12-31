@@ -1,10 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 
-const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "noface", maxAttempts = 10, onReturnToTest}) => {
-  const [seconds, setSeconds] = useState(15);
-  const intervalRef = useRef(null);
+const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "noface", maxAttempts = 10}) => {
   const photoCapturedRef = useRef(false);
-  const hasTriggeredRef = useRef(false);
 
   const capturePhoto = async () => {
     if (!userUniqueID) return;
@@ -35,42 +32,12 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
     }
   };
 
-  // Start timer and capture photo on mount
   useEffect(() => {
     if (!photoCapturedRef.current) {
       capturePhoto();
       photoCapturedRef.current = true;
     }
-    
-    hasTriggeredRef.current = false;
-    
-    intervalRef.current = window.setInterval(() => {
-      setSeconds(prev => {
-        if (prev <= 1) {
-          window.clearInterval(intervalRef.current);
-          intervalRef.current = null;
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    return () => {
-      if (intervalRef.current) {
-        window.clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleReturnToTest = () => {
-    if (intervalRef.current) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-    hasTriggeredRef.current = true;
-    onReturnToTest && onReturnToTest();
-  };
+  }, [userUniqueID]);
 
   const overlayStyle = {
     position: "fixed",
@@ -78,7 +45,7 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
@@ -86,67 +53,80 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
   };
 
   const containerStyle = {
-    backgroundColor: "#ffcccb",
-    color: "#a94442",
-    border: "1px solid #ebccd1",
-    padding: "20px",
-    borderRadius: "5px",
-    maxWidth: "400px",
+    backgroundColor: "#fff",
+    borderRadius: "12px",
+    padding: "30px 40px",
+    maxWidth: "450px",
+    width: "90%",
     textAlign: "center",
-    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.3)"
+    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.5)"
+  };
+
+  const iconStyle = {
+    width: "70px",
+    height: "70px",
+    borderRadius: "50%",
+    backgroundColor: "#ffc107",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    margin: "0 auto 20px"
   };
 
   const headerStyle = {
-    fontSize: "18px",
+    fontSize: "22px",
     fontWeight: "bold",
-    marginBottom: "10px"
+    color: "#333",
+    marginBottom: "15px"
   };
 
   const textStyle = {
-    fontSize: "16px",
-    marginBottom: "15px"
+    fontSize: "15px",
+    color: "#666",
+    marginBottom: "20px",
+    lineHeight: "1.5"
   };
 
-  const listStyle = {
-    fontSize: "16px",
-    textAlign: "left",
-    marginBottom: "5px"
+  const infoBoxStyle = {
+    backgroundColor: "#f8f9fa",
+    borderRadius: "10px",
+    padding: "15px 20px",
+    textAlign: "left"
   };
 
-  const countdownStyle = {
+  const bulletItemStyle = {
+    display: "flex",
     fontSize: "14px",
-    marginTop: "15px",
-    marginBottom: "15px"
+    color: "#666",
+    marginBottom: "8px",
+    lineHeight: "1.4"
   };
 
-  const countdownNumberStyle = {
-    fontSize: "32px",
-    fontWeight: "bold",
-    color: seconds <= 5 ? "#dc3545" : "#a94442"
+  const bulletStyle = {
+    marginRight: "8px",
+    flexShrink: 0
   };
 
-  const buttonStyle = {
-    padding: "10px 30px",
-    fontSize: "14px",
-    fontWeight: "600",
-    color: "#fff",
-    backgroundColor: "#a94442",
-    border: "none",
-    borderRadius: "5px",
-    cursor: "pointer",
-    marginTop: "10px"
-  };
-
-  // Loading state - no countdown needed
+  // Loading state
   if (offFocus <= 1 && count === 0) {
     return (
       <div style={overlayStyle}>
         <div style={containerStyle}>
+          <div style={iconStyle}>
+            <svg width="35" height="35" viewBox="0 0 24 24" fill="white">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
+          </div>
           <div style={headerStyle}>Please Wait</div>
-          <div style={textStyle}>The test will begin once the facial recognition process has finished loading.</div>
-          <ul>
-            <li style={listStyle}>Please ensure your face is centered in the video capture.</li>
-          </ul>
+          <div style={textStyle}>
+            The test will begin once the facial recognition process has finished loading.
+          </div>
+          <div style={infoBoxStyle}>
+            <div style={{...bulletItemStyle, marginBottom: 0}}>
+              <span style={bulletStyle}>•</span>
+              <span>Please ensure your face is centered in the video capture.</span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -157,20 +137,25 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
     return (
       <div style={overlayStyle}>
         <div style={containerStyle}>
-          <div style={headerStyle}>Warning</div>
-          <div style={textStyle}>Multiple faces have been detected on the camera.</div>
-          <ul>
-            <li style={listStyle}>The total number of allowed deviations is {maxAttempts}. Multiple faces have been detected {count} time{count > 1 ? 's' : ''}.</li>
-            <li style={listStyle}>Please ensure only one person is visible in the camera frame.</li>
-          </ul>
-          <div style={countdownStyle}>
-            Time remaining: <span style={countdownNumberStyle}>{seconds}</span> seconds
+          <div style={iconStyle}>
+            <svg width="35" height="35" viewBox="0 0 24 24" fill="white">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            </svg>
           </div>
-          {onReturnToTest && (
-            <button onClick={handleReturnToTest} style={buttonStyle}>
-              Return to Test
-            </button>
-          )}
+          <div style={headerStyle}>Multiple Faces Detected</div>
+          <div style={textStyle}>
+            Multiple faces have been detected on the camera.
+          </div>
+          <div style={infoBoxStyle}>
+            <div style={bulletItemStyle}>
+              <span style={bulletStyle}>•</span>
+              <span>The total number of allowed deviations is {maxAttempts}. Multiple faces have been detected {count} time{count > 1 ? 's' : ''}.</span>
+            </div>
+            <div style={{...bulletItemStyle, marginBottom: 0}}>
+              <span style={bulletStyle}>•</span>
+              <span>Please ensure only one person is visible in the camera frame.</span>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -180,20 +165,25 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
   return (
     <div style={overlayStyle}>
       <div style={containerStyle}>
-        <div style={headerStyle}>Warning</div>
-        <div style={textStyle}>The test is paused because the face is not properly focused on the screen.</div>
-        <ul>
-          <li style={listStyle}>The total number of allowed focus deviations is {maxAttempts}. You have been out of focus {count} time{count > 1 ? 's' : ''}.</li>
-          <li style={listStyle}>Please ensure your face is visible and centered in the camera.</li>
-        </ul>
-        <div style={countdownStyle}>
-          Time remaining: <span style={countdownNumberStyle}>{seconds}</span> seconds
+        <div style={iconStyle}>
+          <svg width="35" height="35" viewBox="0 0 24 24" fill="white">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
         </div>
-        {onReturnToTest && (
-          <button onClick={handleReturnToTest} style={buttonStyle}>
-            Return to Test
-          </button>
-        )}
+        <div style={headerStyle}>Face Not Detected</div>
+        <div style={textStyle}>
+          The test is paused because the face is not properly focused on the screen.
+        </div>
+        <div style={infoBoxStyle}>
+          <div style={bulletItemStyle}>
+            <span style={bulletStyle}>•</span>
+            <span>The total number of allowed focus deviations is {maxAttempts}. You have been out of focus {count} time{count > 1 ? 's' : ''}.</span>
+          </div>
+          <div style={{...bulletItemStyle, marginBottom: 0}}>
+            <span style={bulletStyle}>•</span>
+            <span>Please ensure your face is visible and centered in the camera.</span>
+          </div>
+        </div>
       </div>
     </div>
   );
