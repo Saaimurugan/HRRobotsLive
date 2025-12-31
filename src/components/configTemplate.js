@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
+import '../confirmationBox.css';
 
 const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
   const { JWTValue, setRedirectPath, logout } = useGlobalContext();
-  const [faceRecognition, setFaceRecognition] = useState(false);
-  const [toleranceLevel, setToleranceLevel] = useState(0);
   const [allowedDefaults, setAllowedDefaults] = useState(0);
+  const [numberOfQuestions, setNumberOfQuestions] = useState(10);
+  const [testDuration, setTestDuration] = useState(30);
+  const [sensitivityLevel, setSensitivityLevel] = useState(3);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -42,7 +45,6 @@ const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
   useEffect(() => {
-    // Fetch initial config on component mount, passing templateID as a query param
     fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
       method: "POST",
       headers: {
@@ -54,89 +56,106 @@ const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
       .then(data => {
         if (checkUnauthorized(data)) return;
         if (data.statusCode === 200 && data.body) {
-          // Parse the JSON string in body
           const body = JSON.parse(data.body);
           const config = Array.isArray(body.configurations) && body.configurations.length > 0
             ? body.configurations[0]
             : {};
-          setFaceRecognition(config.faceRecognition === "True");
-          setToleranceLevel(Number(config.toleranceLevel) || 0);
           setAllowedDefaults(Number(config.allowedDefaults) || 0);
-        } else {
-          //console.error("Error fetching configuration:", data);
+          setNumberOfQuestions(Number(config.numberOfQuestions) || 10);
+          setTestDuration(Number(config.testDuration) || 30);
+          setSensitivityLevel(Number(config.sensitivityLevel) || 3);
         }
+        setLoading(false);
       })
       .catch(error => {
-        //console.error("Error fetching configuration:", error);
+        setLoading(false);
       });
   }, [templateID, JWTValue, checkUnauthorized]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onConfig({
+      allowedDefaults,
+      numberOfQuestions,
+      testDuration,
+      sensitivityLevel,
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="overlay">
+        <div className="confirmation-box">
+          <p>Loading configuration...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="overlay">
       <div className="confirmation-box">
-        <div style={{padding: 24, border: '1px solid #ccc', borderRadius: 8 }}>
-          <h2>Configuration</h2>
-          <div style={{ border: '1px solid #ccc', padding: 16, borderRadius: 8, marginBottom: 16 }}>
-            <div style={{ marginBottom: 16 }}>
-              <div style={{ border: '1px solid #eee', borderRadius: 6, padding: 12 }}>
-                <label>
-                  Terminate based on face recognition:&nbsp;
-                  <input
-                    type="checkbox"
-                    checked={faceRecognition}
-                    onChange={e => {
-                      setFaceRecognition(e.target.checked);
-                      if (!e.target.checked) setToleranceLevel(0);
-                    }}
-                    style={{ width: 40, height: 20 }}
-                  />
-                  <span style={{ marginLeft: 8 }}>{faceRecognition ? 'On' : 'Off'}</span>
-                </label>
-                <div style={{ marginTop: 16 }}>
-                  <label htmlFor="toleranceSlider">
-                    Tolerance Level: {toleranceLevel}
-                  </label>
-                  <input
-                    id="toleranceSlider"
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={toleranceLevel}
-                    disabled={!faceRecognition}
-                    onChange={e => setToleranceLevel(Number(e.target.value))}
-                    style={{ width: '100%', marginTop: 8 }}
-                  />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label htmlFor="allowedDefaultsSlider">Allowed defaults by user: {allowedDefaults}</label>
-              <input
-                id="allowedDefaultsSlider"
-                type="range"
-                min="1"
-                max="10"
-                value={allowedDefaults}
-                onChange={e => setAllowedDefaults(Number(e.target.value))}
-                style={{ width: '90%', marginTop: 8 }}
-              />
-            </div>
+        <h2>Configuration</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="numberOfQuestions">Number of Questions</label>
+            <input
+              type="number"
+              id="numberOfQuestions"
+              name="numberOfQuestions"
+              min="1"
+              max="100"
+              value={numberOfQuestions}
+              onChange={(e) => setNumberOfQuestions(Number(e.target.value))}
+              required
+            />
           </div>
+
+          <div className="form-group">
+            <label htmlFor="testDuration">Test Duration (minutes)</label>
+            <input
+              type="number"
+              id="testDuration"
+              name="testDuration"
+              min="5"
+              max="180"
+              value={testDuration}
+              onChange={(e) => setTestDuration(Number(e.target.value))}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="sensitivityLevel">Sensitivity Level: {sensitivityLevel} sec</label>
+            <input
+              type="range"
+              id="sensitivityLevel"
+              name="sensitivityLevel"
+              min="1"
+              max="5"
+              value={sensitivityLevel}
+              onChange={(e) => setSensitivityLevel(Number(e.target.value))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="allowedDefaults">Allowed Defaults: {allowedDefaults}</label>
+            <input
+              type="range"
+              id="allowedDefaults"
+              name="allowedDefaults"
+              min="1"
+              max="10"
+              value={allowedDefaults}
+              onChange={(e) => setAllowedDefaults(Number(e.target.value))}
+            />
+          </div>
+
           <div className="buttons">
-            <button
-              onClick={() =>
-                onConfig({
-                  faceRecognition,
-                  toleranceLevel,
-                  allowedDefaults,
-                })
-              }
-            >
-              Save
-            </button>
-            <button onClick={onCancel}>Cancel</button>
+            <button type="submit">Save</button>
+            <button type="button" onClick={onCancel}>Cancel</button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );

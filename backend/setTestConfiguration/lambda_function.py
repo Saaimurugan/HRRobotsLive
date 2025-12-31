@@ -19,13 +19,14 @@ def lambda_handler(event, context):
             # New format
             config_id = str(data['templateIDSelectedToAssign'])
             config_data = data['d']
-        elif all(k in data for k in ['testID', 'faceRecognition', 'toleranceLevel', 'allowedDefaults']):
+        elif 'testID' in data:
             # Old format
             config_id = str(data['testID'])
             config_data = {
-                'faceRecognition': data['faceRecognition'],
-                'toleranceLevel': data['toleranceLevel'],
-                'allowedDefaults': data['allowedDefaults']
+                'allowedDefaults': data.get('allowedDefaults', 0),
+                'numberOfQuestions': data.get('numberOfQuestions', 10),
+                'testDuration': data.get('testDuration', 30),
+                'sensitivityLevel': data.get('sensitivityLevel', 3)
             }
         else:
             return {
@@ -33,12 +34,13 @@ def lambda_handler(event, context):
                 'body': json.dumps({'message': 'Missing required fields'})
             }
 
-        # Normalize values to string for DynamoDB (if needed)
+        # Normalize values to string for DynamoDB
         item = {
             'testConfigurationID': config_id,
-            'faceRecognition': str(config_data['faceRecognition']),
-            'toleranceLevel': str(config_data['toleranceLevel']),
-            'allowedDefaults': str(config_data['allowedDefaults'])
+            'allowedDefaults': str(config_data.get('allowedDefaults', 0)),
+            'numberOfQuestions': str(config_data.get('numberOfQuestions', 10)),
+            'testDuration': str(config_data.get('testDuration', 30)),
+            'sensitivityLevel': str(config_data.get('sensitivityLevel', 3))
         }
 
         # Store in DynamoDB

@@ -10,7 +10,6 @@ table = dynamodb.Table('testConfiguration')
 def lambda_handler(event, context):
     try:
         # Support both API Gateway style and direct invocation
-        # Support both API Gateway and direct payload invocation
         if 'body' in event:
             body = json.loads(event['body'])
         else:
@@ -29,11 +28,23 @@ def lambda_handler(event, context):
             KeyConditionExpression=boto3.dynamodb.conditions.Key('testConfigurationID').eq(test_config_id)
         )
 
+        # Add default values for fields if not present
+        configurations = response.get('Items', [])
+        for config in configurations:
+            if 'numberOfQuestions' not in config:
+                config['numberOfQuestions'] = '50'
+            if 'testDuration' not in config:
+                config['testDuration'] = '60'
+            if 'sensitivityLevel' not in config:
+                config['sensitivityLevel'] = '5'
+            if 'allowedDefaults' not in config:
+                config['allowedDefaults'] = '10'
+
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'testConfigurationID': test_config_id,
-                'configurations': response.get('Items', [])
+                'configurations': configurations
             })
         }
 
