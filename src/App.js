@@ -23,6 +23,7 @@ import CreateJD from './components/createJD';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerifyEmail from './components/verifyEmail';
 import SignupSuccess from './components/signupSuccess';
+import { TourProvider } from './components/TourProvider';
 
 // Replace with your actual reCAPTCHA v3 site key
 const RECAPTCHA_SITE_KEY = "6Lcb8jYsAAAAAGX87VEDrxMu8TZzAUL7jOwh9pqZ";
@@ -181,35 +182,37 @@ const App = () => {
     <GoogleReCaptchaProvider reCaptchaKey={RECAPTCHA_SITE_KEY}>
       <GlobalProvider>
         <Router>
-          <>
-            <Header />
-            <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUp />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/logout" element={<LogoutHandler />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="/signup-success" element={<SignupSuccess />} />
-            
-            {/* Protected routes */}
-            <Route path="/" element={<ProtectedRoute><RedirectPage /></ProtectedRoute>} />
-            <Route path="/list" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
-              <Route path="/test/:id" element={<TestPage />} />
-              <Route path="/reset/:id" element={<ResetPage />} />
-              <Route path="/result" element={<ProtectedRoute><SearchResult/></ProtectedRoute>} />
-              <Route path="/createTemplate" element={<ProtectedRoute><CreateTemplate/></ProtectedRoute>} />
-              <Route path="/profilerPage" element={<ProtectedRoute><ProfilerPage/></ProtectedRoute>} />
-              <Route path="/aiinterview" element={<ProtectedRoute><AIInterview/></ProtectedRoute>} />
-              <Route path="/interviewPage" element={<ProtectedRoute><InterviewPage/></ProtectedRoute>} />
-              <Route path="/speechtotext" element={<ProtectedRoute><SpeechToText/></ProtectedRoute>} />
-              <Route path="/chatBot" element={<ProtectedRoute><ChatBot/></ProtectedRoute>} />
-              <Route path="/faceDetection" element={<ProtectedRoute><FaceDetection/></ProtectedRoute>} />
-              <Route path="/edit/:id" element={<ProtectedRoute><EditTemplate/></ProtectedRoute>} />
-              <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
-              <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
-            </Routes>
-          </>
+          <TourProvider>
+            <>
+              <Header />
+              <Routes>
+              {/* Public routes */}
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/logout" element={<LogoutHandler />} />
+              <Route path="/verify-email" element={<VerifyEmail />} />
+              <Route path="/signup-success" element={<SignupSuccess />} />
+              
+              {/* Protected routes */}
+              <Route path="/" element={<ProtectedRoute><RedirectPage /></ProtectedRoute>} />
+              <Route path="/list" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
+                <Route path="/test/:id" element={<TestPage />} />
+                <Route path="/reset/:id" element={<ResetPage />} />
+                <Route path="/result" element={<ProtectedRoute><SearchResult/></ProtectedRoute>} />
+                <Route path="/createTemplate" element={<ProtectedRoute><CreateTemplate/></ProtectedRoute>} />
+                <Route path="/profilerPage" element={<ProtectedRoute><ProfilerPage/></ProtectedRoute>} />
+                <Route path="/aiinterview" element={<ProtectedRoute><AIInterview/></ProtectedRoute>} />
+                <Route path="/interviewPage" element={<ProtectedRoute><InterviewPage/></ProtectedRoute>} />
+                <Route path="/speechtotext" element={<ProtectedRoute><SpeechToText/></ProtectedRoute>} />
+                <Route path="/chatBot" element={<ProtectedRoute><ChatBot/></ProtectedRoute>} />
+                <Route path="/faceDetection" element={<ProtectedRoute><FaceDetection/></ProtectedRoute>} />
+                <Route path="/edit/:id" element={<ProtectedRoute><EditTemplate/></ProtectedRoute>} />
+                <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
+                <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
+              </Routes>
+            </>
+          </TourProvider>
         </Router>
       </GlobalProvider>
     </GoogleReCaptchaProvider>

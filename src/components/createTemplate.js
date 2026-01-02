@@ -505,7 +505,7 @@ const CreateTemplate = () => {
               </button>
             </div>
 
-            <div className="questions-list">
+            <div className="questions-list" data-tour="question-list">
               {groupedQuestions.length > 0 ? (
                 groupedQuestions.map((q, index) => {
                   const prevQuestion = index > 0 ? groupedQuestions[index - 1] : null;
@@ -544,7 +544,7 @@ const CreateTemplate = () => {
           </div>
 
           <div className="right-panel">
-            <div className="form-section">
+            <div className="form-section" data-tour="add-question-form">
               <h3>{isEditing ? "Edit Question" : "Add Question"}</h3>
               <div className="form-group">
                 <label>Type</label>
@@ -611,7 +611,7 @@ const CreateTemplate = () => {
               )}
             </div>
 
-            <div className="ai-section">
+            <div className="ai-section" data-tour="ai-section">
               <h3>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2z" />
