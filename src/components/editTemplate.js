@@ -143,8 +143,19 @@ const EditTemplate = () => {
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [selectedTopicFilter, setSelectedTopicFilter] = useState(null); // null means "Total" (show all)
   const [minQuestions, setMinQuestions] = useState(10); // Default minimum, will be updated from config
+  const [showSamplePlaceholder, setShowSamplePlaceholder] = useState(false); // Show sample when no questions
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Sample placeholder question (frontend only - never saved)
+  const SAMPLE_PLACEHOLDER = {
+    type: "mcq",
+    question: "Sample Question::: This is a sample placeholder question. Add your own questions using the form on the right or generate them with AI. This sample will disappear once you add real questions.",
+    options: ["Option A (example)", "Option B (example)", "Option C (example)", "Option D (example)"],
+    correctAnswer: "Option A (example)",
+    correctAnswerIndex: 0,
+    isSampleQuestion: true
+  };
 
   // Toast functions
   const showToast = (type, title, message) => {
@@ -180,6 +191,17 @@ const EditTemplate = () => {
 
   // Group and sort questions by topic, with optional filtering
   const groupedQuestions = useMemo(() => {
+    // If no questions, show sample placeholder
+    if (questionSet.length === 0 && showSamplePlaceholder) {
+      const { topic, question } = parseQuestionTopic(SAMPLE_PLACEHOLDER.question);
+      return [{
+        ...SAMPLE_PLACEHOLDER,
+        originalIndex: 0,
+        displayQuestion: question,
+        topic
+      }];
+    }
+
     const groups = {};
     const noTopicQuestions = [];
 
@@ -215,7 +237,7 @@ const EditTemplate = () => {
     }
     
     return result;
-  }, [questionSet, selectedTopicFilter]);
+  }, [questionSet, selectedTopicFilter, showSamplePlaceholder]);
 
   // Calculate topic counts for display
   const topicCounts = useMemo(() => {
@@ -299,6 +321,7 @@ const EditTemplate = () => {
       }
       newQuestion.options = formData.options;
       newQuestion.correctAnswer = formData.options[formData.correctAnswerIndex];
+      newQuestion.correctAnswerIndex = formData.correctAnswerIndex;
     } else {
       if (!formData.correctAnswer) {
         showToast('warning', 'Missing Answer', 'Answer cannot be empty for a descriptive question.');
@@ -307,6 +330,8 @@ const EditTemplate = () => {
       newQuestion.correctAnswer = formData.correctAnswer;
     }
 
+    // Hide sample placeholder when user adds their own question
+    setShowSamplePlaceholder(false);
     setQuestionSet([...questionSet, newQuestion]);
     clearForm();
   };
@@ -346,6 +371,7 @@ const EditTemplate = () => {
       ...formData,
       question: formatQuestionWithTopic(manualTopic, formData.question),
       correctAnswer: correctAnswer,
+      correctAnswerIndex: formData.correctAnswerIndex >= 0 ? formData.correctAnswerIndex : undefined,
     };
     setQuestionSet(updatedQuestions);
     clearForm();
@@ -416,14 +442,16 @@ const EditTemplate = () => {
           if (Array.isArray(parsedBody.questions)) {
             setQuestionSet(parsedBody.questions);
             setTtname(parsedBody.templateName);
+            // Show sample placeholder if no questions exist
+            setShowSamplePlaceholder(parsedBody.questions.length === 0);
           } else {
-            //console.error("Invalid questions format in response:", parsedBody);
+            setShowSamplePlaceholder(true);
           }
         } catch (parseError) {
-          //console.error("Error parsing response body:", parseError);
+          setShowSamplePlaceholder(true);
         }
       } else {
-        //console.error("Unexpected API response:", data);
+        setShowSamplePlaceholder(true);
       }
 
       // Fetch configuration to get numberOfQuestions
@@ -447,6 +475,7 @@ const EditTemplate = () => {
       }
     } catch (error) {
       //console.error("Error fetching templates:", error);
+      setShowSamplePlaceholder(true);
     } finally {
       setLoadingTemplate(false);
     }
@@ -474,11 +503,18 @@ const EditTemplate = () => {
       const responseContent = parsedBody.data;
       const generatedQuestions = JSON.parse(responseContent);
 
-      const questionsWithTopic = generatedQuestions.map(q => ({
-        ...q,
-        question: groupByTopic ? `${topic}::: ${q.question}` : q.question
-      }));
+      const questionsWithTopic = generatedQuestions.map(q => {
+        // Calculate correctAnswerIndex from correctAnswer value
+        const correctAnswerIndex = q.options ? q.options.indexOf(q.correctAnswer) : -1;
+        return {
+          ...q,
+          question: groupByTopic ? `${topic}::: ${q.question}` : q.question,
+          correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : undefined
+        };
+      });
 
+      // Hide sample placeholder when adding AI-generated questions
+      setShowSamplePlaceholder(false);
       setQuestionSet([...questionSet, ...questionsWithTopic]);
       if (!ttname) {
         setTtname(topic + " - " + level);
@@ -565,23 +601,25 @@ const EditTemplate = () => {
                   groupedQuestions.map((q, index) => {
                     const prevQuestion = index > 0 ? groupedQuestions[index - 1] : null;
                     const showTopicHeader = q.topic && (!prevQuestion || prevQuestion.topic !== q.topic);
+                    const isSample = q.isSampleQuestion;
                     
                     return (
-                      <React.Fragment key={q.originalIndex}>
+                      <React.Fragment key={isSample ? 'sample' : q.originalIndex}>
                         {showTopicHeader && (
                           <div className="topic-group-header">
                             <span className="topic-tag">{q.topic}</span>
                           </div>
                         )}
-                        <div className="qcard">
-                          {q.topic && <span className="question-topic-tag">{q.topic}</span>}
+                        <div className={`qcard ${isSample ? 'sample-question-card' : ''}`}>
+                          {isSample && <span className="sample-question-badge">Sample - Will be replaced when you add questions</span>}
+                          {q.topic && !isSample && <span className="question-topic-tag">{q.topic}</span>}
                           <h4>{index + 1}. {q.displayQuestion}</h4>
                           {q.options && (
-                            <ul>{q.options.map((opt, i) => <li key={i} className={opt === q.correctAnswer ? 'correct-answer' : ''}>{opt}</li>)}</ul>
+                            <ul>{q.options.map((opt, i) => <li key={i} className={(q.correctAnswerIndex !== undefined ? i === q.correctAnswerIndex : opt === q.correctAnswer) ? 'correct-answer' : ''}>{opt}</li>)}</ul>
                           )}
                           <div className="qcard-actions">
-                            <button className="btn-edit" onClick={(e) => { e.preventDefault(); editQuestion(q.originalIndex); }}>Edit</button>
-                            <button className="btn-danger" onClick={(e) => { e.preventDefault(); removeQuestion(q.originalIndex); }}>Remove</button>
+                            <button className="btn-edit" onClick={(e) => { e.preventDefault(); if (!isSample) editQuestion(q.originalIndex); }} disabled={isSample}>Edit</button>
+                            <button className="btn-danger" onClick={(e) => { e.preventDefault(); if (!isSample) removeQuestion(q.originalIndex); }} disabled={isSample}>Remove</button>
                           </div>
                         </div>
                       </React.Fragment>

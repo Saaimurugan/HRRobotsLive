@@ -878,3 +878,41 @@
   color: var(--color-bg-primary);
   font-style: normal;
 }
+
+
+/* Sample Question Styles */
+.sample-question-card {
+  border: 2px dashed var(--color-warning);
+  background: linear-gradient(135deg, rgba(237, 137, 54, 0.05) 0%, rgba(237, 137, 54, 0.1) 100%);
+  position: relative;
+}
+
+.sample-question-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--color-warning) 0%, #c05621 100%);
+  color: var(--color-bg-primary);
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sample-question-card h4 {
+  color: var(--color-text-muted);
+}
+
+.sample-question-card ul li {
+  color: var(--color-text-muted);
+}
+
+
+/* Disabled button styles for sample questions */
+.btn-edit:disabled,
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}

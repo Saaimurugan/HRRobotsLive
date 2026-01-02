@@ -102,7 +102,7 @@ def lambda_handler(event, context):
         # get all questions of the provided template_ID
         items_to_delete = getAllQuestions(template_ID)
 
-        # Delete questions matching the templateID
+        # Delete questions matching the templateID (including sample questions)
         i = 0
         for item in items_to_delete:
             i = i+1
@@ -113,8 +113,21 @@ def lambda_handler(event, context):
                 }
         )
         
-        # Create questions
+        # Filter out ALL sample questions before saving
+        # Check both the flag and question text patterns
+        filtered_questions = []
         for question in questions:
+            # Skip if marked as sample question
+            if question.get('isSampleQuestion', False):
+                continue
+            # Skip if question text contains sample question patterns
+            question_text = question.get('question', '').lower()
+            if 'sample question:::' in question_text or question_text.startswith('sample question'):
+                continue
+            filtered_questions.append(question)
+        
+        # Create only non-sample questions
+        for question in filtered_questions:
             question_ID = str(uuid.uuid4())  # Generate a unique ID for each question
             questions_table.put_item(
                 Item={
