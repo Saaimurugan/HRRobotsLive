@@ -110,7 +110,8 @@ def lambda_handler(event, context):
                 "isVerified": False,
                 "verificationToken": verification_token,
                 "tokenExpiry": token_expiry,
-                "createdAt": datetime.datetime.utcnow().isoformat()
+                "createdAt": datetime.datetime.utcnow().isoformat(),
+                "newUser": "yes"
             }
         )
         
