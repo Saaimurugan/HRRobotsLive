@@ -11,6 +11,9 @@ import urllib.request
 dynamodb = boto3.resource('dynamodb')
 table_name = "userDetails"
 table = dynamodb.Table(table_name)
+template_table = dynamodb.Table('template')
+questions_table = dynamodb.Table('MCQQuestions')
+config_table = dynamodb.Table('testConfiguration')
 
 # Encryption settings
 ITERATIONS = 100000
@@ -87,6 +90,82 @@ def send_verification_email(email, token):
         return False
 
 
+def clone_gk_template_for_user(email):
+    """Create a sample GK template with 5 questions for a new user."""
+    try:
+        # Sample GK questions
+        gk_questions = [
+            {
+                'question': 'General Knowledge::: What is the capital of France?',
+                'options': ['Paris', 'London', 'Berlin', 'Madrid'],
+                'correctAnswer': 'Paris'
+            },
+            {
+                'question': 'General Knowledge::: Which planet is known as the Red Planet?',
+                'options': ['Venus', 'Mars', 'Jupiter', 'Saturn'],
+                'correctAnswer': 'Mars'
+            },
+            {
+                'question': 'General Knowledge::: Who wrote the play "Romeo and Juliet"?',
+                'options': ['Charles Dickens', 'William Shakespeare', 'Jane Austen', 'Mark Twain'],
+                'correctAnswer': 'William Shakespeare'
+            },
+            {
+                'question': 'General Knowledge::: What is the largest ocean on Earth?',
+                'options': ['Atlantic Ocean', 'Indian Ocean', 'Arctic Ocean', 'Pacific Ocean'],
+                'correctAnswer': 'Pacific Ocean'
+            },
+            {
+                'question': 'General Knowledge::: In which year did World War II end?',
+                'options': ['1943', '1944', '1945', '1946'],
+                'correctAnswer': '1945'
+            }
+        ]
+        
+        # Generate template ID
+        template_id = str(uuid.uuid4())
+        
+        # Create template entry
+        template_table.put_item(
+            Item={
+                'templateID': template_id,
+                'templateName': 'Sample GK Template',
+                'email': email,
+                'datetime': str(datetime.datetime.now())
+            }
+        )
+        
+        # Create questions
+        for question in gk_questions:
+            questions_table.put_item(
+                Item={
+                    'questionID': str(uuid.uuid4()),
+                    'templateID': template_id,
+                    'question': question['question'],
+                    'options': question['options'],
+                    'correctAnswer': question['correctAnswer'],
+                    'datetime': str(datetime.datetime.now())
+                }
+            )
+        
+        # Create default test configuration
+        config_table.put_item(
+            Item={
+                'testConfigurationID': template_id,
+                'allowedDefaults': '10',
+                'numberOfQuestions': '5',
+                'testDuration': '30',
+                'sensitivityLevel': '5'
+            }
+        )
+        
+        print(f"GK template created for {email}")
+        return True
+    except Exception as e:
+        print(f"Failed to create GK template for {email}: {str(e)}")
+        return False
+
+
 def lambda_handler(event, context):
     try:
         JSONData = str(event)
@@ -117,6 +196,9 @@ def lambda_handler(event, context):
         
         # Send verification email
         email_sent = send_verification_email(email, verification_token)
+        
+        # Clone GK template for the new user (async, non-blocking)
+        clone_gk_template_for_user(email)
 
         if email_sent:
             return {
