@@ -140,6 +140,7 @@ const CreateTemplate = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingOriginalIndex, setEditingOriginalIndex] = useState(null); // Track original index in questionSet
   const [loading, setLoading] = useState(false);
+  const [selectedTopicFilter, setSelectedTopicFilter] = useState(null); // null means "Total" (show all)
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -175,7 +176,7 @@ const CreateTemplate = () => {
     return Array.from(topics).sort();
   }, [questionSet]);
 
-  // Group and sort questions by topic
+  // Group and sort questions by topic, with optional filtering
   const groupedQuestions = useMemo(() => {
     const groups = {};
     const noTopicQuestions = [];
@@ -194,17 +195,25 @@ const CreateTemplate = () => {
 
     // Sort topics alphabetically and build ordered list
     const sortedTopics = Object.keys(groups).sort();
-    const result = [];
+    let result = [];
     
-    sortedTopics.forEach(topic => {
-      result.push(...groups[topic]);
-    });
-    
-    // Add questions without topic at the end
-    result.push(...noTopicQuestions);
+    // Apply filter if a topic is selected
+    if (selectedTopicFilter === null) {
+      // Show all questions
+      sortedTopics.forEach(topic => {
+        result.push(...groups[topic]);
+      });
+      result.push(...noTopicQuestions);
+    } else if (selectedTopicFilter === '__no_topic__') {
+      // Show only questions without topic
+      result = noTopicQuestions;
+    } else {
+      // Show only questions from selected topic
+      result = groups[selectedTopicFilter] || [];
+    }
     
     return result;
-  }, [questionSet]);
+  }, [questionSet, selectedTopicFilter]);
 
   // Calculate topic counts for display
   const topicCounts = useMemo(() => {
@@ -452,20 +461,33 @@ const CreateTemplate = () => {
           <div className="left-panel">
             <div className="form-section">
               <div className="topic-counts-summary">
-                <span className="topic-count-badge topic-count-total">
-                  Total: {questionSet.length}
-                </span>
-                {Object.entries(topicCounts.counts).sort((a, b) => a[0].localeCompare(b[0])).map(([topicName, count]) => (
-                  <span key={topicName} className="topic-count-badge">
-                    {topicName}: {count}
+                  <span 
+                    className={`topic-count-badge ${selectedTopicFilter === null ? 'topic-count-active' : 'topic-count-inactive'}`}
+                    onClick={() => setSelectedTopicFilter(null)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Total: {questionSet.length}
                   </span>
-                ))}
-                {topicCounts.noTopicCount > 0 && (
-                  <span className="topic-count-badge topic-count-no-topic">
-                    No Topic: {topicCounts.noTopicCount}
-                  </span>
-                )}
-              </div>
+                  {Object.entries(topicCounts.counts).sort((a, b) => a[0].localeCompare(b[0])).map(([topicName, count]) => (
+                    <span 
+                      key={topicName} 
+                      className={`topic-count-badge ${selectedTopicFilter === topicName ? 'topic-count-active' : 'topic-count-inactive'}`}
+                      onClick={() => setSelectedTopicFilter(topicName)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {topicName}: {count}
+                    </span>
+                  ))}
+                  {topicCounts.noTopicCount > 0 && (
+                    <span 
+                      className={`topic-count-badge ${selectedTopicFilter === '__no_topic__' ? 'topic-count-active' : 'topic-count-inactive'} topic-count-no-topic`}
+                      onClick={() => setSelectedTopicFilter('__no_topic__')}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      No Topic: {topicCounts.noTopicCount}
+                    </span>
+                  )}
+                </div>
               <div className="form-group">
                 <label>Test Template Name</label>
                 <input
