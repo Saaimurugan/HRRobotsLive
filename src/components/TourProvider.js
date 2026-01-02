@@ -139,7 +139,7 @@ export const TourProvider = ({ children }) => {
           setShowTourButton(false);
         }
       } catch (error) {
-        console.error("Error checking user status:", error);
+        // console.error("Error checking user status:", error);
         // On error, show tour button as fallback
         setShowTourButton(true);
       }
@@ -169,7 +169,7 @@ export const TourProvider = ({ children }) => {
         })
       });
     } catch (error) {
-      console.error("Error updating user status:", error);
+      // console.error("Error updating user status:", error);
     }
   };
 
