@@ -104,7 +104,7 @@ const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
               id="numberOfQuestions"
               name="numberOfQuestions"
               min="1"
-              max="100"
+              max="60"
               value={numberOfQuestions}
               onChange={(e) => setNumberOfQuestions(Number(e.target.value))}
               required
