@@ -123,6 +123,14 @@ const handleConfigTemplate = (d) => {
       .then(data => {
         if (checkUnauthorized(data)) return;
         if (data.statusCode === 200) {
+          // Update local template state immediately with new numberOfQuestions
+          setTemplates(prevTemplates => 
+            prevTemplates.map(template => 
+              template.templateID === templateIDSelectedToAssign
+                ? { ...template, numberOfQuestions: d.numberOfQuestions }
+                : template
+            )
+          );
           fetchTemplates();
         } else {
           //console.error("Error configuring template:", data);
@@ -167,6 +175,22 @@ useEffect(() => {
 }, [globalValue, navigate]);
 
 const handleCreateTest = async (templateID) => {
+  // Find the template to check question count vs numberOfQuestions
+  const template = templates.find(t => t.templateID === templateID);
+  if (template) {
+    const questionCount = template.questionCount || 0;
+    const numberOfQuestions = template.numberOfQuestions || 10;
+    
+    if (questionCount < numberOfQuestions) {
+      showToast(
+        'error',
+        'Insufficient Questions',
+        `This template has ${questionCount} question(s) but requires ${numberOfQuestions}. Please add more questions or reduce the "Number of Questions" in the configuration.`
+      );
+      return;
+    }
+  }
+
   setTemplateStates({}); // Clear all messages
   setLoading(true);
   setClicked(templateID);
