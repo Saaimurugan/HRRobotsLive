@@ -140,22 +140,21 @@ const TestPage = () => {
       .then(res => res.json())
       .then(data => {
         if (data.statusCode === 200 && data.body) {
-          // Parse the JSON string in body
           const body = JSON.parse(data.body);
           const config = Array.isArray(body.configurations) && body.configurations.length > 0
             ? body.configurations[0]
             : {};
           setFaceRecognition(config.faceRecognition === "True");
           setToleranceLevel(Number(config.toleranceLevel) || 0);
-          setAllowedDefaults(Number(config.allowedDefaults) || 10); // Default to 10 if not set
-          setNumberOfQuestions(Number(config.numberOfQuestions) || 50); // Default to 50 if not set
-          setTestDuration(Number(config.testDuration) || 60); // Default to 60 minutes if not set
-          setSensitivityLevel(Number(config.sensitivityLevel) || 5); // Default to 5 seconds if not set
+          setAllowedDefaults(Number(config.allowedDefaults) || 10);
+          setNumberOfQuestions(Number(config.numberOfQuestions) || 50);
+          setTestDuration(Number(config.testDuration) || 60);
+          setSensitivityLevel(Number(config.sensitivityLevel) || 5);
         }
         setConfigLoaded(true);
       })
       .catch(error => {
-        setConfigLoaded(true); // Still mark as loaded to prevent infinite loading
+        setConfigLoaded(true);
       });
   }, [templateID]);
 
