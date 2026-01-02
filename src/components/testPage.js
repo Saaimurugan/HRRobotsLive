@@ -98,6 +98,7 @@ const TestPage = () => {
   const [testDuration, setTestDuration] = useState(60); // Default to 60 minutes
   const [sensitivityLevel, setSensitivityLevel] = useState(5); // Default to 5 seconds
   const [templateID, setTemplateID] = useState(''); // Template ID for configuration lookup
+  const [configLoaded, setConfigLoaded] = useState(false); // Track if configuration has been loaded
 
   // Status check states
   const [statusChecked, setStatusChecked] = useState(false);
@@ -150,12 +151,11 @@ const TestPage = () => {
           setNumberOfQuestions(Number(config.numberOfQuestions) || 50); // Default to 50 if not set
           setTestDuration(Number(config.testDuration) || 60); // Default to 60 minutes if not set
           setSensitivityLevel(Number(config.sensitivityLevel) || 5); // Default to 5 seconds if not set
-        } else {
-          //console.error("Error fetching configuration:", data);
         }
+        setConfigLoaded(true);
       })
       .catch(error => {
-        //console.error("Error fetching configuration:", error);
+        setConfigLoaded(true); // Still mark as loaded to prevent infinite loading
       });
   }, [templateID]);
 
@@ -1327,7 +1327,7 @@ if (userUniqueID != '')
         {showMultipleFacesWarning && !showProctorWarning && 
         <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
-        {isFaceDetectionLoaded ? (
+        {isFaceDetectionLoaded && configLoaded ? (
           <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} numberOfQuestions={numberOfQuestions}/>
         ) : (
           <div style={{

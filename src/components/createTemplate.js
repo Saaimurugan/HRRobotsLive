@@ -375,20 +375,22 @@ const CreateTemplate = () => {
       if (checkUnauthorized(data)) return;
 
       if (data.statusCode === 200) {
-        // Extract templateID from response and create default configuration
-        const responseBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-        const templateID = responseBody?.templateID;
+        // Get templateID from response and create default configuration
+        const templateID = data.templateID;
         
         if (templateID) {
-          // Create default test configuration for the new template
           try {
-            await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
+            const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ templateID, createDefault: true, token: JWTValue }),
             });
+            const configData = await configResponse.json();
+            if (configData.statusCode !== 200) {
+              console.error('Failed to create default configuration:', configData);
+            }
           } catch (configError) {
-            // Silent fail - configuration can be set later
+            console.error('Error creating default configuration:', configError);
           }
         }
         

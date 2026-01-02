@@ -34,7 +34,7 @@ def lambda_handler(event, context):
             return {
                 'statusCode': 200,
                 'body': json.dumps({
-                    'TemplateConfigurationID': None,
+                    'testConfigurationID': None,
                     'configurations': [{
                         'numberOfQuestions': '50',
                         'testDuration': '60',
@@ -44,9 +44,9 @@ def lambda_handler(event, context):
                 })
             }
 
-        # Query by templateID (TemplateConfigurationID is the partition key)
+        # Query by templateID (testConfigurationID is the partition key)
         response = config_table.query(
-            KeyConditionExpression=Key('TemplateConfigurationID').eq(template_id)
+            KeyConditionExpression=Key('testConfigurationID').eq(template_id)
         )
 
         # Add default values for fields if not present
@@ -74,7 +74,7 @@ def lambda_handler(event, context):
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'TemplateConfigurationID': template_id,
+                'testConfigurationID': template_id,
                 'configurations': configurations
             })
         }

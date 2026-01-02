@@ -31,7 +31,7 @@ def lambda_handler(event, context):
             # Create default configuration for new template
             config_id = str(data['templateID'])
             item = {
-                'TemplateConfigurationID': config_id,
+                'testConfigurationID': config_id,
                 'allowedDefaults': DEFAULT_CONFIG['allowedDefaults'],
                 'numberOfQuestions': DEFAULT_CONFIG['numberOfQuestions'],
                 'testDuration': DEFAULT_CONFIG['testDuration'],
@@ -42,7 +42,7 @@ def lambda_handler(event, context):
             config_id = str(data['templateIDSelectedToAssign'])
             config_data = data['d']
             item = {
-                'TemplateConfigurationID': config_id,
+                'testConfigurationID': config_id,
                 'allowedDefaults': str(config_data.get('allowedDefaults', DEFAULT_CONFIG['allowedDefaults'])),
                 'numberOfQuestions': str(config_data.get('numberOfQuestions', DEFAULT_CONFIG['numberOfQuestions'])),
                 'testDuration': str(config_data.get('testDuration', DEFAULT_CONFIG['testDuration'])),
@@ -52,7 +52,7 @@ def lambda_handler(event, context):
             # Direct templateID format
             config_id = str(data['templateID'])
             item = {
-                'TemplateConfigurationID': config_id,
+                'testConfigurationID': config_id,
                 'allowedDefaults': str(data.get('allowedDefaults', DEFAULT_CONFIG['allowedDefaults'])),
                 'numberOfQuestions': str(data.get('numberOfQuestions', DEFAULT_CONFIG['numberOfQuestions'])),
                 'testDuration': str(data.get('testDuration', DEFAULT_CONFIG['testDuration'])),
