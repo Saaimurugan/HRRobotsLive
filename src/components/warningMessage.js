@@ -1,6 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const WarningMessage = ({ reason }) => {
+  const [countdown, setCountdown] = useState(5);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          window.location.href = "https://www.hrrobots.com";
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const reasons = [
     { key: "camera", text: "Camera access is denied" },
     { key: "mic", text: "Mic access is denied" },
@@ -57,8 +74,27 @@ const WarningMessage = ({ reason }) => {
   const textStyle = {
     fontSize: "15px",
     color: "#666",
-    marginBottom: "20px",
+    marginBottom: "15px",
     lineHeight: "1.5"
+  };
+
+  const countdownBoxStyle = {
+    backgroundColor: "#f8d7da",
+    borderRadius: "10px",
+    padding: "15px",
+    marginBottom: "20px"
+  };
+
+  const countdownNumberStyle = {
+    fontSize: "36px",
+    fontWeight: "bold",
+    color: "#dc3545"
+  };
+
+  const countdownLabelStyle = {
+    fontSize: "14px",
+    color: "#721c24",
+    marginTop: "5px"
   };
 
   const infoBoxStyle = {
@@ -93,6 +129,17 @@ const WarningMessage = ({ reason }) => {
         <div style={headerStyle}>Test Terminated</div>
         <div style={textStyle}>
           Your test has been terminated due to a violation.
+        </div>
+        <div style={countdownBoxStyle}>
+          <div style={{fontSize: "14px", color: "#721c24", marginBottom: "5px"}}>
+            Redirecting in
+          </div>
+          <div style={countdownNumberStyle}>
+            {countdown}
+          </div>
+          <div style={countdownLabelStyle}>
+            seconds
+          </div>
         </div>
         <div style={infoBoxStyle}>
           {reasons.map((item, index) => (

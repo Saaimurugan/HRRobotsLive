@@ -88,7 +88,7 @@ def lambda_handler(event, context):
         query_params = {
             "IndexName": "email-index",
             "KeyConditionExpression": Key("email").eq(e_mail),
-            "ProjectionExpression": "testID, candidateName, #dt, #st, templateID, email",
+            "ProjectionExpression": "testID, candidateName, #dt, #st, templateID, email, terminationReason",
             "ExpressionAttributeNames": {"#dt": "datetime", "#st": "status"}
         }
 
