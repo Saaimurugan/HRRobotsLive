@@ -102,7 +102,7 @@ def get_test_configuration(template_id):
     """Get test configuration from DynamoDB, return defaults if not found"""
     try:
         response = config_table.query(
-            KeyConditionExpression=Key('TemplateConfigurationID').eq(template_id)
+            KeyConditionExpression=Key('testConfigurationID').eq(template_id)
         )
         items = response.get('Items', [])
         if items:
