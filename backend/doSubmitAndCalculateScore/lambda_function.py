@@ -108,7 +108,7 @@ def get_test_configuration(template_id):
         if items:
             config = items[0]
             return {
-                'numberOfQuestions': int(config.get('numberOfQuestions', 50)),
+                'numberOfQuestions': int(config.get('numberOfQuestions', 10)),
                 'testDuration': int(config.get('testDuration', 60)),
                 'sensitivityLevel': int(config.get('sensitivityLevel', 5)),
                 'allowedDefaults': int(config.get('allowedDefaults', 10))
@@ -117,13 +117,13 @@ def get_test_configuration(template_id):
         pass
     # Return defaults if configuration not found
     return {
-        'numberOfQuestions': 50,
+        'numberOfQuestions': 10,
         'testDuration': 60,
         'sensitivityLevel': 5,
         'allowedDefaults': 10
     }
 
-def count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions=50):
+def count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions=10):
     submitted_answers = sum(1 for entry in report if entry.get("submittedAnswer"))
     correct_answers = sum(1 for entry in report if entry.get("isCorrect") is True)
 

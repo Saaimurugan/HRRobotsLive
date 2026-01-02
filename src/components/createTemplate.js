@@ -357,8 +357,8 @@ const CreateTemplate = () => {
       showToast('warning', 'No Questions', 'No questions to save. Please add some questions first.');
       setLoading(false);
       return;
-    } else if (questionSet.length < 50) {
-      showToast('warning', 'Not Enough Questions', `Minimum 50 questions required. You have ${questionSet.length} questions.`);
+    } else if (questionSet.length < 10) {
+      showToast('warning', 'Not Enough Questions', `Minimum 10 questions required. You have ${questionSet.length} questions.`);
       setLoading(false);
       return;
     }
@@ -383,7 +383,7 @@ const CreateTemplate = () => {
             const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ templateID, createDefault: true, token: JWTValue }),
+              body: JSON.stringify({ templateID, createDefault: true, numberOfQuestions: 10, token: JWTValue }),
             });
             const configData = await configResponse.json();
             if (configData.statusCode !== 200) {

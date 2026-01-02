@@ -94,7 +94,7 @@ const TestPage = () => {
   const [faceRecognition, setFaceRecognition] = useState(false);
   const [toleranceLevel, setToleranceLevel] = useState(0);
   const [allowedDefaults, setAllowedDefaults] = useState(10); // Default to 10 allowed deviations
-  const [numberOfQuestions, setNumberOfQuestions] = useState(50); // Default to 50 questions
+  const [numberOfQuestions, setNumberOfQuestions] = useState(10); // Default to 10 questions
   const [testDuration, setTestDuration] = useState(60); // Default to 60 minutes
   const [sensitivityLevel, setSensitivityLevel] = useState(5); // Default to 5 seconds
   const [templateID, setTemplateID] = useState(''); // Template ID for configuration lookup
@@ -147,7 +147,7 @@ const TestPage = () => {
           setFaceRecognition(config.faceRecognition === "True");
           setToleranceLevel(Number(config.toleranceLevel) || 0);
           setAllowedDefaults(Number(config.allowedDefaults) || 10);
-          setNumberOfQuestions(Number(config.numberOfQuestions) || 50);
+          setNumberOfQuestions(Number(config.numberOfQuestions) || 10);
           setTestDuration(Number(config.testDuration) || 60);
           setSensitivityLevel(Number(config.sensitivityLevel) || 5);
         }

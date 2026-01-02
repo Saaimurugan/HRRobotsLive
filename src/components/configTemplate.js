@@ -5,9 +5,9 @@ import '../confirmationBox.css';
 
 const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
   const { JWTValue, setRedirectPath, logout } = useGlobalContext();
-  const [allowedDefaults, setAllowedDefaults] = useState(0);
+  const [allowedDefaults, setAllowedDefaults] = useState(10);
   const [numberOfQuestions, setNumberOfQuestions] = useState(10);
-  const [testDuration, setTestDuration] = useState(30);
+  const [testDuration, setTestDuration] = useState(60);
   const [sensitivityLevel, setSensitivityLevel] = useState(3);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();

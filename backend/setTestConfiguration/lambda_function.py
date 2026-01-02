@@ -9,7 +9,7 @@ table = dynamodb.Table('testConfiguration')
 # Default configuration values
 DEFAULT_CONFIG = {
     'allowedDefaults': '10',      # Face detection warnings allowed
-    'numberOfQuestions': '50',    # Number of questions in test
+    'numberOfQuestions': '10',    # Number of questions in test
     'testDuration': '60',         # Test duration in minutes
     'sensitivityLevel': '5'       # Seconds before face-off warning
 }

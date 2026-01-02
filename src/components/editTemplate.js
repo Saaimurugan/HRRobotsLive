@@ -142,6 +142,7 @@ const EditTemplate = () => {
   const [loading, setLoading] = useState(false);
   const [loadingTemplate, setLoadingTemplate] = useState(false);
   const [selectedTopicFilter, setSelectedTopicFilter] = useState(null); // null means "Total" (show all)
+  const [minQuestions, setMinQuestions] = useState(10); // Default minimum, will be updated from config
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -364,8 +365,8 @@ const EditTemplate = () => {
       showToast('warning', 'No Questions', 'No questions to save. Please add some questions first.');
       setLoading(false);
       return;
-    } else if (questionSet.length < 50) {
-      showToast('warning', 'Not Enough Questions', `Minimum 50 questions required. You have ${questionSet.length} questions.`);
+    } else if (questionSet.length < minQuestions) {
+      showToast('warning', 'Not Enough Questions', `Minimum ${minQuestions} questions required. You have ${questionSet.length} questions.`);
       setLoading(false);
       return;
     }
@@ -397,6 +398,8 @@ const EditTemplate = () => {
   const loadQuestions = async (passedTemplateID) => {
     try {
       setLoadingTemplate(true);
+      
+      // Fetch questions
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -421,6 +424,26 @@ const EditTemplate = () => {
         }
       } else {
         //console.error("Unexpected API response:", data);
+      }
+
+      // Fetch configuration to get numberOfQuestions
+      try {
+        const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateID: passedTemplateID, token: JWTValue }),
+        });
+        const configData = await configResponse.json();
+        if (configData.statusCode === 200 && configData.body) {
+          const body = JSON.parse(configData.body);
+          const config = Array.isArray(body.configurations) && body.configurations.length > 0
+            ? body.configurations[0]
+            : {};
+          const configuredQuestions = Number(config.numberOfQuestions) || 10;
+          setMinQuestions(configuredQuestions);
+        }
+      } catch (configError) {
+        //console.error("Error fetching configuration:", configError);
       }
     } catch (error) {
       //console.error("Error fetching templates:", error);
