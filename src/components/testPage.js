@@ -94,6 +94,10 @@ const TestPage = () => {
   const [faceRecognition, setFaceRecognition] = useState(false);
   const [toleranceLevel, setToleranceLevel] = useState(0);
   const [allowedDefaults, setAllowedDefaults] = useState(10); // Default to 10 allowed deviations
+  const [numberOfQuestions, setNumberOfQuestions] = useState(50); // Default to 50 questions
+  const [testDuration, setTestDuration] = useState(60); // Default to 60 minutes
+  const [sensitivityLevel, setSensitivityLevel] = useState(5); // Default to 5 seconds
+  const [templateID, setTemplateID] = useState(''); // Template ID for configuration lookup
 
   // Status check states
   const [statusChecked, setStatusChecked] = useState(false);
@@ -121,14 +125,16 @@ const TestPage = () => {
     }, 300);
   };
   
+  // Fetch configuration when templateID is available
   useEffect(() => {
-    // Fetch initial config on component mount, passing templateID as a query param
+    if (!templateID) return;
+    
     fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ userUniqueID }),
+      body: JSON.stringify({ templateID }),
     })
       .then(res => res.json())
       .then(data => {
@@ -141,6 +147,9 @@ const TestPage = () => {
           setFaceRecognition(config.faceRecognition === "True");
           setToleranceLevel(Number(config.toleranceLevel) || 0);
           setAllowedDefaults(Number(config.allowedDefaults) || 10); // Default to 10 if not set
+          setNumberOfQuestions(Number(config.numberOfQuestions) || 50); // Default to 50 if not set
+          setTestDuration(Number(config.testDuration) || 60); // Default to 60 minutes if not set
+          setSensitivityLevel(Number(config.sensitivityLevel) || 5); // Default to 5 seconds if not set
         } else {
           //console.error("Error fetching configuration:", data);
         }
@@ -148,7 +157,7 @@ const TestPage = () => {
       .catch(error => {
         //console.error("Error fetching configuration:", error);
       });
-  }, [userUniqueID]);
+  }, [templateID]);
 
   useEffect(() => {
     // Extract the value from the URL
@@ -187,11 +196,19 @@ const TestPage = () => {
           setTestStatus(body.status);
           setStatusMessage(body.message);
           setCanStartTest(body.canStart);
+          // Set templateID for configuration lookup
+          if (body.templateID) {
+            setTemplateID(body.templateID);
+          }
         } else if (data.body) {
           const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
           setTestStatus(body.status || 'Error');
           setStatusMessage(body.error || body.message || 'Unable to verify test status');
           setCanStartTest(false);
+          // Set templateID even on error for potential config lookup
+          if (body.templateID) {
+            setTemplateID(body.templateID);
+          }
         }
         setStatusChecked(true);
       } catch (error) {
@@ -249,7 +266,7 @@ const TestPage = () => {
   const [ candidateName, setCandidateName ] = useState("");
   const { candidateAccept, setcandidateAccept } = useGlobalContext("");
   const [ isTimeOut, setIsTimeOut ] = useState(true);
-  const [testProgress, setTestProgress] = useState({ currentQuestion: 0, questionCount: 0, answers: [], totalQuestions: 50, questionsLoaded: 0 });
+  const [testProgress, setTestProgress] = useState({ currentQuestion: 0, questionCount: 0, answers: [], totalQuestions: numberOfQuestions, questionsLoaded: 0 });
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [isFaceDetectionLoaded, setIsFaceDetectionLoaded] = useState(false);
   const navigateToQuestionRef = useRef(null);
@@ -628,11 +645,11 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
           lowScoreStartRef.current = Date.now();
           warningShownForCurrentPeriodRef.current = false;
         } else if (!warningShownForCurrentPeriodRef.current) {
-          // Check if 5 seconds have passed
+          // Check if sensitivityLevel seconds have passed
           const elapsedTime = Date.now() - lowScoreStartRef.current;
           //console.log('Elapsed time with no face:', elapsedTime, 'ms');
-          if (elapsedTime >= 5000) {
-            //console.log('5 seconds passed! Showing warning');
+          if (elapsedTime >= sensitivityLevel * 1000) {
+            //console.log('sensitivityLevel seconds passed! Showing warning');
             setShowFaceWarning(true);
             setFaceOffWarningCount(c => c + 1);
             setFaceOffFocusCount(c => c + 1);
@@ -651,7 +668,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
     }, 500); // Check every 500ms
 
     return () => clearInterval(checkInterval);
-  }, [faceDetectionInitialized]);
+  }, [faceDetectionInitialized, sensitivityLevel]);
 
   const handleFaceScore = (data) =>{
     setFaceFocusScore(data);
@@ -1210,6 +1227,8 @@ if (userUniqueID != '')
         speechCount={speechCount}
         isAudioListening={audioDetection.isListening}
         isFirstQuestionLoaded={testProgress.questionsLoaded > 0}
+        testDuration={testDuration}
+        sensitivityLevel={sensitivityLevel}
         />
         {/* Progress dots for larger screens */}
         <div className="progress-dots-desktop" style={{
@@ -1221,7 +1240,7 @@ if (userUniqueID != '')
           maxWidth: '600px',
           margin: '0 auto'
         }}>
-          {Array.from({ length: 50 }, (_, i) => {
+          {Array.from({ length: numberOfQuestions }, (_, i) => {
             const questionNum = i + 1;
             // questionCount is the number of previously answered questions
             // currentQuestion is the 0-based index in the loaded questions array
@@ -1309,7 +1328,7 @@ if (userUniqueID != '')
         <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
         {isFaceDetectionLoaded ? (
-          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef}/>
+          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} numberOfQuestions={numberOfQuestions}/>
         ) : (
           <div style={{
             display: 'flex',
@@ -1394,7 +1413,7 @@ if (userUniqueID != '')
             gridTemplateColumns: 'repeat(10, 1fr)',
             gap: '5px'
           }}>
-            {Array.from({ length: 50 }, (_, i) => {
+            {Array.from({ length: numberOfQuestions }, (_, i) => {
               const questionNum = i + 1;
               // questionCount is the number of previously answered questions
               // currentQuestion is the 0-based index in the loaded questions array

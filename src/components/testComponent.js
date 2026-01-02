@@ -15,7 +15,7 @@ const parseQuestionTopic = (questionText) => {
   return { topic: '', question: questionText };
 };
 
-const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef }) => {
+const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50 }) => {
   const [answers, setAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -68,11 +68,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         currentQuestion: currentQuestionIndex,
         questionCount,
         answers,
-        totalQuestions: 50,
+        totalQuestions: numberOfQuestions,
         questionsLoaded: questions.length
       });
     }
-  }, [currentQuestionIndex, questionCount, answers, onProgressUpdate, questions.length]);
+  }, [currentQuestionIndex, questionCount, answers, onProgressUpdate, questions.length, numberOfQuestions]);
 
   // Expose navigation function to parent via ref
   useEffect(() => {
@@ -261,11 +261,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     <div className="MCQOuterWrap">
       {currentQuestion ?
       <>
-      {(currentQuestionIndex + questionCount + 1) <= 50? 
+      {(currentQuestionIndex + questionCount + 1) <= numberOfQuestions? 
         <div>{/* {currentQuestionIndex} - {questionCount} -  */}
           <h2>
             Question {currentQuestionIndex + questionCount + 1}
-            /50
+            /{numberOfQuestions}
             {parseQuestionTopic(currentQuestion.question).topic && (
               <span className="question-topic-tag">{parseQuestionTopic(currentQuestion.question).topic}</span>
             )}
@@ -306,7 +306,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
             >
               {isLoadingPrev ? "Loading..." : "Previous"}
             </button>&ensp;
-            {(currentQuestionIndex + questionCount + 1) >= 50 ? (
+            {(currentQuestionIndex + questionCount + 1) >= numberOfQuestions ? (
               <button
                 onClick={handleSubmit}
                 disabled={isSubmitting || isSavingAnswer}

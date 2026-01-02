@@ -43,13 +43,13 @@ const ScoreChart = ({ message, showToast }) => {
   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
   const parsedBody = message;
-  const { testID, candidateName, templateName, submittedAt } = parsedBody || {};
+  const { testID, candidateName, templateName, submittedAt, totalQuestions: configTotalQuestions } = parsedBody || {};
   
   // Calculate totals from topic scores when available, otherwise fall back to message data
-  // totalQuestions is always 50 (hardcoded test length)
+  // Use totalQuestions from config if available, otherwise default to 50
   const calculatedTotals = topicScores.length > 0 
     ? {
-        totalQuestions: 50,
+        totalQuestions: configTotalQuestions || 50,
         correctAnswers: topicScores.reduce((acc, topic) => acc + (topic.correct || 0), 0),
         submittedAnswers: topicScores.reduce((acc, topic) => acc + (topic.attempted || 0), 0),
       }
@@ -180,7 +180,7 @@ const ScoreChart = ({ message, showToast }) => {
                     <td>{topic.topic}</td>
                     <td>{topic.attempted}</td>
                     <td>{topic.correct}</td>
-                    <td>{((topic.correct / 50) * 100).toFixed(0)}%</td>
+                    <td>{((topic.correct / totalQuestions) * 100).toFixed(0)}%</td>
                   </tr>
                 ))}
               </tbody>

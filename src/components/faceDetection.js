@@ -16,7 +16,10 @@ const FaceTracking = ({
   speechCount = 0,
   isAudioListening = false,
   // Timer control
-  isFirstQuestionLoaded = false
+  isFirstQuestionLoaded = false,
+  // Configuration props
+  testDuration = 60, // Test duration in minutes (default 60)
+  sensitivityLevel = 5 // Sensitivity level in seconds (default 5)
 }) => {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -188,9 +191,9 @@ const FaceTracking = ({
                 // Start tracking multiple faces
                 multipleFaceStartRef.current = Date.now();
               } else {
-                // Check if 5 seconds have passed with multiple faces
+                // Check if sensitivityLevel seconds have passed with multiple faces
                 const elapsedTime = Date.now() - multipleFaceStartRef.current;
-                if (elapsedTime >= 5000) {
+                if (elapsedTime >= sensitivityLevel * 1000) {
                   // Trigger multiple faces warning callback
                   if (onMultipleFacesDetected) {
                     onMultipleFacesDetected(detections.length);
@@ -300,7 +303,7 @@ const handleTimerEnd = () => {
       {isLoading ? 
         <p style={{ color: 'red', fontSize: '20px', marginTop: '15px' }}>Loading...</p>
         :
-        isFirstQuestionLoaded ? <TimerComponent onTimerEnd={handleTimerEnd} /> : null
+        isFirstQuestionLoaded ? <TimerComponent onTimerEnd={handleTimerEnd} testDuration={testDuration} /> : null
         }
     </>
     );

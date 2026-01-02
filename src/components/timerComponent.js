@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
-const MAX_TIME = 3600; // 1 hour in seconds
+const DEFAULT_TIME = 3600; // 1 hour in seconds (default)
 
-const TimerComponent = ({ onTimerEnd }) => {
-   const [time, setTime] = useState(MAX_TIME);
+const TimerComponent = ({ onTimerEnd, testDuration }) => {
+   // testDuration is in minutes, convert to seconds. Default to 60 minutes if not provided
+   const maxTime = testDuration ? testDuration * 60 : DEFAULT_TIME;
+   const [time, setTime] = useState(maxTime);
    const [isBlinking, setIsBlinking] = useState(false);
 
    useEffect(() => {
