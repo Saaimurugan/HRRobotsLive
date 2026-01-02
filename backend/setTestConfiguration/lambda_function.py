@@ -6,6 +6,14 @@ from botocore.exceptions import ClientError
 dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('testConfiguration')
 
+# Default configuration values
+DEFAULT_CONFIG = {
+    'allowedDefaults': '10',      # Face detection warnings allowed
+    'numberOfQuestions': '50',    # Number of questions in test
+    'testDuration': '60',         # Test duration in minutes
+    'sensitivityLevel': '5'       # Seconds before face-off warning
+}
+
 def lambda_handler(event, context):
     try:
         # Parse request body
@@ -14,41 +22,54 @@ def lambda_handler(event, context):
         else:
             data = event
 
-        # Support both old and new formats
-        if 'd' in data and 'templateIDSelectedToAssign' in data:
+        # Support multiple formats:
+        # 1. New format with 'd' and 'templateIDSelectedToAssign'
+        # 2. Old format with 'templateID'
+        # 3. Create default format with 'templateID' and 'createDefault': true
+        
+        if data.get('createDefault') and data.get('templateID'):
+            # Create default configuration for new template
+            config_id = str(data['templateID'])
+            item = {
+                'TemplateConfigurationID': config_id,
+                'allowedDefaults': DEFAULT_CONFIG['allowedDefaults'],
+                'numberOfQuestions': DEFAULT_CONFIG['numberOfQuestions'],
+                'testDuration': DEFAULT_CONFIG['testDuration'],
+                'sensitivityLevel': DEFAULT_CONFIG['sensitivityLevel']
+            }
+        elif 'd' in data and 'templateIDSelectedToAssign' in data:
             # New format
             config_id = str(data['templateIDSelectedToAssign'])
             config_data = data['d']
-        elif 'testID' in data:
-            # Old format
-            config_id = str(data['testID'])
-            config_data = {
-                'allowedDefaults': data.get('allowedDefaults', 0),
-                'numberOfQuestions': data.get('numberOfQuestions', 10),
-                'testDuration': data.get('testDuration', 30),
-                'sensitivityLevel': data.get('sensitivityLevel', 3)
+            item = {
+                'TemplateConfigurationID': config_id,
+                'allowedDefaults': str(config_data.get('allowedDefaults', DEFAULT_CONFIG['allowedDefaults'])),
+                'numberOfQuestions': str(config_data.get('numberOfQuestions', DEFAULT_CONFIG['numberOfQuestions'])),
+                'testDuration': str(config_data.get('testDuration', DEFAULT_CONFIG['testDuration'])),
+                'sensitivityLevel': str(config_data.get('sensitivityLevel', DEFAULT_CONFIG['sensitivityLevel']))
+            }
+        elif 'templateID' in data:
+            # Direct templateID format
+            config_id = str(data['templateID'])
+            item = {
+                'TemplateConfigurationID': config_id,
+                'allowedDefaults': str(data.get('allowedDefaults', DEFAULT_CONFIG['allowedDefaults'])),
+                'numberOfQuestions': str(data.get('numberOfQuestions', DEFAULT_CONFIG['numberOfQuestions'])),
+                'testDuration': str(data.get('testDuration', DEFAULT_CONFIG['testDuration'])),
+                'sensitivityLevel': str(data.get('sensitivityLevel', DEFAULT_CONFIG['sensitivityLevel']))
             }
         else:
             return {
                 'statusCode': 400,
-                'body': json.dumps({'message': 'Missing required fields'})
+                'body': json.dumps({'message': 'Missing required fields. Provide templateID.'})
             }
-
-        # Normalize values to string for DynamoDB
-        item = {
-            'testConfigurationID': config_id,
-            'allowedDefaults': str(config_data.get('allowedDefaults', 0)),
-            'numberOfQuestions': str(config_data.get('numberOfQuestions', 10)),
-            'testDuration': str(config_data.get('testDuration', 30)),
-            'sensitivityLevel': str(config_data.get('sensitivityLevel', 3))
-        }
 
         # Store in DynamoDB
         table.put_item(Item=item)
 
         return {
             'statusCode': 200,
-            'body': json.dumps({'message': 'Data stored successfully'})
+            'body': json.dumps({'message': 'Configuration saved successfully', 'config': item})
         }
 
     except ClientError as e:

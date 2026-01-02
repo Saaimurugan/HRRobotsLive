@@ -16,7 +16,6 @@ def lambda_handler(event, context):
         - 200 with canStart=False and status message if "Completed" or "Terminated"
         - 404 if test ID not found
         - 400 if testID is missing
-        - Always includes templateID in response for configuration lookup
     """
     try:
         test_id = event.get('testID')
@@ -54,7 +53,6 @@ def lambda_handler(event, context):
             }
 
         status = test_items[0].get('status', 'Not Started')
-        template_id = test_items[0].get('templateID', '')
 
         # Check if test can be started
         if status == "Not Started":
@@ -68,8 +66,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({
                     'canStart': True,
                     'status': status,
-                    'message': 'Test can be started',
-                    'templateID': template_id
+                    'message': 'Test can be started'
                 })
             }
         elif status == "Completed":
@@ -83,8 +80,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({
                     'canStart': False,
                     'status': status,
-                    'message': 'This test has already been completed.',
-                    'templateID': template_id
+                    'message': 'This test has already been completed.'
                 })
             }
         elif status == "Terminated":
@@ -98,8 +94,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({
                     'canStart': False,
                     'status': status,
-                    'message': 'This test has been terminated. Please contact your recruiter for more details.',
-                    'templateID': template_id
+                    'message': 'This test has been terminated. Please contact your recruiter for more details.'
                 })
             }
         elif status == "In Progress":
@@ -114,8 +109,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({
                     'canStart': True,
                     'status': status,
-                    'message': 'Test is in progress, resuming...',
-                    'templateID': template_id
+                    'message': 'Test is in progress, resuming...'
                 })
             }
         else:
@@ -130,8 +124,7 @@ def lambda_handler(event, context):
                 'body': json.dumps({
                     'canStart': False,
                     'status': status,
-                    'message': f'Test status is: {status}',
-                    'templateID': template_id
+                    'message': f'Test status is: {status}'
                 })
             }
 

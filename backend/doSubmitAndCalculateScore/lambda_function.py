@@ -20,6 +20,7 @@ table = dynamodb.Table("testTransactions")
 mcq_answers_table = dynamodb.Table('MCQAnswers')
 mcq_questions_table = dynamodb.Table('MCQQuestions')
 savedResult_table = dynamodb.Table("savedResult_table_name")
+config_table = dynamodb.Table('testConfiguration')
 
 # Initialize Lambda client
 lambda_client = boto3.client('lambda')
@@ -97,14 +98,39 @@ def calculate_score(test_id, template_ID):
                 })
     return report
 
-def count_submitted_and_correct_answers(report, candidate_Name, test_id):
+def get_test_configuration(template_id):
+    """Get test configuration from DynamoDB, return defaults if not found"""
+    try:
+        response = config_table.query(
+            KeyConditionExpression=Key('TemplateConfigurationID').eq(template_id)
+        )
+        items = response.get('Items', [])
+        if items:
+            config = items[0]
+            return {
+                'numberOfQuestions': int(config.get('numberOfQuestions', 50)),
+                'testDuration': int(config.get('testDuration', 60)),
+                'sensitivityLevel': int(config.get('sensitivityLevel', 5)),
+                'allowedDefaults': int(config.get('allowedDefaults', 10))
+            }
+    except Exception:
+        pass
+    # Return defaults if configuration not found
+    return {
+        'numberOfQuestions': 50,
+        'testDuration': 60,
+        'sensitivityLevel': 5,
+        'allowedDefaults': 10
+    }
+
+def count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions=50):
     submitted_answers = sum(1 for entry in report if entry.get("submittedAnswer"))
     correct_answers = sum(1 for entry in report if entry.get("isCorrect") is True)
 
     return {
         "testID": test_id,
         "candidateName": candidate_Name,
-        "totalQuestions": 50,
+        "totalQuestions": total_questions,
         "submittedAnswers": submitted_answers,
         "correctAnswers": correct_answers
     }
@@ -156,6 +182,10 @@ def lambda_handler(event, context):
         status = items[0].get('status')
         template_ID = items[0].get('templateID')
         candidate_Name = items[0].get('candidateName')
+        
+        # Get test configuration for numberOfQuestions
+        config = get_test_configuration(template_ID)
+        total_questions = config['numberOfQuestions']
             
         if status == "In Progress":
             # Update status to Completed
@@ -168,7 +198,7 @@ def lambda_handler(event, context):
 
             # Calculate score and save results
             report = calculate_score(test_id, template_ID)
-            result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id)
+            result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions)
             save_result_to_dynamodb(test_id, report, result_summary)
 
             return {
@@ -181,7 +211,7 @@ def lambda_handler(event, context):
         elif status in ["Completed", "Terminated"]:
             # Calculate and save results if not already saved (fallback for checkResult)
             report = calculate_score(test_id, template_ID)
-            result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id)
+            result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions)
             save_result_to_dynamodb(test_id, report, result_summary)
 
             return {
