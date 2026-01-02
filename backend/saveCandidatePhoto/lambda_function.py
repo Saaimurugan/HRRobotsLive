@@ -15,9 +15,9 @@ dynamodb = boto3.resource('dynamodb')
 BUCKET_NAME = 'hrrfiles'
 TABLE_NAME = 'candidatePhoto'
 WATERMARK_OPACITY = 128  # Semi-transparent watermark
-OUTPUT_QUALITY = 35  # Low quality for preview only (1-100)
+DEFAULT_OUTPUT_QUALITY = 5  # Low quality for preview only (1-100)
 
-def add_watermark_and_reduce_quality(image_bytes, timestamp_text):
+def add_watermark_and_reduce_quality(image_bytes, timestamp_text, output_quality=DEFAULT_OUTPUT_QUALITY):
     """
     Reduce image quality first, then add timestamp watermark to make it preview-only.
     """
@@ -30,7 +30,7 @@ def add_watermark_and_reduce_quality(image_bytes, timestamp_text):
     
     # STEP 1: Reduce quality first by saving and reloading
     quality_buffer = BytesIO()
-    image.save(quality_buffer, format='JPEG', quality=OUTPUT_QUALITY, optimize=True)
+    image.save(quality_buffer, format='JPEG', quality=output_quality, optimize=True)
     quality_buffer.seek(0)
     image = Image.open(quality_buffer)
     
@@ -77,7 +77,7 @@ def add_watermark_and_reduce_quality(image_bytes, timestamp_text):
     
     # Save with reduced quality
     output_buffer = BytesIO()
-    image.save(output_buffer, format='JPEG', quality=OUTPUT_QUALITY, optimize=True)
+    image.save(output_buffer, format='JPEG', quality=output_quality, optimize=True)
     output_buffer.seek(0)
     
     return output_buffer.getvalue()
@@ -86,6 +86,7 @@ def lambda_handler(event, context):
     try:
         image_data = event.get('image')
         user_unique_id = event.get('userUniqueID')
+        output_quality = event.get('outputQuality', DEFAULT_OUTPUT_QUALITY)  # Get quality from FE, default to 5
 
         # Extract base64 string from Data URI
         match = re.match(r'data:(image/\w+);base64,(.*)', image_data)
@@ -103,7 +104,7 @@ def lambda_handler(event, context):
         current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         # Add watermark and reduce quality
-        processed_image_bytes = add_watermark_and_reduce_quality(image_bytes, current_timestamp)
+        processed_image_bytes = add_watermark_and_reduce_quality(image_bytes, current_timestamp, output_quality)
 
         # Always save as JPEG (reduced quality)
         filename = f"face_capture_{uuid.uuid4().hex}.jpg"

@@ -102,7 +102,7 @@ const FaceTracking = ({
         await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageData, userUniqueID }),
+          body: JSON.stringify({ image: imageData, userUniqueID, outputQuality: 5 }),  // Low quality for face photos
         });
       } catch (error) {
         //console.error('Error sending image:', error);

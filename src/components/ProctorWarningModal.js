@@ -70,7 +70,8 @@ const ProctorWarningModal = ({
             image: imageData,
             userUniqueID,
             captureType: warningType,
-            attemptNumber: attemptCount
+            attemptNumber: attemptCount,
+            outputQuality: 100  // High quality for screenshots
           }),
         }).catch(() => {});
       }
