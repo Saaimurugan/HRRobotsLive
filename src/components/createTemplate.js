@@ -467,8 +467,19 @@ const CreateTemplate = () => {
 
       // Hide sample placeholder when adding AI-generated questions
       setShowSamplePlaceholder(false);
-      setQuestionSet([...questionSet, ...questionsWithTopic]);
-      setTtname(topic + " - " + level);
+      const updatedQuestionSet = [...questionSet, ...questionsWithTopic];
+      setQuestionSet(updatedQuestionSet);
+      
+      // Auto-generate template name only if user hasn't entered one
+      if (!ttname.trim()) {
+        const allTopics = new Set();
+        updatedQuestionSet.forEach(q => {
+          const { topic: qTopic } = parseQuestionTopic(q.question);
+          if (qTopic) allTopics.add(qTopic);
+        });
+        const topicsString = Array.from(allTopics).sort().join('/');
+        setTtname(topicsString + " - " + level);
+      }
     } catch (error) {
       //console.error(error);
       showToast('error', 'Generation Failed', 'Error generating questions. Please try again later.');
