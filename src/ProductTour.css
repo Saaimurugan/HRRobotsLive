@@ -17,6 +17,7 @@
   transition: top 0.3s ease, left 0.3s ease, width 0.3s ease, height 0.3s ease;
   pointer-events: none;
   animation: highlightPulse 2s ease-in-out infinite;
+  background: transparent;
 }
 
 @keyframes highlightPulse {

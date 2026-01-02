@@ -502,27 +502,27 @@ const fetchTemplates = async () => {
         {templates.map((card, index) => {
           const templateState = templateStates[card.templateID] || {};
           return (
-              <div key={index} className="card template-card">
+              <div key={index} className="card template-card" data-tour-template={index === 0 ? "first" : undefined}>
                 {card.AssignedTo !== globalValue ? (
                 <div className="card-actions">
-                  <button onClick={() => navigate(`/edit/${card.templateID}`)} className="delete-button" title="Edit Template" data-tour="edit-template">
+                  <button onClick={() => navigate(`/edit/${card.templateID}`)} className="delete-button" title="Edit Template" data-tour={index === 0 ? "edit-template-btn" : undefined}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path fillRule="evenodd" clipRule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="currentColor"/>
                     </svg>
                   </button>
-                  <button onClick={() => deleteConfirm(card.templateID)} className="delete-button" title="Delete Template" data-tour="delete-template">
+                  <button onClick={() => deleteConfirm(card.templateID)} className="delete-button" title="Delete Template" data-tour={index === 0 ? "delete-template-btn" : undefined}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M6 7V18C6 19.1046 6.89543 20 8 20H16C17.1046 20 18 19.1046 18 18V7M6 7H5M6 7H8M18 7H19M18 7H16M10 11V16M14 11V16M8 7V5C8 4.44772 8.44772 4 9 4H15C15.5523 4 16 4.44772 16 5V7M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
-                  <button onClick={() => assignModal(card.templateID)} className="delete-button" title="Assign to Recruiter" data-tour="assign-template">
+                  <button onClick={() => assignModal(card.templateID)} className="delete-button" title="Assign to Recruiter" data-tour={index === 0 ? "assign-template-btn" : undefined}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M8.5 11C10.7091 11 12.5 9.20914 12.5 7C12.5 4.79086 10.7091 3 8.5 3C6.29086 3 4.5 4.79086 4.5 7C4.5 9.20914 6.29086 11 8.5 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M20 8V14M17 11H23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
-                  <button onClick={() => configModal(card.templateID)} className="delete-button" title="Configuration" data-tour="config-template">
+                  <button onClick={() => configModal(card.templateID)} className="delete-button" title="Configuration" data-tour={index === 0 ? "config-template-btn" : undefined}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M22 6.5H16" stroke="#292D32" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M6 6.5H2" stroke="#292D32" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
@@ -547,7 +547,7 @@ const fetchTemplates = async () => {
                 <p>Generate a unique test link to share with candidates</p>
                 
                 {templateState.uuid ? (
-                  <div className="form-group" data-tour="generate-link">
+                  <div className="form-group">
                     <button onClick={() => handleCopyToClipboard(card.templateID)}>
                       <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -558,8 +558,8 @@ const fetchTemplates = async () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="form-group" data-tour="generate-link">
-                    <button onClick={() => handleCreateTest(card.templateID)}>
+                  <div className="form-group">
+                    <button onClick={() => handleCreateTest(card.templateID)} data-tour={index === 0 ? "generate-link-btn" : undefined}>
                       {clicked === card.templateID && loading ? (
                         <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="spin-animation">

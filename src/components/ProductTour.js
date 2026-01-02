@@ -84,7 +84,7 @@ const TOUR_STEPS = [
     id: 'edit-template',
     title: 'Edit Template',
     content: 'Click the pencil icon to edit an existing template. You can add, modify, or remove questions from your templates.',
-    target: '[data-tour="edit-template"]',
+    target: '[data-tour="edit-template-btn"]',
     page: '/list',
     position: 'right'
   },
@@ -92,7 +92,7 @@ const TOUR_STEPS = [
     id: 'assign-template',
     title: 'Assign Template',
     content: 'Share your template with other recruiters by clicking the assign icon. Enter their email to give them access.',
-    target: '[data-tour="assign-template"]',
+    target: '[data-tour="assign-template-btn"]',
     page: '/list',
     position: 'right'
   },
@@ -100,7 +100,7 @@ const TOUR_STEPS = [
     id: 'config-template',
     title: 'Configuration',
     content: 'Configure test settings like number of questions, duration, and proctoring sensitivity using the settings icon.',
-    target: '[data-tour="config-template"]',
+    target: '[data-tour="config-template-btn"]',
     page: '/list',
     position: 'right'
   },
@@ -108,25 +108,17 @@ const TOUR_STEPS = [
     id: 'delete-template',
     title: 'Delete Template',
     content: 'Remove templates you no longer need by clicking the trash icon. This will also delete all associated questions.',
-    target: '[data-tour="delete-template"]',
+    target: '[data-tour="delete-template-btn"]',
     page: '/list',
     position: 'right'
   },
   {
     id: 'generate-link',
     title: 'Generate Test Link',
-    content: 'Click "Generate Test Link" to create a unique URL for each candidate. This link can be shared via email.',
-    target: '[data-tour="generate-link"]',
+    content: 'Click "Generate Test Link" to create a unique URL for each candidate. After generating, you can copy the link to share with candidates.',
+    target: '[data-tour="generate-link-btn"]',
     page: '/list',
     position: 'right'
-  },
-  {
-    id: 'copy-link',
-    title: 'Share the Link',
-    content: 'After generating, copy the link and paste it in your browser\'s address bar or share it with candidates via email.',
-    target: '[data-tour="generate-link"]',
-    page: '/list',
-    position: 'top'
   },
   {
     id: 'check-results',
@@ -163,7 +155,7 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
 
   const step = TOUR_STEPS[currentStep];
 
-  const positionTooltip = useCallback(() => {
+  const positionTooltip = useCallback((retryCount = 0) => {
     if (!step) return;
 
     if (step.position === 'center' || !step.target) {
@@ -179,6 +171,12 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
 
     const targetElement = document.querySelector(step.target);
     if (!targetElement) {
+      // Retry up to 10 times with 300ms intervals (3 seconds total)
+      if (retryCount < 10) {
+        setTimeout(() => positionTooltip(retryCount + 1), 300);
+        return;
+      }
+      // After retries, show tooltip in center
       setTooltipStyle({
         position: 'fixed',
         top: '50%',
@@ -205,18 +203,35 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
 
     // Wait a bit for scroll to complete, then position
     setTimeout(() => {
-      const rect = targetElement.getBoundingClientRect();
-      const padding = 8;
+      // Re-query the element after scroll
+      const targetEl = document.querySelector(step.target);
+      if (!targetEl) {
+        // Target not found - show tooltip in center with a message
+        setTooltipStyle({
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        });
+        setHighlightStyle({ display: 'none' });
+        return;
+      }
+
+      const rect = targetEl.getBoundingClientRect();
+      const padding = 10;
 
       setHighlightStyle({
         display: 'block',
         position: 'fixed',
-        top: rect.top - padding,
-        left: rect.left - padding,
-        width: rect.width + padding * 2,
-        height: rect.height + padding * 2,
+        top: `${rect.top - padding}px`,
+        left: `${rect.left - padding}px`,
+        width: `${rect.width + padding * 2}px`,
+        height: `${rect.height + padding * 2}px`,
         borderRadius: '8px',
-        pointerEvents: 'none'
+        pointerEvents: 'none',
+        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)',
+        border: '3px solid #1cbbb4',
+        zIndex: 9999
       });
 
       const tooltipWidth = 340;
@@ -277,8 +292,8 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
           left = rect.right + gap;
           break;
         default:
-          top = rect.bottom + gap;
-          left = rect.left + rect.width / 2 - tooltipWidth / 2;
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
+          left = rect.right + gap;
       }
 
       // Keep tooltip within viewport bounds
@@ -312,18 +327,25 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
                          tooltipRect.top > targetRect.bottom);
 
       if (overlaps) {
-        // Move tooltip to the side with most space
-        if (spaceRight >= spaceLeft && spaceRight >= tooltipWidth + gap) {
+        // Force tooltip to a non-overlapping position
+        // Priority: right > left > bottom > top
+        if (spaceRight >= tooltipWidth + gap) {
           left = rect.right + gap;
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
         } else if (spaceLeft >= tooltipWidth + gap) {
           left = rect.left - tooltipWidth - gap;
-        } else if (spaceBelow >= spaceAbove) {
+          top = rect.top + rect.height / 2 - tooltipHeight / 2;
+        } else if (spaceBelow >= tooltipHeight + gap) {
           top = rect.bottom + gap;
-          left = Math.max(minLeft, Math.min(rect.left, maxLeft));
+          left = Math.max(minLeft, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, maxLeft));
         } else {
           top = rect.top - tooltipHeight - gap;
-          left = Math.max(minLeft, Math.min(rect.left, maxLeft));
+          left = Math.max(minLeft, Math.min(rect.left + rect.width / 2 - tooltipWidth / 2, maxLeft));
         }
+        
+        // Re-apply bounds
+        left = Math.max(minLeft, Math.min(left, maxLeft));
+        top = Math.max(minTop, Math.min(top, maxTop));
       }
 
       setTooltipStyle({
@@ -340,28 +362,27 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
     // Navigate to the correct page if needed
     if (step && step.page && window.location.pathname !== step.page) {
       navigate(step.page);
-      // Wait longer for navigation to complete
-      const timer = setTimeout(positionTooltip, 500);
+      // Wait longer for navigation and data loading to complete
+      const timer = setTimeout(() => positionTooltip(0), 800);
       return () => clearTimeout(timer);
     }
 
     // Position tooltip after a short delay to allow DOM updates
-    const timer = setTimeout(positionTooltip, 400);
+    const timer = setTimeout(() => positionTooltip(0), 200);
     
-    window.addEventListener('resize', positionTooltip);
-    window.addEventListener('scroll', positionTooltip);
+    const handleReposition = () => positionTooltip(0);
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition);
 
     return () => {
       clearTimeout(timer);
-      window.removeEventListener('resize', positionTooltip);
-      window.removeEventListener('scroll', positionTooltip);
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition);
     };
   }, [isOpen, currentStep, step, navigate, positionTooltip]);
 
   const handleNext = () => {
     if (currentStep < TOUR_STEPS.length - 1) {
-      const nextStep = TOUR_STEPS[currentStep + 1];
-      
       // If current step has an action, perform it
       if (step.action === 'navigate' && step.actionTarget) {
         navigate(step.actionTarget);
