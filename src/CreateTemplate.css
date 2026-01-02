@@ -838,34 +838,43 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  background: var(--color-bg-primary);
-  color: var(--color-text-secondary);
   border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   border: 1px solid var(--color-border);
   transition: all var(--transition-normal);
+  cursor: pointer;
 }
 
-.topic-count-badge:hover {
+.topic-count-badge.topic-count-inactive {
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+}
+
+.topic-count-badge.topic-count-inactive:hover {
   border-color: var(--color-primary);
   color: var(--color-primary);
 }
 
-.topic-count-no-topic {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-
-
-.topic-count-total {
+.topic-count-badge.topic-count-active {
   background: var(--color-primary-gradient);
   color: var(--color-bg-primary);
   border-color: var(--color-primary);
   font-weight: var(--font-weight-semibold);
 }
 
-.topic-count-total:hover {
+.topic-count-badge.topic-count-active:hover {
   color: var(--color-bg-primary);
+}
+
+.topic-count-no-topic.topic-count-inactive {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.topic-count-no-topic.topic-count-active {
+  background: var(--color-primary-gradient);
+  color: var(--color-bg-primary);
+  font-style: normal;
 }
