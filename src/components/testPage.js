@@ -87,6 +87,7 @@ const TestPage = () => {
 /*   const [confidence, setConfidence] = useState(0);
  */
   const [isTerminated, setIsTerminated] = useState(false); // New state
+  const [isSubmitted, setIsSubmitted] = useState(false); // Track if test is submitted
   const [terminationReason, setTerminationReason] = useState(''); // Reason for termination
   const [toasts, setToasts] = useState([]); // Toast notifications
   const clipboardHashRef = useRef(null); // Track clipboard content hash
@@ -281,6 +282,7 @@ const TestPage = () => {
   // Refs to track current state for event listeners
   const isQuizStartedRef = useRef(false);
   const isTerminatedRef = useRef(false);
+  const isSubmittedRef = useRef(false);
   const showProctorWarningRef = useRef(false);
 
   // Keep refs in sync with state for event listeners
@@ -293,6 +295,10 @@ const TestPage = () => {
   }, [isTerminated]);
 
   useEffect(() => {
+    isSubmittedRef.current = isSubmitted;
+  }, [isSubmitted]);
+
+  useEffect(() => {
     showProctorWarningRef.current = showProctorWarning;
   }, [showProctorWarning]);
 
@@ -301,9 +307,9 @@ const TestPage = () => {
   const [audioVolume, setAudioVolume] = useState(0);
   const [speechCount, setSpeechCount] = useState(0);
 
-  // Audio detection hook - only active when quiz is started and not terminated
+  // Audio detection hook - only active when quiz is started and not terminated/submitted
   const audioDetection = useAudioDetection({
-    enabled: isQuizStarted && !isTerminated && micPermission,
+    enabled: isQuizStarted && !isTerminated && !isSubmitted && micPermission,
     threshold: 30, // Adjust sensitivity (lower = more sensitive)
     silenceDelay: 500,
     onSpeechStart: () => {
@@ -323,7 +329,7 @@ const TestPage = () => {
 
   // Clipboard monitoring for screenshot detection
   useEffect(() => {
-    if (!isQuizStarted || isTerminated) return;
+    if (!isQuizStarted || isTerminated || isSubmitted) return;
 
     let hasTerminated = false; // Local guard to prevent multiple terminations
 
@@ -463,7 +469,7 @@ const TestPage = () => {
       document.removeEventListener('keyup', handleKeyUp, true);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isQuizStarted, isTerminated]);
+  }, [isQuizStarted, isTerminated, isSubmitted]);
   
   const handlePhotoCaptured = (status) => {
     setPhotoCaptured(status); // Update state when child notifies
@@ -484,7 +490,7 @@ const TestPage = () => {
   const onFullScreenChange = () => {
     const isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
     
-    if (!isFull && isQuizStartedRef.current && !isTerminatedRef.current) {
+    if (!isFull && isQuizStartedRef.current && !isTerminatedRef.current && !isSubmittedRef.current) {
       // Fullscreen was exited during test - show warning modal
       setFullscreenAttempts(prev => prev + 1);
       setProctorWarningType('fullscreen');
@@ -558,7 +564,7 @@ useEffect(() => {
       //console.error("Failed to call API:", error);
     }
   };
-if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
+if (userUniqueIDPresent && isQuizStarted && !isTerminated && !isSubmitted) {
   // console.log('Termination check:', {
   //   isTimeOut,
   //   isFullScreen,
@@ -615,6 +621,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   fullscreenAttempts,
   focusAttempts,
   maxProctorAttempts,
+  isSubmitted,
 ]);
 
   useEffect(() => {
@@ -628,8 +635,8 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   }, [faceFocusScore, faceDetectionInitialized]);
 
   useEffect(() => {
-    // Only start checking after face detection is initialized
-    if (!faceDetectionInitialized) return;
+    // Only start checking after face detection is initialized and test is active
+    if (!faceDetectionInitialized || isTerminated || isSubmitted) return;
 
     // Use an interval to check face score periodically
     const checkInterval = setInterval(() => {
@@ -667,7 +674,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
     }, 500); // Check every 500ms
 
     return () => clearInterval(checkInterval);
-  }, [faceDetectionInitialized, sensitivityLevel]);
+  }, [faceDetectionInitialized, sensitivityLevel, isTerminated, isSubmitted]);
 
   const handleFaceScore = (data) =>{
     setFaceFocusScore(data);
@@ -676,7 +683,7 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated) {
   // Detect window focus and blur
   useEffect(() => {
     const handleBlur = () => {
-      if (isQuizStartedRef.current && !isTerminatedRef.current && !showProctorWarningRef.current) {
+      if (isQuizStartedRef.current && !isTerminatedRef.current && !showProctorWarningRef.current && !isSubmittedRef.current) {
         // Window lost focus during test - show warning modal
         setFocusAttempts(prev => prev + 1);
         setProctorWarningType('focus');
@@ -1327,7 +1334,7 @@ if (userUniqueID != '')
         <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
         {isFaceDetectionLoaded && configLoaded ? (
-          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} numberOfQuestions={numberOfQuestions}/>
+          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} numberOfQuestions={numberOfQuestions} onSubmit={() => setIsSubmitted(true)}/>
         ) : (
           <div style={{
             display: 'flex',

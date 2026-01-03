@@ -15,7 +15,7 @@ const parseQuestionTopic = (questionText) => {
   return { topic: '', question: questionText };
 };
 
-const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50 }) => {
+const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit }) => {
   const [answers, setAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -239,6 +239,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       if (data.statusCode === 200) {
         setMessage("Test submitted successfully!");
         setIsSubmitted(true);
+        if (onSubmit) onSubmit(); // Notify parent that test is submitted
         //alert("Test submitted successfully!");
       } else {
         setMessage("Failed to submit test, please take screenshot and contact support.");
