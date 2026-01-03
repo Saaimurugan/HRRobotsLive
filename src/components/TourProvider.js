@@ -1,4 +1,5 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useGlobalContext } from '../globalContext';
 import ProductTour from './ProductTour';
 import '../ProductTour.css';
@@ -94,6 +95,8 @@ export const TourProvider = ({ children }) => {
   const [isNewUser, setIsNewUser] = useState(null);
   const [showTourButton, setShowTourButton] = useState(false);
   const { globalValue, JWTValue } = useGlobalContext();
+  const location = useLocation();
+  const isOnListPage = location.pathname === '/list';
 
   // Check if user is new when they log in
   useEffect(() => {
@@ -208,7 +211,7 @@ export const TourProvider = ({ children }) => {
         />
       )}
       
-      {showTourButton && globalValue && !showTour && !showWelcome && (
+      {showTourButton && globalValue && !showTour && !showWelcome && isOnListPage && (
         <StartTourButton onClick={startTour} />
       )}
     </TourContext.Provider>
