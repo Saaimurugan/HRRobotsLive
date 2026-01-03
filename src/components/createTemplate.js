@@ -413,10 +413,10 @@ const CreateTemplate = () => {
             });
             const configData = await configResponse.json();
             if (configData.statusCode !== 200) {
-              console.error('Failed to create default configuration:', configData);
+              //console.error('Failed to create default configuration:', configData);
             }
           } catch (configError) {
-            console.error('Error creating default configuration:', configError);
+            //console.error('Error creating default configuration:', configError);
           }
         }
         
