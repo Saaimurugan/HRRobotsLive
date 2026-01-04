@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DeviceWarning from './deviceWarning.js';
+import html2canvas from 'html2canvas';
 
 const TestSetupWizard = ({ 
   userUniqueID, 
@@ -129,6 +130,41 @@ const TestSetupWizard = ({
 
   const handleNext = () => {
     if (currentStep < 4) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  // Capture screenshot of entire screen on consent submission
+  const captureConsentScreenshot = async () => {
+    try {
+      const canvas = await html2canvas(document.body, {
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        scale: 0.5
+      });
+      const imageData = canvas.toDataURL("image/jpeg", 0.7);
+      
+      // Save the consent screenshot
+      await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          image: imageData, 
+          userUniqueID, 
+          captureType: 'consent_screenshot',
+          outputQuality: 100
+        }),
+      });
+    } catch (error) {
+      // Continue even if screenshot fails
+      console.error('Error capturing consent screenshot:', error);
+    }
+  };
+
+  const handleConsentSubmit = async () => {
+    if (canProceedToStep4) {
+      await captureConsentScreenshot();
       setCurrentStep(currentStep + 1);
     }
   };
@@ -532,7 +568,7 @@ const TestSetupWizard = ({
             </button>
             <button 
               style={buttonStyle(canProceedToStep4)} 
-              onClick={handleNext}
+              onClick={handleConsentSubmit}
               disabled={!canProceedToStep4}
             >
               I Agree & Submit →
