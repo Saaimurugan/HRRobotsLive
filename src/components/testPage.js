@@ -278,6 +278,7 @@ const TestPage = () => {
   const [cameraPermission, setCameraPermission] = useState(null);
   const [micPermission, setMicPermission] = useState(null);
   const [clipboardPermission, setClipboardPermission] = useState(null);
+  const [singleScreenOnly, setSingleScreenOnly] = useState(null);
   const [saveAnswers, setSaveAnswers] = useState([]);
   const { globalValue, setGlobalValue } = useGlobalContext("");
   const [ candidateName, setCandidateName ] = useState("");
@@ -775,6 +776,24 @@ const requestCameraAndMic = async () => {
     //stream.getTracks().forEach((track) => track.stop()); 
     // Stop tracks after checking
     
+    // Check for multiple screens
+    try {
+      if (window.screen && window.screen.isExtended !== undefined) {
+        // Modern Screen API - isExtended is true if multiple screens
+        setSingleScreenOnly(!window.screen.isExtended);
+      } else if (window.getScreenDetails) {
+        // Screen Enumeration API (requires permission)
+        const screenDetails = await window.getScreenDetails();
+        setSingleScreenOnly(screenDetails.screens.length === 1);
+      } else {
+        // Fallback - assume single screen if API not available
+        setSingleScreenOnly(true);
+      }
+    } catch (screenError) {
+      // If screen detection fails, assume single screen
+      setSingleScreenOnly(true);
+    }
+    
     // Request clipboard permission upfront using Permissions API
     try {
       if (navigator.permissions && navigator.permissions.query) {
@@ -1112,6 +1131,7 @@ if (userUniqueID != '')
           cameraPermission={cameraPermission}
           micPermission={micPermission}
           clipboardPermission={clipboardPermission}
+          singleScreenOnly={singleScreenOnly}
           onComplete={(status) => {
             handlePhotoCaptured(status);
             startQuiz();

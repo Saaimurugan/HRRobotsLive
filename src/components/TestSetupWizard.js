@@ -7,6 +7,7 @@ const TestSetupWizard = ({
   cameraPermission, 
   micPermission,
   clipboardPermission,
+  singleScreenOnly,
   onComplete,
   onCandidateNameChange 
 }) => {
@@ -123,7 +124,7 @@ const TestSetupWizard = ({
     }
   };
 
-  const canProceedToStep2 = cameraPermission && micPermission && clipboardPermission;
+  const canProceedToStep2 = cameraPermission && micPermission && clipboardPermission && singleScreenOnly;
   const canProceedToStep3 = candidateName.length > 3 && guidelinesAccepted;
   const canProceedToStep4 = consentAccepted;
   const canStartTest = photoStage === 'done';
@@ -310,11 +311,23 @@ const TestSetupWizard = ({
                 {clipboardPermission === null ? '⏳ Checking...' : clipboardPermission ? '✓ Granted' : '✗ Denied'}
               </span>
             </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '16px', color: '#333' }}>🖥️ Single Screen:</span>
+              <span style={statusBadgeStyle(singleScreenOnly)}>
+                {singleScreenOnly === null ? '⏳ Checking...' : singleScreenOnly ? '✓ Single Screen' : '✗ Multiple Screens Detected'}
+              </span>
+            </div>
           </div>
 
           {!canProceedToStep2 && (
             <p style={{ color: '#c62828', marginTop: '20px', fontSize: '14px' }}>
-              ⚠️ Camera, microphone, and clipboard access are required to continue.
+              ⚠️ Camera, microphone, clipboard access, and single screen are required to continue.
+              {singleScreenOnly === false && (
+                <span style={{ display: 'block', marginTop: '5px' }}>
+                  Please disconnect additional monitors/screens to proceed.
+                </span>
+              )}
             </p>
           )}
 
