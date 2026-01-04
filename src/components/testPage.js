@@ -129,8 +129,14 @@ const TestPage = () => {
   
   // Fetch configuration when templateID is available
   useEffect(() => {
-    if (!templateID) return;
+    console.log("Config useEffect triggered, templateID:", templateID); // Debug log
+    if (!templateID) {
+      // Don't set configLoaded to true if templateID is not available yet
+      console.log("templateID is empty, skipping config fetch"); // Debug log
+      return;
+    }
     
+    console.log("Fetching config for templateID:", templateID); // Debug log
     fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
       method: "POST",
       headers: {
@@ -140,11 +146,15 @@ const TestPage = () => {
     })
       .then(res => res.json())
       .then(data => {
+        console.log("Config API response:", data); // Debug log
         if (data.statusCode === 200 && data.body) {
           const body = JSON.parse(data.body);
+          console.log("Parsed config body:", body); // Debug log
           const config = Array.isArray(body.configurations) && body.configurations.length > 0
             ? body.configurations[0]
             : {};
+          console.log("Config object:", config); // Debug log
+          console.log("numberOfQuestions from config:", config.numberOfQuestions); // Debug log
           setFaceRecognition(config.faceRecognition === "True");
           setToleranceLevel(Number(config.toleranceLevel) || 0);
           setAllowedDefaults(Number(config.allowedDefaults) || 10);
@@ -155,6 +165,7 @@ const TestPage = () => {
         setConfigLoaded(true);
       })
       .catch(error => {
+        console.error("Error fetching configuration:", error);
         setConfigLoaded(true);
       });
   }, [templateID]);
@@ -190,15 +201,21 @@ const TestPage = () => {
         );
 
         const data = await response.json();
+        console.log("checkTestStatus response:", data); // Debug log
         
         if (data.statusCode === 200 && data.body) {
           const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+          console.log("checkTestStatus body:", body); // Debug log
+          console.log("templateID from checkTestStatus:", body.templateID); // Debug log
           setTestStatus(body.status);
           setStatusMessage(body.message);
           setCanStartTest(body.canStart);
           // Set templateID for configuration lookup
           if (body.templateID) {
+            console.log("Setting templateID to:", body.templateID); // Debug log
             setTemplateID(body.templateID);
+          } else {
+            console.log("No templateID in response!"); // Debug log
           }
         } else if (data.body) {
           const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
@@ -1132,84 +1149,67 @@ if (userUniqueID != '')
       
       { userUniqueIDPresent?
       <>
-      <div
-        style={{
-          background: "linear-gradient(132deg, rgb(227, 244, 253) 0.00%, rgb(170, 209, 226) 100.00%)",
-          marginTop: "50px",
-          padding: "0 5px 0",
-          color: "black",
-          display: "flex",
-          alignItems: "center",
-          lineHeight: "0"
-        }}
-      >
-        <p>
-        &ensp;
-        <span
-          style={{
-            height: "35px",
-            fontSize:"12px",
-            width: "35px",
-            borderRadius: "50%",
-            display: "flex",
-            backgroundColor: isFullScreen ? "green" : "red",
-            color:"white",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-            title: "Full screen mode, the candidate will be disqualified if the Full Screen model is exited."
-          }}
-        >FSM</span>
-        </p>&ensp;<p>
-        &ensp;<span
-          style={{
-            height: "35px",
-            fontSize:"12px",
-            width: "35px",
-            borderRadius: "50%",
-            display: "flex",
-            backgroundColor: isFocused ? "green" : "red",
-            color:"white",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-          }}
-        >WIN</span>
-        </p>&ensp;<p>
-        &ensp;<span
-          style={{
-            height: "35px",
-            fontSize:"12px",
-            width: "35px",
-            borderRadius: "50%",
-            display: "flex",
-            backgroundColor: cameraPermission ? "green" : "red",
-            color:"white",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-          }}
-        >CAM</span>
-        </p>&ensp;
-        <p>
-        &ensp;<span
-          style={{
-            height: "35px",
-            fontSize:"12px",
-            width: "35px",
-            borderRadius: "50%",
-            display: "flex",
-            backgroundColor: micPermission ? "green" : "red",
-            color:"white",
-            justifyContent: "center",
-            alignItems: "center",
-            textAlign: "center",
-          }}
-        >MIC</span>
-        </p>&ensp;
-        {/* <p style={{ fontSize: '12px', color: 'black' }}>
-          Score: {faceFocusScore >= 0 ? faceFocusScore.toFixed(2) : 'Loading...'} | Init: {faceDetectionInitialized ? 'YES' : 'NO'} | Warning: {showFaceWarning ? 'YES' : 'NO'}
-        </p> */}
+      <div className="test-nav-bar">
+        <div className="status-indicators">
+          {/* Fullscreen Mode */}
+          <span
+            className={`status-badge ${isFullScreen ? 'active' : 'inactive'}`}
+            title="Full screen mode - candidate will be disqualified if exited"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+            </svg>
+            {fullscreenAttempts > 0 && <span className="status-counter">{fullscreenAttempts}</span>}
+          </span>
+          {/* Window Focus */}
+          <span
+            className={`status-badge ${isFocused ? 'active' : 'inactive'}`}
+            title="Window focus status"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M19 4H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V8h14v10z"/>
+            </svg>
+            {focusAttempts > 0 && <span className="status-counter">{focusAttempts}</span>}
+          </span>
+          {/* Camera */}
+          <span
+            className={`status-badge ${cameraPermission ? 'active' : 'inactive'}`}
+            title="Camera permission status"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
+            </svg>
+          </span>
+          {/* Microphone */}
+          <span
+            className={`status-badge ${micPermission ? 'active' : 'inactive'}`}
+            title="Microphone permission status"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
+            </svg>
+            {speechCount > 0 && <span className="status-counter">{speechCount}</span>}
+          </span>
+          {/* Screenshot Detection */}
+          <span
+            className={`status-badge ${clipboardPermission ? 'active' : 'inactive'}`}
+            title="Screenshot detection - test will terminate if screenshot is taken"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+            </svg>
+          </span>
+          {/* Audio/Speech Detection */}
+          <span
+            className={`status-badge ${audioDetection.isListening ? 'active' : 'inactive'} ${isTalking ? 'talking' : ''}`}
+            title={`Audio detection - Speech detected: ${speechCount} times`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+            {speechCount > 0 && <span className="status-counter">{speechCount}</span>}
+          </span>
+        </div>
         {isTimeOut && (isFullScreen || fullscreenAttempts < maxProctorAttempts) && (isFocused || focusAttempts < maxProctorAttempts) && cameraPermission && micPermission && !isTerminated && (!faceRecognition || (faceOffWarningCount < allowedDefaults && multipleFacesWarningCount < allowedDefaults))? 
         // {isTimeOut? 
           <>
@@ -1236,51 +1236,33 @@ if (userUniqueID != '')
         testDuration={testDuration}
         sensitivityLevel={sensitivityLevel}
         />
-        {/* Progress dots for larger screens */}
+        {/* Progress dots for larger screens - auto-scaling based on question count */}
+        {configLoaded ? (
         <div className="progress-dots-desktop" style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '4px',
-          flex: 1,
-          justifyContent: 'center',
-          maxWidth: '600px',
-          margin: '0 auto'
+          // Auto-scale: fewer questions = larger dots, more questions = smaller dots
+          '--dot-size': numberOfQuestions <= 20 ? '28px' : numberOfQuestions <= 35 ? '24px' : numberOfQuestions <= 50 ? '20px' : '16px',
+          '--dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 35 ? '10px' : numberOfQuestions <= 50 ? '9px' : '8px',
         }}>
           {Array.from({ length: numberOfQuestions }, (_, i) => {
             const questionNum = i + 1;
-            // questionCount is the number of previously answered questions
-            // currentQuestion is the 0-based index in the loaded questions array
-            // So current display question = currentQuestion + questionCount + 1
             const currentDisplayQuestion = testProgress.currentQuestion + testProgress.questionCount + 1;
-            // For isAnswered, we need to check if this question has been answered in the current session
-            // The answers array is indexed by currentQuestionIndex (0-based for loaded questions)
-            // Question (questionCount + 1) is at answers[0], question (questionCount + 2) is at answers[1], etc.
             const answersIndex = i - testProgress.questionCount;
             const isAnswered = answersIndex >= 0 && testProgress.answers[answersIndex] && testProgress.answers[answersIndex] !== "";
             const isCurrent = questionNum === currentDisplayQuestion;
-            // targetIndex is the index in the loaded questions array
             const targetIndex = questionNum - testProgress.questionCount - 1;
             const questionsLoaded = testProgress.questionsLoaded || 0;
             const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
+            
             return (
               <span
                 key={i}
                 onClick={() => isClickable && handleQuestionDotClick(questionNum)}
+                className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
                 style={{
-                  width: '22px',
-                  height: '22px',
-                  borderRadius: '50%',
-                  backgroundColor: isAnswered ? '#28a745' : '#fd7e14',
-                  border: isCurrent ? '2px solid #007bff' : 'none',
-                  boxSizing: 'border-box',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  fontSize: '10px',
-                  fontWeight: 'bold',
-                  color: 'white',
+                  width: 'var(--dot-size)',
+                  height: 'var(--dot-size)',
+                  fontSize: 'var(--dot-font)',
                   cursor: isClickable ? 'pointer' : 'not-allowed',
-                  opacity: isClickable ? 1 : 0.5
                 }}
                 title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
               >
@@ -1289,28 +1271,24 @@ if (userUniqueID != '')
             );
           })}
         </div>
+        ) : (
+        <div className="progress-dots-desktop" style={{ justifyContent: 'center' }}>
+          <span style={{ fontSize: '12px', color: '#666' }}>Loading...</span>
+        </div>
+        )}
         {/* Hamburger for mobile */}
         <button 
           className="progress-hamburger"
           onClick={() => setShowProgressModal(true)}
-          style={{
-            display: 'none',
-            background: 'none',
-            border: 'none',
-            fontSize: '24px',
-            cursor: 'pointer',
-            marginLeft: 'auto',
-            padding: '5px 10px'
-          }}
         >
           ☰
         </button>
         </>
         :
         <div style={{
-          fontSize: '75px', // Much bigger font size
-          fontFamily: 'fantasy', // Calculator-like font
-          textAlign: 'center', // Center the text
+          fontSize: '75px',
+          fontFamily: 'fantasy',
+          textAlign: 'center',
           width: '100%',
           color: 'red'
        }}>
@@ -1373,64 +1351,34 @@ if (userUniqueID != '')
     }
     {/* Progress Modal for mobile */}
     {showProgressModal && (
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 9998
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          padding: '15px',
-          borderRadius: '10px',
-          maxWidth: '95%',
-          maxHeight: '80%',
-          overflow: 'auto'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-            <h3 style={{ margin: 0, fontSize: '16px' }}>Question Progress</h3>
+      <div className="progress-modal-overlay">
+        <div className="progress-modal">
+          <div className="progress-modal-header">
+            <h3>Question Progress</h3>
             <button 
+              className="progress-modal-close"
               onClick={() => setShowProgressModal(false)}
-              style={{
-                background: '#f0f0f0',
-                border: '1px solid #ccc',
-                fontSize: '18px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                color: '#333',
-                width: '30px',
-                height: '30px',
-                borderRadius: '4px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                lineHeight: '1'
-              }}
             >×</button>
           </div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(10, 1fr)',
-            gap: '5px'
-          }}>
+          <div 
+            className="progress-modal-grid"
+            style={{
+              // Auto-scale grid columns based on question count
+              gridTemplateColumns: numberOfQuestions <= 20 
+                ? 'repeat(5, 1fr)' 
+                : numberOfQuestions <= 50 
+                  ? 'repeat(10, 1fr)' 
+                  : 'repeat(12, 1fr)',
+              '--modal-dot-size': numberOfQuestions <= 20 ? '32px' : numberOfQuestions <= 50 ? '26px' : '22px',
+              '--modal-dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 50 ? '10px' : '9px',
+            }}
+          >
             {Array.from({ length: numberOfQuestions }, (_, i) => {
               const questionNum = i + 1;
-              // questionCount is the number of previously answered questions
-              // currentQuestion is the 0-based index in the loaded questions array
-              // So current display question = currentQuestion + questionCount + 1
               const currentDisplayQuestion = testProgress.currentQuestion + testProgress.questionCount + 1;
-              // For isAnswered, we need to check if this question has been answered in the current session
-              // The answers array is indexed by currentQuestionIndex (0-based for loaded questions)
               const answersIndex = i - testProgress.questionCount;
               const isAnswered = answersIndex >= 0 && testProgress.answers[answersIndex] && testProgress.answers[answersIndex] !== "";
               const isCurrent = questionNum === currentDisplayQuestion;
-              // targetIndex is the index in the loaded questions array
               const targetIndex = questionNum - testProgress.questionCount - 1;
               const questionsLoaded = testProgress.questionsLoaded || 0;
               const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
@@ -1443,21 +1391,13 @@ if (userUniqueID != '')
                       setShowProgressModal(false);
                     }
                   }}
+                  className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
                   style={{
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    backgroundColor: isAnswered ? '#28a745' : '#fd7e14',
-                    border: isCurrent ? '2px solid #007bff' : 'none',
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    fontSize: '10px',
-                    fontWeight: 'bold',
-                    color: 'white',
+                    width: 'var(--modal-dot-size)',
+                    height: 'var(--modal-dot-size)',
+                    fontSize: 'var(--modal-dot-font)',
                     cursor: isClickable ? 'pointer' : 'not-allowed',
-                    opacity: isClickable ? 1 : 0.5
+                    margin: '0 auto',
                   }}
                   title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
                 >
@@ -1466,13 +1406,13 @@ if (userUniqueID != '')
               );
             })}
           </div>
-          <div style={{ marginTop: '12px', fontSize: '11px' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', marginRight: '15px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#28a745', marginRight: '5px' }}></span>
+          <div className="progress-modal-legend">
+            <span className="legend-item">
+              <span className="legend-dot" style={{ background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' }}></span>
               Answered
             </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#fd7e14', marginRight: '5px' }}></span>
+            <span className="legend-item">
+              <span className="legend-dot" style={{ background: 'linear-gradient(135deg, #fd7e14 0%, #ffc107 100%)' }}></span>
               Not Answered
             </span>
           </div>

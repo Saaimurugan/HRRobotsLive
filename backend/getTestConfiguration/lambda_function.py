@@ -8,6 +8,13 @@ dynamodb = boto3.resource('dynamodb')
 config_table = dynamodb.Table('testConfiguration')
 test_table = dynamodb.Table('testTransactions')
 
+# CORS headers
+CORS_HEADERS = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS'
+}
+
 def lambda_handler(event, context):
     try:
         # Support both API Gateway style and direct invocation
@@ -33,6 +40,7 @@ def lambda_handler(event, context):
             # Return default configuration if no templateID found
             return {
                 'statusCode': 200,
+                'headers': CORS_HEADERS,
                 'body': json.dumps({
                     'testConfigurationID': None,
                     'configurations': [{
@@ -73,6 +81,7 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'testConfigurationID': template_id,
                 'configurations': configurations
@@ -82,10 +91,12 @@ def lambda_handler(event, context):
     except ClientError as e:
         return {
             'statusCode': 500,
+            'headers': CORS_HEADERS,
             'body': json.dumps({'error': str(e.response['Error']['Message'])})
         }
     except Exception as e:
         return {
             'statusCode': 500,
+            'headers': CORS_HEADERS,
             'body': json.dumps({'error': str(e)})
         }

@@ -12,17 +12,21 @@ const TestSetupWizard = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [candidateName, setCandidateName] = useState('');
   const [guidelinesAccepted, setGuidelinesAccepted] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const [photoStage, setPhotoStage] = useState('photo'); // 'photo', 'id', 'done'
   const [photoImage, setPhotoImage] = useState(null);
   const [idCardImage, setIdCardImage] = useState(null);
   const [videoReady, setVideoReady] = useState(false);
+  const [hasScrolledConsent, setHasScrolledConsent] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const consentScrollRef = useRef(null);
 
   const stepTitles = [
     'Camera & Microphone Status',
     'Test Guidelines',
+    'Data Consent',
     'Identity Verification'
   ];
 
@@ -87,7 +91,7 @@ const TestSetupWizard = ({
 
   // Handle video start/stop based on step and photo stage
   useEffect(() => {
-    if (currentStep === 3 && (photoStage === 'photo' || photoStage === 'id')) {
+    if (currentStep === 4 && (photoStage === 'photo' || photoStage === 'id')) {
       startVideo();
     } else {
       stopVideo();
@@ -100,12 +104,31 @@ const TestSetupWizard = ({
     onCandidateNameChange(candidateName);
   }, [candidateName, onCandidateNameChange]);
 
+  // Reset scroll state when entering step 3
+  useEffect(() => {
+    if (currentStep === 3) {
+      setHasScrolledConsent(false);
+    }
+  }, [currentStep]);
+
+  // Handle consent scroll detection
+  const handleConsentScroll = () => {
+    if (consentScrollRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = consentScrollRef.current;
+      // Check if scrolled to bottom (with 10px tolerance)
+      if (scrollTop + clientHeight >= scrollHeight - 10) {
+        setHasScrolledConsent(true);
+      }
+    }
+  };
+
   const canProceedToStep2 = cameraPermission && micPermission && clipboardPermission;
   const canProceedToStep3 = candidateName.length > 3 && guidelinesAccepted;
+  const canProceedToStep4 = consentAccepted;
   const canStartTest = photoStage === 'done';
 
   const handleNext = () => {
-    if (currentStep < 3) {
+    if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -214,6 +237,8 @@ const TestSetupWizard = ({
         <div style={stepCircleStyle(2)}>2</div>
         <div style={stepLineStyle(2)}></div>
         <div style={stepCircleStyle(3)}>3</div>
+        <div style={stepLineStyle(3)}></div>
+        <div style={stepCircleStyle(4)}>4</div>
       </div>
 
       <h2 style={{ textAlign: 'center', color: '#333', marginBottom: '10px' }}>
@@ -351,8 +376,173 @@ const TestSetupWizard = ({
         </div>
       )}
 
-      {/* Step 3: Photo & ID Capture */}
+      {/* Step 3: Data Consent */}
       {currentStep === 3 && (
+        <div style={cardStyle}>
+          <h3 style={{ fontSize: '18px', color: '#444', marginBottom: '15px', textAlign: 'center' }}>
+            Consent for Collection, Use, and Sharing of Photo & ID Proof
+          </h3>
+          <p style={{ fontSize: '12px', color: '#666', textAlign: 'center', marginBottom: '20px' }}>
+            (As per GDPR and Digital Personal Data Protection Act, 2023 – India)
+          </p>
+          
+          <div 
+            ref={consentScrollRef}
+            onScroll={handleConsentScroll}
+            style={{ 
+            maxHeight: '350px', 
+            overflowY: 'auto', 
+            padding: '15px', 
+            background: '#fafafa', 
+            borderRadius: '8px',
+            border: '1px solid #e0e0e0',
+            fontSize: '14px',
+            lineHeight: '1.7',
+            color: '#444'
+          }}>
+            <p style={{ marginBottom: '15px' }}>
+              By clicking "I Agree & Submit", I provide my free, specific, informed, and unambiguous consent and acknowledge that:
+            </p>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Purpose of Processing</h4>
+            <p style={{ marginBottom: '15px' }}>
+              I am voluntarily submitting my photograph and government ID card, which constitute personal data and may include sensitive personal data, for the purpose of recruitment, identity verification, and background validation.
+            </p>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Data Fiduciary / Controller</h4>
+            <p style={{ marginBottom: '15px' }}>
+              HRrobots shall act as the Data Fiduciary (under DPDP Act, 2023) and Data Controller (under GDPR) for processing my personal data.
+            </p>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Lawful Processing & Consent</h4>
+            <ul style={{ paddingLeft: '20px', marginBottom: '15px' }}>
+              <li>I consent to HRrobots collecting, storing, using, and sharing my personal data strictly for the purpose stated above.</li>
+              <li>I authorize HRrobots to share my photo and ID proof with authorized recruiters, recruitment partners, and/or hiring organizations involved in evaluating my application.</li>
+              <li>My personal data will not be used for any purpose other than those explicitly stated without obtaining further consent.</li>
+            </ul>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Data Retention</h4>
+            <p style={{ marginBottom: '15px' }}>
+              My documents will be retained for a period of up to 90 days or until completion of the recruitment process, whichever is earlier, unless retention is required for a longer period under applicable law.
+            </p>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Data Security</h4>
+            <p style={{ marginBottom: '15px' }}>
+              HRrobots will implement reasonable security safeguards to protect my personal data against unauthorized access, disclosure, alteration, or misuse, in compliance with GDPR and the DPDP Act, 2023.
+            </p>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Rights of the Data Principal / Data Subject</h4>
+            <p style={{ marginBottom: '10px' }}>I understand that I have the right to:</p>
+            <ul style={{ paddingLeft: '20px', marginBottom: '15px' }}>
+              <li>Access my personal data</li>
+              <li>Request correction or erasure of my personal data</li>
+              <li>Withdraw my consent at any time</li>
+              <li>Request information regarding how my data is processed</li>
+            </ul>
+            <p style={{ marginBottom: '15px' }}>
+              I may exercise these rights by contacting <a href="mailto:bot@hrrobots.com" style={{ color: '#1CBBB4' }}>bot@hrrobots.com</a>.
+            </p>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Withdrawal of Consent</h4>
+            <p style={{ marginBottom: '15px' }}>
+              I understand that I may withdraw my consent at any time. Withdrawal will not affect the lawfulness of processing carried out prior to such withdrawal but may impact my eligibility to continue in the recruitment process.
+            </p>
+
+            <h4 style={{ color: '#1CBBB4', marginBottom: '8px', marginTop: '15px' }}>Declaration</h4>
+            <p style={{ marginBottom: '15px' }}>
+              I confirm that the documents submitted are authentic, belong to me, and that I am legally authorized to provide them.
+            </p>
+          </div>
+
+          <div style={{ marginTop: '20px' }}>
+            <label style={{ 
+              display: 'flex', 
+              alignItems: 'flex-start', 
+              cursor: hasScrolledConsent ? 'pointer' : 'not-allowed',
+              fontSize: '14px',
+              color: hasScrolledConsent ? '#333' : '#999',
+              padding: '12px',
+              background: consentAccepted ? '#e8f5e9' : '#fff',
+              border: consentAccepted ? '2px solid #1CBBB4' : '2px solid #e0e0e0',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              opacity: hasScrolledConsent ? 1 : 0.6
+            }}>
+              <input
+                type="checkbox"
+                checked={consentAccepted}
+                onChange={(e) => hasScrolledConsent && setConsentAccepted(e.target.checked)}
+                disabled={!hasScrolledConsent}
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  marginRight: '12px',
+                  marginTop: '2px',
+                  cursor: hasScrolledConsent ? 'pointer' : 'not-allowed',
+                  accentColor: '#1CBBB4',
+                  flexShrink: 0
+                }}
+              />
+              <span>
+                I have read and understood this notice and hereby give my consent to the processing and sharing of my personal data as described above.
+              </span>
+            </label>
+            {!hasScrolledConsent && (
+              <p style={{ 
+                color: '#ff9800', 
+                fontSize: '13px', 
+                marginTop: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}>
+                ⚠️ Please scroll through the entire consent text above to enable this checkbox
+              </p>
+            )}
+          </div>
+
+          <div style={{ 
+            marginTop: '15px', 
+            display: 'flex', 
+            justifyContent: 'center', 
+            gap: '20px',
+            fontSize: '13px'
+          }}>
+            <a 
+              href="/privacy-policy" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#1CBBB4', textDecoration: 'none' }}
+            >
+              Privacy Policy
+            </a>
+            <a 
+              href="/data-protection-policy" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: '#1CBBB4', textDecoration: 'none' }}
+            >
+              Data Protection & Grievance Redressal Policy
+            </a>
+          </div>
+
+          <div style={{ marginTop: '25px', display: 'flex', justifyContent: 'space-between' }}>
+            <button style={backButtonStyle} onClick={handleBack}>
+              Cancel
+            </button>
+            <button 
+              style={buttonStyle(canProceedToStep4)} 
+              onClick={handleNext}
+              disabled={!canProceedToStep4}
+            >
+              I Agree & Submit →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 4: Photo & ID Capture */}
+      {currentStep === 4 && (
         <div style={cardStyle}>
           <h3 style={{ fontSize: '18px', color: '#444', marginBottom: '15px' }}>
             Capture Your Photo and Government ID
@@ -375,7 +565,7 @@ const TestSetupWizard = ({
               color: photoStage === 'photo' ? 'white' : (photoImage ? '#2e7d32' : '#666'),
               fontWeight: '500'
             }}>
-              {photoImage ? '✓' : '3a.'} Capture Photo
+              {photoImage ? '✓' : '4a.'} Capture Photo
             </span>
             <span style={{ 
               padding: '8px 16px', 
@@ -384,7 +574,7 @@ const TestSetupWizard = ({
               color: photoStage === 'id' ? 'white' : (idCardImage ? '#2e7d32' : '#666'),
               fontWeight: '500'
             }}>
-              {idCardImage ? '✓' : '3b.'} Capture ID Card
+              {idCardImage ? '✓' : '4b.'} Capture ID Card
             </span>
           </div>
 

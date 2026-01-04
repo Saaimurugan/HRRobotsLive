@@ -19,7 +19,13 @@ def lambda_handler(event, context):
         - Always includes templateID in response for configuration lookup
     """
     try:
-        test_id = event.get('testID')
+        # Support both API Gateway style and direct invocation
+        if 'body' in event and event['body']:
+            body = json.loads(event['body'])
+            test_id = body.get('testID')
+        else:
+            test_id = event.get('testID')
+            
         if not test_id:
             return {
                 'statusCode': 400,

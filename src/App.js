@@ -23,6 +23,8 @@ import CreateJD from './components/createJD';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerifyEmail from './components/verifyEmail';
 import SignupSuccess from './components/signupSuccess';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import DataProtectionPolicy from './components/DataProtectionPolicy';
 import { TourProvider } from './components/TourProvider';
 
 // Replace with your actual reCAPTCHA v3 site key
@@ -58,7 +60,7 @@ const Header = () => {
   }, []);
 
   // Hide navbar on auth pages
-  const authPages = ["/login", "/logout", "/signup", "/forgot-password", "/verify-email", "/signup-success"];
+  const authPages = ["/login", "/logout", "/signup", "/forgot-password", "/verify-email", "/signup-success", "/privacy-policy", "/data-protection-policy"];
   const isAuthPage = authPages.some(route => location.pathname === route || location.pathname.startsWith(route + "/"));
   
   if (isAuthPage) {
@@ -193,6 +195,8 @@ const App = () => {
               <Route path="/logout" element={<LogoutHandler />} />
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/signup-success" element={<SignupSuccess />} />
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="/data-protection-policy" element={<DataProtectionPolicy />} />
               
               {/* Protected routes */}
               <Route path="/" element={<ProtectedRoute><RedirectPage /></ProtectedRoute>} />
