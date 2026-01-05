@@ -20,6 +20,7 @@ import FaceDetection from './components/faceDetection';
 import EditTemplate from './components/editTemplate';
 import Profile from './components/profile';
 import CreateJD from './components/createJD';
+import CreateTemplateFromJD from './components/createTemplateFromJD';
 import ProtectedRoute from './components/ProtectedRoute';
 import VerifyEmail from './components/verifyEmail';
 import SignupSuccess from './components/signupSuccess';
@@ -216,6 +217,7 @@ const App = () => {
                 <Route path="/edit/:id" element={<ProtectedRoute><EditTemplate/></ProtectedRoute>} />
                 <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
                 <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
+                <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
               </Routes>
             </>
           </TourProvider>

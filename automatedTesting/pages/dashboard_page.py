@@ -12,7 +12,7 @@ class DashboardPage(BasePage):
     # Locators
     CREATE_JD_CARD = (By.XPATH, "//div[contains(@class, 'card') and contains(., 'Create JD')]")
     PROFILER_CARD = (By.XPATH, "//div[contains(@class, 'card') and contains(., 'Candidate Profiler')]")
-    SCREENING_TEST_CARD = (By.XPATH, "//div[contains(@class, 'card') and contains(., 'Screening Test')]")
+    SCREENING_TEST_CARD = (By.XPATH, "//div[contains(@class, 'card') and contains(., 'Create Template')]")
     RESULTS_CARD = (By.XPATH, "//div[contains(@class, 'card') and contains(., 'Results')]")
     
     # Header Navigation
@@ -51,7 +51,7 @@ class DashboardPage(BasePage):
         button.click()
     
     def click_screening_test(self):
-        """Click Screening Test card"""
+        """Click Create Template card"""
         card = self.find_element(self.SCREENING_TEST_CARD)
         button = card.find_element(By.TAG_NAME, "button")
         button.click()

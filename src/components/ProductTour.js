@@ -55,6 +55,14 @@ const TOUR_STEPS = [
     position: 'left'
   },
   {
+    id: 'template-from-jd',
+    title: 'Template from JD',
+    content: 'Have a Job Description? Upload it here to automatically extract keywords and generate relevant MCQ questions based on the JD requirements.',
+    target: '[data-tour="jd-template-section"]',
+    page: '/createTemplate',
+    position: 'left'
+  },
+  {
     id: 'edit-question',
     title: 'Edit Questions',
     content: 'Click the "Edit" button on any question card to modify it. You can change the question text, options, or correct answer.',

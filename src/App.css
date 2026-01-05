@@ -233,6 +233,21 @@ button {
   transform: translateY(0);
 }
 
+/* Secondary button style for cards */
+.card .btn-secondary-card {
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  box-shadow: none;
+  margin-top: 0;
+}
+
+.card .btn-secondary-card:hover {
+  background: var(--color-primary);
+  color: white;
+  box-shadow: var(--shadow-primary);
+}
+
 .login-container {
   background: var(--color-bg-primary);
   padding: 2rem;

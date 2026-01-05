@@ -32,6 +32,7 @@ class CreateTemplatePage(BasePage):
     DELETE_QUESTION_BUTTON = (By.XPATH, ".//button[2]")
     GROUP_BY_TOPIC_TOGGLE = (By.CSS_SELECTOR, "input[type='checkbox']")
     SUCCESS_TOAST = (By.CSS_SELECTOR, "div.toast.success")
+    JD_TEMPLATE_BUTTON = (By.XPATH, "//button[contains(., 'Create from Job Description')]")
     
     def __init__(self, driver):
         super().__init__(driver)
@@ -162,3 +163,7 @@ class CreateTemplatePage(BasePage):
     def is_question_list_visible(self):
         """Check if question list is visible"""
         return self.is_element_visible(self.QUESTION_LIST)
+    
+    def click_jd_template(self):
+        """Click Template from JD button"""
+        self.click(self.JD_TEMPLATE_BUTTON)
