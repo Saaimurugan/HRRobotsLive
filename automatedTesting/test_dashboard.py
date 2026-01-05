@@ -49,52 +49,200 @@ selenium_driver = None
 # Screenshots storage
 SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), 'test_screenshots')
 
-# Test suites configuration
+# Test suites configuration with detailed test descriptions
 TEST_SUITES = {
     "signup": {
         "name": "Signup Tests",
         "file": "tests/test_01_signup.py",
-        "description": "User registration and validation"
+        "description": "User registration and validation",
+        "tests": {
+            "test_signup_page_loads": "Verify signup page loads with all form elements",
+            "test_signup_with_valid_business_email": "Register with valid business email address",
+            "test_signup_rejects_personal_gmail": "Reject personal Gmail addresses",
+            "test_signup_rejects_personal_yahoo": "Reject personal Yahoo addresses",
+            "test_signup_rejects_personal_hotmail": "Reject personal Hotmail addresses",
+            "test_signup_rejects_personal_outlook": "Reject personal Outlook addresses",
+            "test_signup_invalid_email_format": "Reject invalid email format",
+            "test_signup_password_too_short": "Reject password less than 8 characters",
+            "test_signup_password_no_uppercase": "Reject password without uppercase letter",
+            "test_signup_password_no_lowercase": "Reject password without lowercase letter",
+            "test_signup_password_no_number": "Reject password without number",
+            "test_signup_password_no_special_char": "Reject password without special character",
+            "test_signup_password_mismatch": "Reject mismatched password confirmation",
+            "test_signup_strong_password_indicator": "Show strong indicator for valid password",
+            "test_signup_toggle_password_visibility": "Toggle password visibility works",
+            "test_signup_navigate_to_login": "Navigate to login page link works",
+            "test_signup_empty_form_submission": "Prevent empty form submission",
+            "test_signup_email_already_registered": "Reject already registered email"
+        }
     },
     "login": {
         "name": "Login Tests", 
         "file": "tests/test_02_login.py",
-        "description": "Authentication and session management"
+        "description": "Authentication and session management",
+        "tests": {
+            "test_login_page_loads": "Verify login page loads with all elements",
+            "test_login_with_valid_credentials": "Login with correct email and password",
+            "test_login_with_invalid_email": "Reject invalid email format",
+            "test_login_with_wrong_password": "Reject incorrect password",
+            "test_login_with_unregistered_email": "Reject unregistered email address",
+            "test_login_empty_email": "Prevent login with empty email",
+            "test_login_empty_password": "Prevent login with empty password",
+            "test_login_empty_form": "Prevent empty form submission",
+            "test_login_toggle_password_visibility": "Toggle password visibility works",
+            "test_login_navigate_to_signup": "Navigate to signup page link works",
+            "test_login_navigate_to_forgot_password": "Navigate to forgot password link works",
+            "test_login_failed_attempts_trigger_captcha": "Show captcha after 3 failed attempts",
+            "test_login_case_sensitivity_email": "Email should be case insensitive",
+            "test_login_whitespace_in_email": "Handle whitespace in email input",
+            "test_login_special_characters_in_password": "Handle special characters in password",
+            "test_login_button_disabled_during_loading": "Button state during submission",
+            "test_login_session_persistence": "Session persists across pages",
+            "test_login_redirect_after_success": "Redirect to dashboard after login"
+        }
     },
     "forgot_password": {
         "name": "Forgot Password Tests",
         "file": "tests/test_03_forgot_password.py",
-        "description": "Password reset flow"
+        "description": "Password reset flow",
+        "tests": {
+            "test_forgot_password_page_loads": "Verify forgot password page loads",
+            "test_forgot_password_with_valid_email": "Send reset link to valid email",
+            "test_forgot_password_displays_email": "Display email in success state",
+            "test_forgot_password_try_again_button": "Try again button resets form",
+            "test_forgot_password_with_unregistered_email": "Handle unregistered email",
+            "test_forgot_password_with_invalid_email_format": "Reject invalid email format",
+            "test_forgot_password_empty_email": "Prevent empty email submission",
+            "test_forgot_password_back_to_login": "Navigate back to login page",
+            "test_forgot_password_from_login_page": "Access from login page link",
+            "test_forgot_password_with_personal_email": "Handle personal email addresses",
+            "test_forgot_password_multiple_requests": "Allow multiple reset requests",
+            "test_forgot_password_email_case_insensitive": "Email case insensitive",
+            "test_forgot_password_email_with_whitespace": "Handle whitespace in email"
+        }
     },
     "jd_creation": {
         "name": "JD Creation Tests",
         "file": "tests/test_04_jd_creation.py",
-        "description": "Job description generation"
+        "description": "Job description generation",
+        "tests": {
+            "test_create_jd_page_loads": "Verify JD creation page loads",
+            "test_create_jd_with_all_fields": "Generate JD with all fields filled",
+            "test_create_jd_shows_print_button": "Show print button after generation",
+            "test_create_jd_generated_content_contains_role": "Generated JD contains role name",
+            "test_create_jd_with_project_details": "Generate JD with project details",
+            "test_create_jd_empty_role_name": "Handle empty role name",
+            "test_create_jd_empty_experience": "Handle empty experience field",
+            "test_create_jd_empty_languages": "Handle empty languages field",
+            "test_create_jd_empty_skills": "Handle empty skills field",
+            "test_create_jd_back_button": "Back button navigation works",
+            "test_create_jd_different_experience_levels": "Generate JD for various experience levels",
+            "test_create_jd_various_roles": "Generate JD for different roles",
+            "test_create_jd_special_characters_in_role": "Handle special characters in role",
+            "test_create_jd_long_skills_list": "Handle long skills list",
+            "test_create_jd_from_dashboard": "Navigate from dashboard"
+        }
     },
     "candidate_profiling": {
         "name": "Candidate Profiling Tests",
         "file": "tests/test_05_candidate_profiling.py",
-        "description": "Resume-JD matching"
+        "description": "Resume-JD matching",
+        "tests": {
+            "test_profiler_page_loads": "Verify profiler page loads",
+            "test_upload_jd_file": "Upload JD PDF file",
+            "test_upload_resume_file": "Upload resume PDF file",
+            "test_generate_profile_report": "Generate profile matching report",
+            "test_report_shows_suitability_score": "Display suitability score",
+            "test_report_shows_print_button": "Show print button for report",
+            "test_report_content_sections": "Report contains all sections",
+            "test_generate_without_jd": "Handle missing JD file",
+            "test_generate_without_resume": "Handle missing resume file",
+            "test_generate_without_files": "Handle no files uploaded",
+            "test_back_button": "Back button navigation works",
+            "test_navigate_from_dashboard": "Navigate from dashboard"
+        }
     },
     "screening_test": {
         "name": "Screening Test Creation",
         "file": "tests/test_06_screening_test_creation.py",
-        "description": "Template and question management"
+        "description": "Template and question management",
+        "tests": {
+            "test_create_template_page_loads": "Verify template page loads",
+            "test_create_template_with_single_question": "Create template with one question",
+            "test_create_template_with_multiple_questions": "Create template with multiple questions",
+            "test_save_template": "Save template successfully",
+            "test_create_template_different_difficulty_levels": "Questions with different difficulties",
+            "test_create_template_different_topics": "Questions with different topics",
+            "test_delete_question": "Delete question from template",
+            "test_edit_question": "Edit existing question",
+            "test_generate_questions_ai": "AI question generation",
+            "test_group_by_topic_toggle": "Group questions by topic",
+            "test_back_button": "Back button navigation",
+            "test_navigate_from_dashboard": "Navigate from dashboard",
+            "test_create_template_empty_name": "Handle empty template name",
+            "test_create_template_empty_question": "Handle empty question text",
+            "test_create_template_incomplete_options": "Handle incomplete options",
+            "test_create_template_special_characters": "Handle special characters"
+        }
     },
     "edit_screening": {
         "name": "Edit Screening Tests",
         "file": "tests/test_07_edit_screening_test.py",
-        "description": "Template editing"
+        "description": "Template editing",
+        "tests": {
+            "test_edit_template_from_dashboard": "Edit template from dashboard",
+            "test_edit_template_loads_existing_questions": "Load existing questions",
+            "test_add_question_to_existing_template": "Add question to template",
+            "test_delete_question_from_existing_template": "Delete question from template",
+            "test_save_edited_template": "Save edited template",
+            "test_edit_template_back_button": "Back button navigation",
+            "test_template_config_button": "Template configuration button",
+            "test_template_assign_button": "Template assign button",
+            "test_template_delete_button": "Template delete button",
+            "test_edit_question_in_template": "Edit question in template",
+            "test_change_question_difficulty": "Change question difficulty",
+            "test_change_question_topic": "Change question topic"
+        }
     },
     "reports": {
         "name": "Report Tests",
         "file": "tests/test_08_report.py",
-        "description": "Test results viewing"
+        "description": "Test results viewing",
+        "tests": {
+            "test_results_page_loads": "Verify results page loads",
+            "test_search_with_valid_test_link": "Search with valid test link",
+            "test_search_with_invalid_test_link": "Handle invalid test link",
+            "test_search_with_empty_link": "Handle empty search",
+            "test_search_with_nonexistent_test": "Handle non-existent test",
+            "test_navigate_from_dashboard": "Navigate from dashboard",
+            "test_search_multiple_times": "Multiple searches work"
+        }
     },
     "profile": {
         "name": "Profile Tests",
         "file": "tests/test_09_profile.py",
-        "description": "User profile management"
+        "description": "User profile management",
+        "tests": {
+            "test_profile_page_loads": "Verify profile page loads",
+            "test_change_password_valid": "Change password successfully",
+            "test_change_password_mismatch": "Reject mismatched passwords",
+            "test_change_password_too_short": "Reject short password",
+            "test_change_password_no_uppercase": "Reject password without uppercase",
+            "test_change_password_no_lowercase": "Reject password without lowercase",
+            "test_change_password_no_number": "Reject password without number",
+            "test_change_password_no_special_char": "Reject password without special char",
+            "test_change_password_empty": "Handle empty password fields",
+            "test_toggle_password_visibility": "Toggle password visibility",
+            "test_invite_user_valid_email": "Invite user with valid email",
+            "test_invite_user_personal_email": "Handle personal email invitation",
+            "test_invite_user_invalid_email": "Reject invalid email format",
+            "test_invite_user_empty_email": "Handle empty email",
+            "test_invite_existing_user": "Handle existing user invitation",
+            "test_back_button": "Back button navigation",
+            "test_profile_shows_config_sections": "Show configuration sections",
+            "test_multiple_password_changes": "Multiple password changes",
+            "test_invite_multiple_users": "Invite multiple users"
+        }
     }
 }
 
@@ -387,6 +535,39 @@ def get_saved_screenshot(filename):
 def get_grouped_results():
     """Get results grouped by test suite"""
     return jsonify(test_state["suites_results"])
+
+
+@app.route('/api/test-screenshots/<test_name>')
+def get_test_screenshots(test_name):
+    """Get screenshots for a specific test"""
+    screenshots_file = os.path.join(os.path.dirname(__file__), 'test_screenshots.json')
+    try:
+        if os.path.exists(screenshots_file):
+            with open(screenshots_file, 'r') as f:
+                all_screenshots = json.load(f)
+                return jsonify(all_screenshots.get(test_name, []))
+    except:
+        pass
+    return jsonify([])
+
+
+@app.route('/api/all-test-screenshots')
+def get_all_test_screenshots():
+    """Get all test screenshots"""
+    screenshots_file = os.path.join(os.path.dirname(__file__), 'test_screenshots.json')
+    try:
+        if os.path.exists(screenshots_file):
+            with open(screenshots_file, 'r') as f:
+                return jsonify(json.load(f))
+    except:
+        pass
+    return jsonify({})
+
+
+@app.route('/api/test-cases')
+def get_test_cases():
+    """Get all test cases with descriptions"""
+    return jsonify(TEST_SUITES)
 
 
 @app.route('/api/start', methods=['POST'])

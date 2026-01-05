@@ -122,7 +122,7 @@ def get_edge_driver():
 
 
 @pytest.fixture(scope="function")
-def driver():
+def driver(request):
     """Create and configure WebDriver instance"""
     if BROWSER.lower() == "chrome":
         driver = get_chrome_driver()
@@ -146,50 +146,54 @@ def driver():
     import json
     import time
     
+    test_name = request.node.name if hasattr(request, 'node') else 'unknown'
     screenshot_file = os.path.join(os.path.dirname(__file__), 'current_screenshot.json')
-    steps_file = os.path.join(os.path.dirname(__file__), 'current_steps.json')
+    test_screenshots_file = os.path.join(os.path.dirname(__file__), 'test_screenshots.json')
     stop_capture = threading.Event()
     step_counter = [0]
     last_url = [None]
+    screenshots_list = []
     
     def capture_screenshots():
         while not stop_capture.is_set():
             try:
                 screenshot = driver.get_screenshot_as_base64()
                 current_url = driver.current_url
+                timestamp = time.time()
                 
-                # Save current screenshot
+                # Save current screenshot for live preview
                 data = {
                     "screenshot": screenshot,
                     "url": current_url,
-                    "timestamp": time.time()
+                    "timestamp": timestamp,
+                    "test": test_name
                 }
                 with open(screenshot_file, 'w') as f:
                     json.dump(data, f)
                 
-                # Detect URL change as a step
+                # Detect URL change or periodic capture as a step
                 if current_url != last_url[0]:
                     step_counter[0] += 1
                     last_url[0] = current_url
                     
-                    # Save step data
                     step_data = {
                         "step": step_counter[0],
-                        "action": f"Navigate to {current_url}",
+                        "action": f"Navigate to: {current_url.split('/')[-1] or 'home'}",
                         "url": current_url,
                         "screenshot": screenshot,
-                        "timestamp": time.time()
+                        "timestamp": timestamp
                     }
+                    screenshots_list.append(step_data)
                     
-                    # Append to steps file
+                    # Save to file for dashboard
                     try:
-                        steps = []
-                        if os.path.exists(steps_file):
-                            with open(steps_file, 'r') as f:
-                                steps = json.load(f)
-                        steps.append(step_data)
-                        with open(steps_file, 'w') as f:
-                            json.dump(steps, f)
+                        all_screenshots = {}
+                        if os.path.exists(test_screenshots_file):
+                            with open(test_screenshots_file, 'r') as f:
+                                all_screenshots = json.load(f)
+                        all_screenshots[test_name] = screenshots_list
+                        with open(test_screenshots_file, 'w') as f:
+                            json.dump(all_screenshots, f)
                     except:
                         pass
                         
@@ -202,6 +206,30 @@ def driver():
     
     yield driver
     
+    # Capture final screenshot
+    try:
+        final_screenshot = driver.get_screenshot_as_base64()
+        final_url = driver.current_url
+        step_counter[0] += 1
+        screenshots_list.append({
+            "step": step_counter[0],
+            "action": "Test completed",
+            "url": final_url,
+            "screenshot": final_screenshot,
+            "timestamp": time.time()
+        })
+        
+        # Save final screenshots
+        all_screenshots = {}
+        if os.path.exists(test_screenshots_file):
+            with open(test_screenshots_file, 'r') as f:
+                all_screenshots = json.load(f)
+        all_screenshots[test_name] = screenshots_list
+        with open(test_screenshots_file, 'w') as f:
+            json.dump(all_screenshots, f)
+    except:
+        pass
+    
     stop_capture.set()
     
     try:
@@ -209,7 +237,6 @@ def driver():
     except Exception:
         pass
     
-    # Cleanup
     try:
         if os.path.exists(screenshot_file):
             os.remove(screenshot_file)
