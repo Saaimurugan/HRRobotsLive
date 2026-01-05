@@ -1,0 +1,9 @@
+selenium==4.15.2
+pytest==7.4.3
+pytest-html==4.1.1
+webdriver-manager==4.0.1
+python-dotenv==1.0.0
+Faker==21.0.0
+allure-pytest==2.13.2
+flask==3.0.0
+flask-cors==4.0.0

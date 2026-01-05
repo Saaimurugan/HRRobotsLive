@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Robots - Test Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root { --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        body { background: #f0f2f5; font-family: 'Segoe UI', sans-serif; font-size: 13px; }
+        .dashboard-header { background: var(--primary-gradient); color: white; padding: 0.75rem 0; }
+        .stat-card { background: white; border-radius: 10px; padding: 0.75rem; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .stat-number { font-size: 1.75rem; font-weight: 700; }
+        .stat-card.passed .stat-number { color: #28a745; }
+        .stat-card.failed .stat-number { color: #dc3545; }
+        .console-output { background: #1e1e1e; color: #d4d4d4; height: 150px; overflow: auto; font-size: 10px; font-family: monospace; }
+        .browser-preview { background: #000; border-radius: 0 0 8px 8px; min-height: 250px; }
+        .browser-preview img { width: 100%; height: auto; }
+        .browser-url { background: #333; color: #0f0; padding: 6px 10px; font-size: 10px; font-family: monospace; }
+        .test-accordion .accordion-button { padding: 0.5rem 1rem; font-size: 12px; }
+        .test-accordion .accordion-body { padding: 0.5rem; font-size: 11px; }
+        .test-item { border-left: 3px solid #ddd; padding: 0.25rem 0.5rem; margin: 0.25rem 0; cursor: pointer; }
+        .test-item.passed { border-color: #28a745; background: #f0fff4; }
+        .test-item.failed { border-color: #dc3545; background: #fff5f5; }
+        .test-item.skipped { border-color: #ffc107; background: #fffbeb; }
+        .test-details-panel { background: #f8f9fa; border-radius: 8px; padding: 1rem; margin-top: 0.5rem; }
+        .step-item { display: flex; align-items: center; padding: 0.25rem; border-bottom: 1px solid #eee; font-size: 11px; }
+        .step-screenshot { width: 80px; height: 45px; object-fit: cover; border-radius: 4px; cursor: pointer; }
+        .screenshot-modal img { max-width: 100%; max-height: 80vh; }
+        .error-text { color: #dc3545; font-family: monospace; font-size: 10px; white-space: pre-wrap; background: #fff5f5; padding: 0.5rem; border-radius: 4px; }
+        .suite-header { background: linear-gradient(135deg, #667eea22, #764ba222); }
+        .suite-stats { font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-header">
+        <div class="container-fluid px-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-robot"></i> HR Robots Test Dashboard</h5>
+                <div id="status-badge" class="badge bg-secondary px-3 py-2">IDLE</div>
+            </div>
+        </div>
+    </div>
+    <div class="container-fluid p-2" id="app-container"></div>
+    
+    <!-- Screenshot Modal -->
+    <div class="modal fade" id="screenshotModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="screenshotModalTitle">Screenshot</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center screenshot-modal">
+                    <img id="modalScreenshot" src="" alt="Screenshot">
+                    <p class="text-muted small mt-2" id="modalUrl"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
+<script>
+let testSuites = {};
+let pollInterval = null;
+let selectedTest = null;
+
+const appContainer = document.getElementById('app-container');
+const statusBadge = document.getElementById('status-badge');
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadSuites();
+    renderDashboard();
+    startPolling();
+});
+
+async function loadSuites() {
+    try { const res = await fetch('/api/suites'); testSuites = await res.json(); } catch (e) { console.error(e); }
+}
+
+function renderDashboard() {
+    appContainer.innerHTML = `
+        <div class="row g-2 mb-2">
+            <div class="col-3 col-md"><div class="stat-card passed"><div class="stat-number" id="stat-passed">0</div><small class="text-muted">Passed</small></div></div>
+            <div class="col-3 col-md"><div class="stat-card failed"><div class="stat-number" id="stat-failed">0</div><small class="text-muted">Failed</small></div></div>
+            <div class="col-3 col-md"><div class="stat-card"><div class="stat-number text-warning" id="stat-skipped">0</div><small class="text-muted">Skipped</small></div></div>
+            <div class="col-3 col-md"><div class="stat-card"><div class="stat-number text-info" id="stat-progress">0%</div><small class="text-muted"><span id="stat-completed">0</span>/<span id="stat-total">0</span></small></div></div>
+        </div>
+        <div class="row g-2">
+            <div class="col-lg-2">
+                <div class="card mb-2">
+                    <div class="card-header bg-white py-2"><small class="fw-bold"><i class="bi bi-list-check"></i> Suites</small></div>
+                    <div class="card-body p-2" id="suite-list" style="max-height: 180px; overflow: auto;"></div>
+                    <div class="card-footer bg-white p-2">
+                        <button class="btn btn-sm btn-outline-primary btn-sm me-1" onclick="selectAll()">All</button>
+                        <button class="btn btn-sm btn-outline-secondary btn-sm" onclick="selectNone()">None</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header bg-white py-2"><small class="fw-bold"><i class="bi bi-play-circle"></i> Controls</small></div>
+                    <div class="card-body p-2">
+                        <div class="progress mb-2" style="height: 18px;"><div id="progress-bar" class="progress-bar progress-bar-striped" style="width: 0%">0%</div></div>
+                        <div class="d-grid gap-1">
+                            <div class="btn-group btn-group-sm">
+                                <button id="btn-start" class="btn btn-success" onclick="startTests()"><i class="bi bi-play-fill"></i></button>
+                                <button id="btn-pause" class="btn btn-warning" onclick="pauseTests()" disabled><i class="bi bi-pause-fill"></i></button>
+                                <button id="btn-resume" class="btn btn-info" onclick="resumeTests()" disabled><i class="bi bi-skip-forward-fill"></i></button>
+                                <button id="btn-stop" class="btn btn-danger" onclick="stopTests()" disabled><i class="bi bi-stop-fill"></i></button>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-secondary" onclick="resetTests()"><i class="bi bi-arrow-counterclockwise"></i></button>
+                                <button class="btn btn-outline-primary" onclick="downloadReport()" id="btn-report" disabled><i class="bi bi-download"></i> Report</button>
+                            </div>
+                        </div>
+                        <div id="current-test" class="text-muted small mt-1 text-truncate"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header bg-white py-2 d-flex justify-content-between">
+                        <small class="fw-bold"><i class="bi bi-display"></i> Live Preview</small>
+                        <span id="live-badge" class="badge bg-danger" style="display:none;font-size:9px;">● LIVE</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="browser-url" id="browser-url">No active session</div>
+                        <div class="browser-preview" id="browser-preview">
+                            <div class="text-center text-muted py-5"><i class="bi bi-display" style="font-size:2rem;"></i><p class="small">Preview appears when tests run</p></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card mb-2">
+                    <div class="card-header bg-white py-2"><small class="fw-bold"><i class="bi bi-terminal"></i> Console</small></div>
+                    <div class="card-body p-0"><pre id="output-console" class="m-0 p-2 console-output"></pre></div>
+                </div>
+                <div class="card">
+                    <div class="card-header bg-white py-2"><small class="fw-bold"><i class="bi bi-folder2-open"></i> Test Results by Suite</small></div>
+                    <div class="card-body p-0" style="max-height: 350px; overflow: auto;">
+                        <div class="accordion accordion-flush test-accordion" id="resultsAccordion"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row g-2 mt-2">
+            <div class="col-12">
+                <div class="card" id="test-details-card" style="display:none;">
+                    <div class="card-header bg-white py-2 d-flex justify-content-between">
+                        <small class="fw-bold"><i class="bi bi-info-circle"></i> Test Details: <span id="detail-test-name"></span></small>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="closeDetails()"><i class="bi bi-x"></i></button>
+                    </div>
+                    <div class="card-body p-2" id="test-details-content"></div>
+                </div>
+            </div>
+        </div>`;
+    renderSuiteList();
+}
+
+function renderSuiteList() {
+    document.getElementById('suite-list').innerHTML = Object.entries(testSuites).map(([id, s]) => `
+        <div class="form-check"><input class="form-check-input suite-checkbox" type="checkbox" value="${id}" id="s-${id}" checked>
+        <label class="form-check-label small" for="s-${id}">${s.name.replace(' Tests','')}</label></div>`).join('');
+}
+
+function selectAll() { document.querySelectorAll('.suite-checkbox').forEach(cb => cb.checked = true); }
+function selectNone() { document.querySelectorAll('.suite-checkbox').forEach(cb => cb.checked = false); }
+function getSelectedSuites() { return Array.from(document.querySelectorAll('.suite-checkbox:checked')).map(cb => cb.value); }
+
+async function startTests() {
+    const suites = getSelectedSuites();
+    if (!suites.length) { alert('Select at least one suite'); return; }
+    await fetch('/api/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ suites }) });
+}
+async function pauseTests() { await fetch('/api/pause', { method: 'POST' }); }
+async function resumeTests() { await fetch('/api/resume', { method: 'POST' }); }
+async function stopTests() { await fetch('/api/stop', { method: 'POST' }); }
+async function resetTests() { await fetch('/api/reset', { method: 'POST' }); document.getElementById('resultsAccordion').innerHTML = ''; closeDetails(); }
+function downloadReport() { window.open('/api/report/html', '_blank'); }
+function startPolling() { setInterval(updateStatus, 1000); setInterval(updateScreenshot, 500); }
+function closeDetails() { document.getElementById('test-details-card').style.display = 'none'; selectedTest = null; }
+</script>
+
+<script>
+async function updateScreenshot() {
+    try {
+        const res = await fetch('/api/screenshot');
+        const data = await res.json();
+        const preview = document.getElementById('browser-preview');
+        const urlBar = document.getElementById('browser-url');
+        const liveBadge = document.getElementById('live-badge');
+        
+        if (data.screenshot) {
+            preview.innerHTML = `<img src="data:image/png;base64,${data.screenshot}" alt="Preview">`;
+            urlBar.textContent = data.url || 'Loading...';
+            liveBadge.style.display = 'inline';
+        } else {
+            liveBadge.style.display = 'none';
+        }
+    } catch (e) { }
+}
+
+async function updateStatus() {
+    try {
+        const res = await fetch('/api/status');
+        const state = await res.json();
+        
+        document.getElementById('stat-passed').textContent = state.passed;
+        document.getElementById('stat-failed').textContent = state.failed;
+        document.getElementById('stat-skipped').textContent = state.skipped + state.errors;
+        document.getElementById('stat-progress').textContent = Math.min(state.progress, 100) + '%';
+        document.getElementById('stat-completed').textContent = state.completed_count || 0;
+        document.getElementById('stat-total').textContent = state.total_tests || 0;
+        
+        const pb = document.getElementById('progress-bar');
+        pb.style.width = Math.min(state.progress, 100) + '%';
+        pb.textContent = Math.min(state.progress, 100) + '%';
+        pb.className = 'progress-bar progress-bar-striped' + (state.status === 'running' ? ' progress-bar-animated' : '') + (state.failed > 0 ? ' bg-danger' : ' bg-success');
+        
+        const colors = { idle: 'secondary', running: 'primary', paused: 'warning', completed: 'success', stopped: 'danger' };
+        statusBadge.className = `badge bg-${colors[state.status] || 'secondary'} px-3 py-2`;
+        statusBadge.textContent = state.status.toUpperCase();
+        
+        document.getElementById('current-test').innerHTML = state.current_test ? `<i class="bi bi-arrow-right"></i> ${state.current_test}` : '';
+        
+        const isRunning = state.status === 'running', isPaused = state.status === 'paused';
+        const isIdle = ['idle', 'completed', 'stopped'].includes(state.status);
+        document.getElementById('btn-start').disabled = !isIdle;
+        document.getElementById('btn-pause').disabled = !isRunning;
+        document.getElementById('btn-resume').disabled = !isPaused;
+        document.getElementById('btn-stop').disabled = isIdle;
+        document.getElementById('btn-report').disabled = state.results.length === 0;
+        
+        const consoleEl = document.getElementById('output-console');
+        consoleEl.textContent = (state.current_output || '').slice(-3000);
+        consoleEl.scrollTop = consoleEl.scrollHeight;
+        
+        // Render grouped results
+        renderGroupedResults(state.suites_results || {});
+        
+    } catch (e) { console.error(e); }
+}
+
+function renderGroupedResults(suitesResults) {
+    const accordion = document.getElementById('resultsAccordion');
+    let html = '';
+    
+    Object.entries(suitesResults).forEach(([suiteName, tests], idx) => {
+        const passed = tests.filter(t => t.status === 'passed').length;
+        const failed = tests.filter(t => t.status === 'failed').length;
+        const total = tests.length;
+        const statusClass = failed > 0 ? 'danger' : (passed === total ? 'success' : 'secondary');
+        
+        html += `
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button ${idx > 0 ? 'collapsed' : ''} suite-header" type="button" data-bs-toggle="collapse" data-bs-target="#suite-${idx}">
+                    <span class="badge bg-${statusClass} me-2">${passed}/${total}</span>
+                    <span>${suiteName}</span>
+                    <span class="suite-stats ms-auto me-3">
+                        <span class="text-success">${passed}✓</span> 
+                        <span class="text-danger">${failed}✗</span>
+                    </span>
+                </button>
+            </h2>
+            <div id="suite-${idx}" class="accordion-collapse collapse ${idx === 0 ? 'show' : ''}">
+                <div class="accordion-body p-1">
+                    ${tests.map(t => `
+                        <div class="test-item ${t.status}" onclick="showTestDetails('${escapeHtml(JSON.stringify(t).replace(/'/g, "\\'"))}')">
+                            <span class="badge bg-${t.status === 'passed' ? 'success' : t.status === 'failed' ? 'danger' : 'warning'} me-1">
+                                ${t.status === 'passed' ? '✓' : t.status === 'failed' ? '✗' : '○'}
+                            </span>
+                            <span class="text-truncate">${t.name}</span>
+                            ${t.failed_step ? '<i class="bi bi-exclamation-triangle text-danger ms-auto"></i>' : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>`;
+    });
+    
+    accordion.innerHTML = html || '<div class="text-center text-muted py-3">No results yet</div>';
+}
+
+function showTestDetails(testJson) {
+    try {
+        const test = JSON.parse(testJson);
+        selectedTest = test;
+        
+        document.getElementById('test-details-card').style.display = 'block';
+        document.getElementById('detail-test-name').textContent = test.name;
+        
+        let html = `
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Status:</strong> <span class="badge bg-${test.status === 'passed' ? 'success' : 'danger'}">${test.status.toUpperCase()}</span></p>
+                    <p><strong>Suite:</strong> ${test.suite || 'Unknown'}</p>
+                    <p><strong>Time:</strong> ${new Date(test.time).toLocaleString()}</p>
+                    ${test.url ? `<p><strong>URL:</strong> <code class="small">${test.url}</code></p>` : ''}
+                </div>
+                <div class="col-md-6">
+                    ${test.screenshot ? `
+                        <p><strong>Final Screenshot:</strong></p>
+                        <img src="data:image/png;base64,${test.screenshot}" class="img-fluid rounded" style="max-height:150px;cursor:pointer;" 
+                             onclick="showScreenshotModal('data:image/png;base64,${test.screenshot}', '${test.url || ''}')">
+                    ` : '<p class="text-muted">No screenshot available</p>'}
+                </div>
+            </div>`;
+        
+        if (test.failed_step || test.details) {
+            html += `
+            <div class="mt-2">
+                <p><strong><i class="bi bi-exclamation-triangle text-danger"></i> Failure Details:</strong></p>
+                <div class="error-text">${escapeHtml(test.failed_step || '')}\n${escapeHtml(test.details || '')}</div>
+            </div>`;
+        }
+        
+        if (test.steps && test.steps.length > 0) {
+            html += `
+            <div class="mt-2">
+                <p><strong>Steps:</strong></p>
+                <div class="border rounded">
+                    ${test.steps.map((s, i) => `
+                        <div class="step-item">
+                            <span class="badge bg-secondary me-2">${i + 1}</span>
+                            <span class="flex-grow-1">${s.action || s.url || 'Step ' + (i+1)}</span>
+                            ${s.screenshot ? `<img src="data:image/png;base64,${s.screenshot}" class="step-screenshot ms-2" 
+                                onclick="showScreenshotModal('data:image/png;base64,${s.screenshot}', '${s.url || ''}')">` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }
+        
+        document.getElementById('test-details-content').innerHTML = html;
+        document.getElementById('test-details-card').scrollIntoView({ behavior: 'smooth' });
+        
+    } catch (e) { console.error('Error showing details:', e); }
+}
+
+function showScreenshotModal(src, url) {
+    document.getElementById('modalScreenshot').src = src;
+    document.getElementById('modalUrl').textContent = url;
+    new bootstrap.Modal(document.getElementById('screenshotModal')).show();
+}
+
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
