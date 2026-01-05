@@ -20,6 +20,9 @@ ROUTES = {
     "create_template": f"{BASE_URL}/createTemplate",
     "result": f"{BASE_URL}/result",
     "profile": f"{BASE_URL}/profile",
+    "eula": f"{BASE_URL}/eula",
+    "privacy_policy": f"{BASE_URL}/privacy-policy",
+    "data_protection": f"{BASE_URL}/data-protection-policy",
 }
 
 # Test Credentials (use environment variables in production)

@@ -20,6 +20,12 @@ class LoginPage(BasePage):
     PASSWORD_TOGGLE = (By.CSS_SELECTOR, "button.password-toggle")
     CAPTCHA_NOTICE = (By.CSS_SELECTOR, "div.captcha-notice")
     
+    # EULA Locators
+    EULA_CHECKBOX = (By.CSS_SELECTOR, "input.eula-input")
+    EULA_CHECKBOX_CONTAINER = (By.CSS_SELECTOR, "div.eula-checkbox")
+    EULA_LABEL = (By.CSS_SELECTOR, "label.eula-label")
+    EULA_LINK = (By.CSS_SELECTOR, "a.eula-link")
+    
     def __init__(self, driver):
         super().__init__(driver)
         self.url = ROUTES["login"]
@@ -57,6 +63,49 @@ class LoginPage(BasePage):
         self.enter_email(email)
         self.enter_password(password)
         self.click_login()
+    
+    def login_with_eula(self, email, password, accept_eula=True):
+        """Perform login with credentials and EULA acceptance"""
+        self.enter_email(email)
+        self.enter_password(password)
+        if accept_eula:
+            self.accept_eula()
+        self.click_login()
+    
+    def accept_eula(self):
+        """Accept the EULA checkbox"""
+        checkbox = self.find_element(self.EULA_CHECKBOX)
+        if not checkbox.is_selected():
+            self.click(self.EULA_CHECKBOX)
+    
+    def uncheck_eula(self):
+        """Uncheck the EULA checkbox"""
+        checkbox = self.find_element(self.EULA_CHECKBOX)
+        if checkbox.is_selected():
+            self.click(self.EULA_CHECKBOX)
+    
+    def is_eula_checkbox_visible(self):
+        """Check if EULA checkbox is visible"""
+        return self.is_element_visible(self.EULA_CHECKBOX)
+    
+    def is_eula_checkbox_checked(self):
+        """Check if EULA checkbox is checked"""
+        checkbox = self.find_element(self.EULA_CHECKBOX)
+        return checkbox.is_selected()
+    
+    def click_eula_link(self):
+        """Click the EULA link to open EULA page"""
+        self.click(self.EULA_LINK)
+    
+    def get_eula_link_href(self):
+        """Get the href attribute of the EULA link"""
+        link = self.find_element(self.EULA_LINK)
+        return link.get_attribute("href")
+    
+    def get_eula_link_target(self):
+        """Get the target attribute of the EULA link"""
+        link = self.find_element(self.EULA_LINK)
+        return link.get_attribute("target")
     
     def get_error_message(self):
         """Get error message text"""

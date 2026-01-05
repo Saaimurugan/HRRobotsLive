@@ -12,6 +12,7 @@ from pages.create_template_page import CreateTemplatePage
 from pages.test_page import TestPage
 from pages.result_page import ResultPage
 from pages.profile_page import ProfilePage
+from pages.eula_page import EULAPage
 
 __all__ = [
     "BasePage",
@@ -24,5 +25,6 @@ __all__ = [
     "CreateTemplatePage",
     "TestPage",
     "ResultPage",
-    "ProfilePage"
+    "ProfilePage",
+    "EULAPage"
 ]

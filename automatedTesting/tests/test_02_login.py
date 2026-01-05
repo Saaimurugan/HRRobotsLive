@@ -5,6 +5,7 @@ Tests all login scenarios and validations
 import pytest
 import time
 from pages.login_page import LoginPage
+from pages.eula_page import EULAPage
 from config import ROUTES, TEST_USER
 
 
@@ -24,10 +25,11 @@ class TestLogin:
         assert self.login_page.is_element_visible(LoginPage.EMAIL_INPUT)
         assert self.login_page.is_element_visible(LoginPage.PASSWORD_INPUT)
         assert self.login_page.is_element_visible(LoginPage.LOGIN_BUTTON)
+        assert self.login_page.is_eula_checkbox_visible()
     
     def test_login_with_valid_credentials(self):
         """Test login with valid credentials"""
-        self.login_page.login(TEST_USER["email"], TEST_USER["password"])
+        self.login_page.login_with_eula(TEST_USER["email"], TEST_USER["password"])
         
         # Should redirect to dashboard
         assert self.login_page.is_login_successful()
@@ -165,7 +167,87 @@ class TestLogin:
     
     def test_login_redirect_after_success(self):
         """Test redirect to dashboard after successful login"""
-        self.login_page.login(TEST_USER["email"], TEST_USER["password"])
+        self.login_page.login_with_eula(TEST_USER["email"], TEST_USER["password"])
         
         self.login_page.wait_for_url_contains("/list")
+        assert "/list" in self.driver.current_url
+    
+    # EULA Tests
+    def test_eula_checkbox_visible_on_login_page(self):
+        """Test that EULA checkbox is visible on login page"""
+        assert self.login_page.is_eula_checkbox_visible()
+    
+    def test_eula_checkbox_unchecked_by_default(self):
+        """Test that EULA checkbox is unchecked by default"""
+        assert not self.login_page.is_eula_checkbox_checked()
+    
+    def test_login_without_eula_acceptance_shows_error(self):
+        """Test that login without accepting EULA shows error message"""
+        self.login_page.enter_email(TEST_USER["email"])
+        self.login_page.enter_password(TEST_USER["password"])
+        # Do not accept EULA
+        self.login_page.click_login()
+        
+        # Should show error message about EULA
+        error = self.login_page.get_error_message()
+        assert error is not None
+        assert "End User License Agreement" in error or "EULA" in error
+    
+    def test_eula_checkbox_can_be_toggled(self):
+        """Test that EULA checkbox can be checked and unchecked"""
+        # Initially unchecked
+        assert not self.login_page.is_eula_checkbox_checked()
+        
+        # Check it
+        self.login_page.accept_eula()
+        assert self.login_page.is_eula_checkbox_checked()
+        
+        # Uncheck it
+        self.login_page.uncheck_eula()
+        assert not self.login_page.is_eula_checkbox_checked()
+    
+    def test_eula_link_present(self):
+        """Test that EULA link is present and has correct href"""
+        href = self.login_page.get_eula_link_href()
+        assert href is not None
+        assert "/eula" in href
+    
+    def test_eula_link_opens_in_new_tab(self):
+        """Test that EULA link opens in new tab"""
+        target = self.login_page.get_eula_link_target()
+        assert target == "_blank"
+    
+    def test_eula_link_navigates_to_eula_page(self):
+        """Test that clicking EULA link opens EULA page"""
+        # Store original window handle
+        original_window = self.driver.current_window_handle
+        
+        # Click EULA link
+        self.login_page.click_eula_link()
+        
+        # Wait for new window/tab
+        time.sleep(1)
+        
+        # Switch to new window
+        for window_handle in self.driver.window_handles:
+            if window_handle != original_window:
+                self.driver.switch_to.window(window_handle)
+                break
+        
+        # Verify EULA page loaded
+        assert "/eula" in self.driver.current_url
+        
+        # Close new tab and switch back
+        self.driver.close()
+        self.driver.switch_to.window(original_window)
+    
+    def test_login_successful_with_eula_accepted(self):
+        """Test that login succeeds when EULA is accepted"""
+        self.login_page.enter_email(TEST_USER["email"])
+        self.login_page.enter_password(TEST_USER["password"])
+        self.login_page.accept_eula()
+        self.login_page.click_login()
+        
+        # Should redirect to dashboard
+        assert self.login_page.is_login_successful()
         assert "/list" in self.driver.current_url
