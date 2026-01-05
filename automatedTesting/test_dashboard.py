@@ -404,6 +404,12 @@ def run_tests_thread(suites):
     
     test_state["status"] = "running"
     test_state["start_time"] = datetime.now().isoformat()
+    test_state["current_output"] = "Starting tests...\n"
+    
+    if not suites:
+        test_state["current_output"] += "No suites selected!\n"
+        test_state["status"] = "completed"
+        return
     
     for suite_id in suites:
         if test_state["stop_requested"]:
@@ -422,18 +428,24 @@ def run_tests_thread(suites):
         test_state["status"] = "running"
         
         if suite_id not in TEST_SUITES:
+            test_state["current_output"] += f"Unknown suite: {suite_id}\n"
             continue
             
         suite = TEST_SUITES[suite_id]
         test_state["current_suite"] = suite["name"]
+        test_state["current_output"] += f"\n{'='*50}\nRunning: {suite['name']}\nFile: {suite['file']}\n{'='*50}\n"
         
         # Run pytest
         cmd = [
             sys.executable, "-m", "pytest",
             suite["file"],
-            "-v", "--tb=line",
-            "--no-header"
+            "-v", "--tb=short",
+            "--no-header",
+            "-s"
         ]
+        
+        working_dir = os.path.dirname(os.path.abspath(__file__))
+        test_state["current_output"] += f"Command: {' '.join(cmd)}\nWorking dir: {working_dir}\n\n"
         
         try:
             test_process = subprocess.Popen(
@@ -442,7 +454,7 @@ def run_tests_thread(suites):
                 stderr=subprocess.STDOUT,
                 text=True,
                 bufsize=1,
-                cwd=os.path.dirname(os.path.abspath(__file__))
+                cwd=working_dir
             )
             
             for line in iter(test_process.stdout.readline, ''):
@@ -462,10 +474,13 @@ def run_tests_thread(suites):
                 test_state["status"] = "running"
                 parse_pytest_output(line)
             
-            test_process.wait()
+            return_code = test_process.wait()
+            test_state["current_output"] += f"\nSuite completed with return code: {return_code}\n"
             
         except Exception as e:
-            test_state["current_output"] += f"\nError: {str(e)}\n"
+            test_state["current_output"] += f"\nError running tests: {str(e)}\n"
+            import traceback
+            test_state["current_output"] += traceback.format_exc()
     
     test_state["end_time"] = datetime.now().isoformat()
     test_state["status"] = "stopped" if test_state["stop_requested"] else "completed"
