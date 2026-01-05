@@ -15,6 +15,7 @@ const LoginPage = () => {
     const [messageType, setMessageType] = useState("error");
     const [showPassword, setShowPassword] = useState(false);
     const [focusedField, setFocusedField] = useState(null);
+    const [eulaAccepted, setEulaAccepted] = useState(false);
     const navigate = useNavigate();
     const { setGlobalValue, setJWTValue, getAndClearRedirectPath } = useGlobalContext("");
     const [loading, setLoading] = useState(false);
@@ -42,6 +43,13 @@ const LoginPage = () => {
     const handleLogin = useCallback(async (e) => {
         e.preventDefault();
         if (loading) return;
+        
+        // Check if EULA is accepted
+        if (!eulaAccepted) {
+            setMessageType("error");
+            setMessage("Please accept the End User License Agreement to continue.");
+            return;
+        }
         
         // Execute reCAPTCHA v3 if required (after 3 failed attempts)
         if (requireCaptcha) {
@@ -111,7 +119,7 @@ const LoginPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [loading, requireCaptcha, executeRecaptcha, email, password, setGlobalValue, setJWTValue, getAndClearRedirectPath, navigate]);
+    }, [loading, requireCaptcha, executeRecaptcha, email, password, eulaAccepted, setGlobalValue, setJWTValue, getAndClearRedirectPath, navigate]);
 
     return (
         <div className="login-page">
@@ -243,6 +251,30 @@ const LoginPage = () => {
                                 <span>Security verification active due to multiple failed attempts</span>
                             </div>
                         )}
+                        
+                        {/* EULA Checkbox */}
+                        <div className="eula-checkbox">
+                            <label className="eula-label">
+                                <input
+                                    type="checkbox"
+                                    checked={eulaAccepted}
+                                    onChange={(e) => setEulaAccepted(e.target.checked)}
+                                    className="eula-input"
+                                />
+                                <span className="eula-text">
+                                    I agree to the{' '}
+                                    <a 
+                                        href="/eula" 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="eula-link"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        End User License Agreement
+                                    </a>
+                                </span>
+                            </label>
+                        </div>
                         
                         <button type="submit" className="login-btn" disabled={loading}>
                             {loading ? (

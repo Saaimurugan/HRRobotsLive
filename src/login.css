@@ -690,3 +690,58 @@
         font-size: 11px;
     }
 }
+
+
+/* ===================================
+   EULA Checkbox Styles
+   =================================== */
+
+.eula-checkbox {
+    margin-top: var(--spacing-sm);
+}
+
+.eula-label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+.eula-input {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: var(--color-primary);
+    flex-shrink: 0;
+}
+
+.eula-text {
+    flex: 1;
+}
+
+.eula-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: var(--font-weight-medium);
+    transition: color var(--transition-normal);
+}
+
+.eula-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .eula-label {
+        font-size: var(--font-size-xs);
+    }
+    
+    .eula-input {
+        width: 16px;
+        height: 16px;
+    }
+}
