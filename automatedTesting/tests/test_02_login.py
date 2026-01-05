@@ -154,7 +154,7 @@ class TestLogin:
     
     def test_login_session_persistence(self):
         """Test that login session persists"""
-        self.login_page.login(TEST_USER["email"], TEST_USER["password"])
+        self.login_page.login_with_eula(TEST_USER["email"], TEST_USER["password"])
         
         # Wait for redirect
         self.login_page.wait_for_url_contains("/list")

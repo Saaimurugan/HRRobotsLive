@@ -392,7 +392,19 @@
             font-size: 12px;
             color: #991b1b;
             white-space: pre-wrap;
-            max-height: 120px;
+            max-height: 150px;
+            overflow: auto;
+        }
+        .skip-box {
+            background: #fefce8;
+            border: 1px solid #fde047;
+            border-radius: 8px;
+            padding: 12px;
+            font-family: monospace;
+            font-size: 12px;
+            color: #854d0e;
+            white-space: pre-wrap;
+            max-height: 150px;
             overflow: auto;
         }
         .screenshots-grid {
@@ -734,11 +746,14 @@ function toggleSuite(name) {
 
 function showDetails(test) {
     const shots = testScreenshots[test.name] || [];
+    const statusBadgeClass = test.status === 'passed' ? 'success' : (test.status === 'skipped' ? 'warning' : 'danger');
+    const hasError = test.failed_step || test.details;
+    
     document.getElementById('details-container').innerHTML = `
         <div class="details-panel">
             <div class="details-header">
                 <h3>
-                    <span class="badge bg-${test.status === 'passed' ? 'success' : 'danger'}">${test.status.toUpperCase()}</span>
+                    <span class="badge bg-${statusBadgeClass}">${test.status.toUpperCase()}</span>
                     ${test.name}
                 </h3>
                 <button class="close-btn" onclick="document.getElementById('details-container').innerHTML=''">
@@ -746,18 +761,29 @@ function showDetails(test) {
                 </button>
             </div>
             <div class="details-body">
-                <div class="row">
+                <div class="row mb-3">
                     <div class="col-md-4">
                         <p><strong>Suite:</strong> ${test.suite || 'Unknown'}</p>
                         <p><strong>Time:</strong> ${new Date(test.time).toLocaleString()}</p>
                         <p><strong>Screenshots:</strong> ${shots.length}</p>
                     </div>
                     <div class="col-md-8">
-                        ${test.failed_step || test.details 
-                            ? `<div class="error-box">${escapeHtml(test.failed_step || '')}${test.details ? '\n' + escapeHtml(test.details) : ''}</div>` 
-                            : '<span style="color:var(--success);"><i class="bi bi-check-circle"></i> Test passed successfully</span>'}
+                        ${test.status === 'passed' && !hasError
+                            ? '<span style="color:var(--success);"><i class="bi bi-check-circle"></i> Test passed successfully</span>'
+                            : ''}
                     </div>
                 </div>
+                
+                ${hasError ? `
+                    <div class="mb-3">
+                        <strong style="color: ${test.status === 'skipped' ? 'var(--warning)' : 'var(--danger)'};">
+                            <i class="bi bi-${test.status === 'skipped' ? 'skip-forward' : 'exclamation-triangle'}"></i>
+                            ${test.status === 'skipped' ? 'Skip Reason:' : 'Failure Reason:'}
+                        </strong>
+                        <div class="${test.status === 'skipped' ? 'skip-box' : 'error-box'} mt-2">${escapeHtml(test.failed_step || '')}${test.details ? '\n' + escapeHtml(test.details) : ''}</div>
+                    </div>
+                ` : ''}
+                
                 ${shots.length > 0 ? `
                     <hr>
                     <strong>Screenshots</strong>

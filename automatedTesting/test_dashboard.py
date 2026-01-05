@@ -201,7 +201,15 @@ TEST_SUITES = {
             "test_template_delete_button": "Template delete button",
             "test_edit_question_in_template": "Edit question in template",
             "test_change_question_difficulty": "Change question difficulty",
-            "test_change_question_topic": "Change question topic"
+            "test_change_question_topic": "Change question topic",
+            "test_open_config_modal": "Open configuration modal",
+            "test_set_number_of_questions": "Set number of questions slider",
+            "test_set_test_duration": "Set test duration slider",
+            "test_set_sensitivity_level": "Set sensitivity level slider",
+            "test_set_allowed_defaults": "Set allowed defaults slider",
+            "test_save_configuration": "Save configuration changes",
+            "test_cancel_configuration": "Cancel configuration changes",
+            "test_slider_min_max_values": "Verify slider min/max values"
         }
     },
     "reports": {
@@ -276,6 +284,14 @@ def reset_state():
         import shutil
         shutil.rmtree(SCREENSHOTS_DIR, ignore_errors=True)
     os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+    
+    # Clear test screenshots JSON file
+    test_screenshots_file = os.path.join(os.path.dirname(__file__), 'test_screenshots.json')
+    try:
+        with open(test_screenshots_file, 'w') as f:
+            json.dump({}, f)
+    except:
+        pass
 
 
 def parse_pytest_output(line):
@@ -294,51 +310,75 @@ def parse_pytest_output(line):
     if current_suite not in test_state["suites_results"]:
         test_state["suites_results"][current_suite] = []
     
-    # Parse test results - look for percentage pattern like "PASSED [ 5%]" or "FAILED [100%]"
-    if "::" in line and ("[" in line and "%" in line):
-        try:
-            # Extract test name
-            parts = line.split("::")
-            if len(parts) >= 2:
-                test_name = parts[-1].split()[0] if parts[-1] else parts[1].split()[0]
-                test_state["current_test"] = test_name
-                
-                # Get screenshot for this test
-                screenshot_data = get_current_screenshot_data()
-                
-                # Get steps for this test
-                steps = test_state["test_steps"].get(test_name, [])
-                
-                result = {
-                    "name": test_name,
-                    "suite": current_suite,
-                    "status": "unknown",
-                    "time": datetime.now().isoformat(),
-                    "details": "",
-                    "screenshot": screenshot_data.get("screenshot") if screenshot_data else None,
-                    "url": screenshot_data.get("url") if screenshot_data else None,
-                    "steps": steps,
-                    "failed_step": None
-                }
-                
-                if "PASSED" in line:
-                    test_state["passed"] += 1
-                    result["status"] = "passed"
-                elif "FAILED" in line:
-                    test_state["failed"] += 1
-                    result["status"] = "failed"
-                elif "SKIPPED" in line:
-                    test_state["skipped"] += 1
-                    result["status"] = "skipped"
-                elif "ERROR" in line:
-                    test_state["errors"] += 1
-                    result["status"] = "error"
-                
-                test_state["results"].append(result)
-                test_state["suites_results"][current_suite].append(result)
-                
-        except Exception as e:
-            pass
+    # Parse test results - multiple patterns to catch different pytest output formats
+    # Pattern 1: "test_file.py::TestClass::test_name PASSED [ 5%]"
+    # Pattern 2: "test_file.py::test_name PASSED"
+    # Pattern 3: "PASSED test_file.py::test_name"
+    test_result_detected = False
+    test_name = None
+    status = None
+    
+    if "::" in line:
+        # Check for PASSED/FAILED/SKIPPED/ERROR in the line
+        if "PASSED" in line:
+            status = "passed"
+            test_result_detected = True
+        elif "FAILED" in line:
+            status = "failed"
+            test_result_detected = True
+        elif "SKIPPED" in line:
+            status = "skipped"
+            test_result_detected = True
+        elif "ERROR" in line:
+            status = "error"
+            test_result_detected = True
+        
+        if test_result_detected:
+            try:
+                # Extract test name from the line
+                parts = line.split("::")
+                if len(parts) >= 2:
+                    # Get the last part which contains the test name
+                    last_part = parts[-1]
+                    # Remove status and percentage from the test name
+                    test_name = last_part.split()[0] if last_part else parts[-2].split()[0]
+                    test_name = test_name.strip()
+            except Exception as e:
+                test_result_detected = False
+    
+    if test_result_detected and test_name:
+        test_state["current_test"] = test_name
+        
+        # Get screenshot for this test
+        screenshot_data = get_current_screenshot_data()
+        
+        # Get steps for this test
+        steps = test_state["test_steps"].get(test_name, [])
+        
+        result = {
+            "name": test_name,
+            "suite": current_suite,
+            "status": status,
+            "time": datetime.now().isoformat(),
+            "details": "",
+            "screenshot": screenshot_data.get("screenshot") if screenshot_data else None,
+            "url": screenshot_data.get("url") if screenshot_data else None,
+            "steps": steps,
+            "failed_step": None
+        }
+        
+        # Update counters
+        if status == "passed":
+            test_state["passed"] += 1
+        elif status == "failed":
+            test_state["failed"] += 1
+        elif status == "skipped":
+            test_state["skipped"] += 1
+        elif status == "error":
+            test_state["errors"] += 1
+        
+        test_state["results"].append(result)
+        test_state["suites_results"][current_suite].append(result)
     
     # Capture failure details and associate with last test
     elif (line.startswith("E ") or line.startswith(">") or 

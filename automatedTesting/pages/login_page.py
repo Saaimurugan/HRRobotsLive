@@ -17,7 +17,7 @@ class LoginPage(BasePage):
     SIGNUP_LINK = (By.CSS_SELECTOR, "a[href='/signup']")
     ERROR_MESSAGE = (By.CSS_SELECTOR, "div.message-box.error")
     SUCCESS_MESSAGE = (By.CSS_SELECTOR, "div.message-box.success")
-    PASSWORD_TOGGLE = (By.CSS_SELECTOR, "button.password-toggle")
+    PASSWORD_TOGGLE = (By.CSS_SELECTOR, ".password-toggle")
     CAPTCHA_NOTICE = (By.CSS_SELECTOR, "div.captcha-notice")
     
     # EULA Locators

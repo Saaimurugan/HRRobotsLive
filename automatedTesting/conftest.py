@@ -152,6 +152,7 @@ def driver(request):
     stop_capture = threading.Event()
     step_counter = [0]
     last_url = [None]
+    last_screenshot_time = [0]
     screenshots_list = []
     
     def capture_screenshots():
@@ -171,14 +172,21 @@ def driver(request):
                 with open(screenshot_file, 'w') as f:
                     json.dump(data, f)
                 
-                # Detect URL change or periodic capture as a step
+                # Capture screenshot on URL change OR every 3 seconds
+                should_capture = False
                 if current_url != last_url[0]:
-                    step_counter[0] += 1
+                    should_capture = True
                     last_url[0] = current_url
+                elif timestamp - last_screenshot_time[0] >= 3:
+                    should_capture = True
+                
+                if should_capture:
+                    step_counter[0] += 1
+                    last_screenshot_time[0] = timestamp
                     
                     step_data = {
                         "step": step_counter[0],
-                        "action": f"Navigate to: {current_url.split('/')[-1] or 'home'}",
+                        "action": f"Step {step_counter[0]}: {current_url.split('/')[-1] or 'home'}",
                         "url": current_url,
                         "screenshot": screenshot,
                         "timestamp": timestamp
