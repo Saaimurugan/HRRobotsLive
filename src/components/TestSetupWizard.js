@@ -20,13 +20,14 @@ const TestSetupWizard = ({
   const [idCardImage, setIdCardImage] = useState(null);
   const [videoReady, setVideoReady] = useState(false);
   const [hasScrolledConsent, setHasScrolledConsent] = useState(false);
+  const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const consentScrollRef = useRef(null);
 
   const stepTitles = [
-    'Camera & Microphone Status',
+    'System Check',
     'Test Guidelines',
     'Data Consent',
     'Identity Verification'
@@ -165,7 +166,9 @@ const TestSetupWizard = ({
 
   const handleConsentSubmit = async () => {
     if (canProceedToStep4) {
+      setIsSubmittingConsent(true);
       await captureConsentScreenshot();
+      setIsSubmittingConsent(false);
       setCurrentStep(currentStep + 1);
     }
   };
@@ -580,11 +583,28 @@ const TestSetupWizard = ({
               Cancel
             </button>
             <button 
-              style={buttonStyle(canProceedToStep4)} 
+              style={buttonStyle(canProceedToStep4 && !isSubmittingConsent)} 
               onClick={handleConsentSubmit}
-              disabled={!canProceedToStep4}
+              disabled={!canProceedToStep4 || isSubmittingConsent}
             >
-              I Agree & Submit →
+              {isSubmittingConsent ? (
+                <>
+                  <span style={{
+                    display: 'inline-block',
+                    width: '16px',
+                    height: '16px',
+                    border: '2px solid #fff',
+                    borderTopColor: 'transparent',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginRight: '8px',
+                    verticalAlign: 'middle'
+                  }}></span>
+                  Submitting...
+                </>
+              ) : (
+                'I Agree & Submit →'
+              )}
             </button>
           </div>
         </div>

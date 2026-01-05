@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../testComponent.css";
 import SubmittedMessage from "./submittedMessage.js";
 import DisplayMessage from "./displayMessage.js";
+import html2canvas from 'html2canvas';
 /* import { useRouter } from "next/router";
  */
 /* import { useNavigate } from "react-router-dom"; */
@@ -216,6 +217,33 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     }
   };
 
+  // Capture screenshot of the page before final submission
+  const captureSubmissionScreenshot = async () => {
+    try {
+      const canvas = await html2canvas(document.body, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 0.5
+      });
+      const imageData = canvas.toDataURL("image/jpeg", 0.7);
+      
+      // Save the submission screenshot
+      await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
+        method: 'POST',
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image: imageData, 
+          userUniqueID: testID, 
+          captureType: 'final_submission_screenshot',
+          outputQuality: 100
+        }),
+      });
+    } catch (error) {
+      // Continue even if screenshot fails
+      console.error('Error capturing submission screenshot:', error);
+    }
+  };
+
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
@@ -223,6 +251,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       if (currentQuestion && !savedQuestions.includes(currentQuestion.questionID)) {
         await saveAnswer(answers[currentQuestionIndex] || "");
       }
+
+      // Capture screenshot of the page before submission
+      await captureSubmissionScreenshot();
+
 /*       const correctAnswers = answers.reduce((total, answer, index) => {
         return answer === questions[index].correctAnswer ? total + 1 : total;
       }, 0);

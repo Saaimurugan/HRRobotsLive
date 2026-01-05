@@ -21,6 +21,7 @@ mcq_answers_table = dynamodb.Table('MCQAnswers')
 mcq_questions_table = dynamodb.Table('MCQQuestions')
 savedResult_table = dynamodb.Table("savedResult_table_name")
 config_table = dynamodb.Table('testConfiguration')
+template_table = dynamodb.Table('template')
 
 # Initialize Lambda client
 lambda_client = boto3.client('lambda')
@@ -165,6 +166,119 @@ def save_result_to_dynamodb(test_id, report, result_summary):
         savedResult_table.put_item(Item=item)
     return
 
+def get_template_name(template_id):
+    """Get the template name from the template table"""
+    try:
+        response = template_table.get_item(Key={"templateID": template_id})
+        return response.get("Item", {}).get("templateName", "Unknown Template")
+    except Exception:
+        return "Unknown Template"
+
+def send_recruiter_notification(test_data, status_type):
+    """
+    Send email notification to recruiter after test submission/termination.
+    Does not include photos or results, only test details.
+    """
+    try:
+        recruiter_email = test_data.get('email')
+        candidate_name = test_data.get('candidateName', 'Unknown')
+        test_id = test_data.get('testID')
+        template_id = test_data.get('templateID')
+        test_datetime = test_data.get('datetime', 'N/A')
+        termination_reason = test_data.get('terminationReason', '')
+        
+        if not recruiter_email:
+            return
+        
+        # Get template name
+        template_name = get_template_name(template_id)
+        
+        # Determine status and subject
+        if status_type == 'Completed':
+            subject = f"Test Completed - {candidate_name}"
+            status_text = "completed"
+            status_color = "#28a745"
+        else:
+            subject = f"Test Terminated - {candidate_name}"
+            status_text = "terminated"
+            status_color = "#dc3545"
+        
+        # Build email body (HTML)
+        body = f"""
+        <html>
+        <head>
+            <style>
+                body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+                .header {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0; text-align: center; }}
+                .content {{ background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-top: none; border-radius: 0 0 10px 10px; }}
+                .status-badge {{ display: inline-block; padding: 8px 16px; border-radius: 20px; color: white; font-weight: bold; background-color: {status_color}; }}
+                .detail-row {{ padding: 10px 0; border-bottom: 1px solid #eee; }}
+                .detail-label {{ font-weight: bold; color: #666; }}
+                .detail-value {{ color: #333; }}
+                .footer {{ text-align: center; padding: 20px; color: #888; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>Test Notification</h1>
+                    <p>A candidate has {status_text} their test</p>
+                </div>
+                <div class="content">
+                    <p style="text-align: center; margin-bottom: 20px;">
+                        <span class="status-badge">Test {status_type}</span>
+                    </p>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">Candidate Name:</span>
+                        <span class="detail-value">{candidate_name}</span>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">Test ID:</span>
+                        <span class="detail-value">{test_id}</span>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">Template:</span>
+                        <span class="detail-value">{template_name}</span>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <span class="detail-label">Date/Time:</span>
+                        <span class="detail-value">{test_datetime}</span>
+                    </div>
+                    
+                    {"<div class='detail-row'><span class='detail-label'>Termination Reason:</span><span class='detail-value'>" + termination_reason + "</span></div>" if termination_reason and status_type == 'Terminated' else ""}
+                    
+                    <p style="margin-top: 20px; text-align: center;">
+                        <a href="https://hrrobots.com" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 25px;">View Results on HRRobots</a>
+                    </p>
+                </div>
+                <div class="footer">
+                    <p>This is an automated notification from HRRobots.</p>
+                    <p>&copy; {datetime.datetime.now().year} HRRobots. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Invoke the sendEmailSMTP Lambda
+        lambda_client.invoke(
+            FunctionName='sendEmailSMTP',
+            InvocationType='Event',  # Async invocation
+            Payload=json.dumps({
+                'recipient_email': recruiter_email,
+                'subject': subject,
+                'body': body
+            })
+        )
+    except Exception as e:
+        # Log error but don't fail the main operation
+        print(f"Error sending recruiter notification: {str(e)}")
+
 def lambda_handler(event, context):
     try:
         test_id = event.get('testID')
@@ -179,9 +293,10 @@ def lambda_handler(event, context):
                 'body': json.dumps(f'No test found for testID: {test_id}')
             }
         
-        status = items[0].get('status')
-        template_ID = items[0].get('templateID')
-        candidate_Name = items[0].get('candidateName')
+        test_data = items[0]
+        status = test_data.get('status')
+        template_ID = test_data.get('templateID')
+        candidate_Name = test_data.get('candidateName')
         
         # Get test configuration for numberOfQuestions
         config = get_test_configuration(template_ID)
@@ -200,6 +315,10 @@ def lambda_handler(event, context):
             report = calculate_score(test_id, template_ID)
             result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions)
             save_result_to_dynamodb(test_id, report, result_summary)
+            
+            # Send email notification to recruiter
+            test_data['status'] = 'Completed'
+            send_recruiter_notification(test_data, 'Completed')
 
             return {
                 'statusCode': 200,
@@ -213,6 +332,10 @@ def lambda_handler(event, context):
             report = calculate_score(test_id, template_ID)
             result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions)
             save_result_to_dynamodb(test_id, report, result_summary)
+            
+            # Send email notification to recruiter (for terminated tests)
+            if status == "Terminated":
+                send_recruiter_notification(test_data, 'Terminated')
 
             return {
                 'statusCode': 200,
