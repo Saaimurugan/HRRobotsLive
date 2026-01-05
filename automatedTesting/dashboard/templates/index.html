@@ -171,15 +171,26 @@ function renderDashboard() {
 
 function renderSuiteList() {
     document.getElementById('suite-list').innerHTML = Object.entries(testSuites).map(([id, s]) => 
-        `<div class="form-check"><input class="form-check-input suite-checkbox" type="checkbox" value="${id}" id="s-${id}" checked>
+        `<div class="form-check"><input class="form-check-input suite-checkbox" type="checkbox" value="${id}" id="s-${id}" checked onchange="renderTestCases()">
         <label class="form-check-label" for="s-${id}">${s.name.replace(' Tests','')}</label></div>`).join('');
 }
 
 function renderTestCases() {
+    const selectedSuites = getSelectedSuites();
     let html = '';
+    let totalTests = 0;
+    
     Object.entries(testSuites).forEach(([suiteId, suite]) => {
-        html += `<div class="mb-2">
-            <div class="bg-light p-1 fw-bold border-bottom"><i class="bi bi-folder"></i> ${suite.name}</div>
+        if (!selectedSuites.includes(suiteId)) return;
+        
+        const testCount = suite.tests ? Object.keys(suite.tests).length : 0;
+        totalTests += testCount;
+        
+        html += `<div class="mb-2 suite-section" data-suite="${suiteId}">
+            <div class="bg-light p-1 fw-bold border-bottom d-flex justify-content-between">
+                <span><i class="bi bi-folder"></i> ${suite.name}</span>
+                <span class="badge bg-secondary">${testCount} tests</span>
+            </div>
             <div class="small text-muted px-1">${suite.description}</div>`;
         if (suite.tests) {
             Object.entries(suite.tests).forEach(([testName, desc]) => {
@@ -188,11 +199,18 @@ function renderTestCases() {
         }
         html += '</div>';
     });
+    
+    if (!html) {
+        html = '<div class="text-center text-muted py-3"><i class="bi bi-info-circle"></i> Select suites to view test cases</div>';
+    } else {
+        html = `<div class="bg-primary text-white p-1 mb-2 rounded small"><i class="bi bi-list-check"></i> ${totalTests} test cases in ${selectedSuites.length} suite(s)</div>` + html;
+    }
+    
     document.getElementById('testCasesList').innerHTML = html;
 }
 
-function selectAll() { document.querySelectorAll('.suite-checkbox').forEach(cb => cb.checked = true); }
-function selectNone() { document.querySelectorAll('.suite-checkbox').forEach(cb => cb.checked = false); }
+function selectAll() { document.querySelectorAll('.suite-checkbox').forEach(cb => cb.checked = true); renderTestCases(); }
+function selectNone() { document.querySelectorAll('.suite-checkbox').forEach(cb => cb.checked = false); renderTestCases(); }
 function getSelectedSuites() { return Array.from(document.querySelectorAll('.suite-checkbox:checked')).map(cb => cb.value); }
 
 async function startTests() { const s = getSelectedSuites(); if (!s.length) return alert('Select suites'); await fetch('/api/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ suites: s }) }); }
