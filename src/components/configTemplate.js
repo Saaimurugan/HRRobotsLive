@@ -98,30 +98,28 @@ const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
         <h2>Configuration</h2>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label htmlFor="numberOfQuestions">Number of Questions</label>
+            <label htmlFor="numberOfQuestions">Number of Questions: {numberOfQuestions}</label>
             <input
-              type="number"
+              type="range"
               id="numberOfQuestions"
               name="numberOfQuestions"
               min="1"
               max="60"
               value={numberOfQuestions}
               onChange={(e) => setNumberOfQuestions(Number(e.target.value))}
-              required
             />
           </div>
 
           <div className="form-group">
-            <label htmlFor="testDuration">Test Duration (minutes)</label>
+            <label htmlFor="testDuration">Test Duration (minutes): {testDuration}</label>
             <input
-              type="number"
+              type="range"
               id="testDuration"
               name="testDuration"
               min="5"
               max="180"
               value={testDuration}
               onChange={(e) => setTestDuration(Number(e.target.value))}
-              required
             />
           </div>
 
