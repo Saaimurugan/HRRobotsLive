@@ -59,10 +59,12 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
       const secs = seconds % 60;
 
       return isMobile ? (
-         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ borderBottom: '1px solid currentColor', paddingBottom: '1px', lineHeight: '1.2' }}>{String(hours).padStart(2, '0')}</span>
-            <span style={{ borderBottom: '1px solid currentColor', paddingBottom: '1px', lineHeight: '1.2' }}>{String(minutes).padStart(2, '0')}</span>
-            <span style={{ paddingBottom: '1px', lineHeight: '1.2' }}>{String(secs).padStart(2, '0')}</span>
+         <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
+            <span>{String(hours).padStart(2, '0')}</span>
+            <span>:</span>
+            <span>{String(minutes).padStart(2, '0')}</span>
+            <span>:</span>
+            <span>{String(secs).padStart(2, '0')}</span>
          </div>
       ) : (
          <div>
@@ -94,20 +96,27 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            marginLeft: isMobile ? '8px' : '20px',
+            marginLeft: isMobile ? '0' : '20px',
             flexShrink: 0,
             minWidth: isMobile ? '40px' : 'auto',
+            ...(isMobile && {
+               background: 'rgba(0, 0, 0, 0.6)',
+               borderRadius: '4px',
+               padding: '2px 6px',
+            }),
          }}
       >
          <div
             style={{
-               fontSize: isMobile ? '14px' : '75px',
+               fontSize: isMobile ? '12px' : '75px',
                fontFamily: 'revert',
                textAlign: 'center',
                marginTop: isMobile ? '0' : '10px',
                marginBottom: '0px',
                fontWeight: isMobile ? '600' : 'normal',
-               ...getTimerStyle(),
+               color: isMobile ? 'white' : undefined,
+               ...(!isMobile && getTimerStyle()),
+               ...(isMobile && time < 300 && { color: '#ff6b6b' }),
             }}
          >
             {formatTime(time)}

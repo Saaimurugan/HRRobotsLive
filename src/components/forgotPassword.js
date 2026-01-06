@@ -17,6 +17,23 @@ const ForgotPasswordPage = () => {
     // reCAPTCHA v3
     const { executeRecaptcha } = useGoogleReCaptcha();
 
+    // Show reCAPTCHA badge on this page, hide on unmount
+    useEffect(() => {
+        const badge = document.querySelector('.grecaptcha-badge');
+        if (badge) {
+            badge.style.visibility = 'visible';
+            badge.style.opacity = '1';
+            badge.style.pointerEvents = 'auto';
+        }
+        return () => {
+            if (badge) {
+                badge.style.visibility = 'hidden';
+                badge.style.opacity = '0';
+                badge.style.pointerEvents = 'none';
+            }
+        };
+    }, []);
+
     useEffect(() => {
         if (globalValue !== "") {
             setEmail(globalValue);

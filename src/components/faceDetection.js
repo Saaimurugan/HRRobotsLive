@@ -273,6 +273,8 @@ const handleTimerEnd = () => {
   }
 };
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
   return (
     <>
     <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -298,12 +300,24 @@ const handleTimerEnd = () => {
         barCount={5}
         showCount={true}
       />
+      {/* Timer overlay on video for mobile */}
+      {isMobile && !isLoading && isFirstQuestionLoaded && (
+        <div style={{
+          position: 'absolute',
+          top: '2px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10
+        }}>
+          <TimerComponent onTimerEnd={handleTimerEnd} testDuration={testDuration} />
+        </div>
+      )}
     </>
     </div>
       {isLoading ? 
         <p style={{ color: 'red', fontSize: '20px', marginTop: '15px' }}>Loading...</p>
         :
-        isFirstQuestionLoaded ? <TimerComponent onTimerEnd={handleTimerEnd} testDuration={testDuration} /> : null
+        !isMobile && isFirstQuestionLoaded ? <TimerComponent onTimerEnd={handleTimerEnd} testDuration={testDuration} /> : null
         }
     </>
     );

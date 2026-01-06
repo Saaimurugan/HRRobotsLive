@@ -30,6 +30,23 @@ const LoginPage = () => {
     });
     const [requireCaptcha, setRequireCaptcha] = useState(false);
 
+    // Show reCAPTCHA badge on login page, hide on unmount
+    useEffect(() => {
+        const badge = document.querySelector('.grecaptcha-badge');
+        if (badge) {
+            badge.style.visibility = 'visible';
+            badge.style.opacity = '1';
+            badge.style.pointerEvents = 'auto';
+        }
+        return () => {
+            if (badge) {
+                badge.style.visibility = 'hidden';
+                badge.style.opacity = '0';
+                badge.style.pointerEvents = 'none';
+            }
+        };
+    }, []);
+
     // Update requireCaptcha when failedAttempts changes
     useEffect(() => {
         setRequireCaptcha(failedAttempts >= MAX_FAILED_ATTEMPTS);

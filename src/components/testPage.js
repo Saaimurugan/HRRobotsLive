@@ -1296,12 +1296,12 @@ if (userUniqueID != '')
           <span style={{ fontSize: '12px', color: '#666' }}>Loading...</span>
         </div>
         )}
-        {/* Hamburger for mobile */}
+        {/* Three dots menu for mobile */}
         <button 
           className="progress-hamburger"
           onClick={() => setShowProgressModal(true)}
         >
-          ☰
+          ⋮
         </button>
         </>
         :
