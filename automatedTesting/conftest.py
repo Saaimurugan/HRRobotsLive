@@ -260,6 +260,6 @@ def logged_in_driver(driver):
     
     driver.get(ROUTES["login"])
     login_page = LoginPage(driver)
-    login_page.login(TEST_USER["email"], TEST_USER["password"])
+    login_page.login_with_eula(TEST_USER["email"], TEST_USER["password"])
     
     yield driver

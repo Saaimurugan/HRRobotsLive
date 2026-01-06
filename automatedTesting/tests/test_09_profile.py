@@ -19,10 +19,10 @@ class TestUserProfile:
         """Setup - login and navigate to profile page"""
         self.driver = driver
         
-        # Login first
+        # Login first (with EULA acceptance)
         login_page = LoginPage(driver)
         login_page.navigate()
-        login_page.login(TEST_USER["email"], TEST_USER["password"])
+        login_page.login_with_eula(TEST_USER["email"], TEST_USER["password"])
         login_page.wait_for_url_contains("/list")
         
         # Navigate to profile
@@ -212,7 +212,7 @@ class TestProfileNavigation:
         
         login_page = LoginPage(driver)
         login_page.navigate()
-        login_page.login(TEST_USER["email"], TEST_USER["password"])
+        login_page.login_with_eula(TEST_USER["email"], TEST_USER["password"])
         login_page.wait_for_url_contains("/list")
     
     def test_navigate_to_profile_from_header(self):
