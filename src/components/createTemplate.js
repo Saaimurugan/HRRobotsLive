@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "../CreateTemplate.css";
+import "../createTemplateFromJD.css";
 import { useGlobalContext } from "../globalContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
+import CreateTemplateFromJDModal from "./CreateTemplateFromJDModal";
 
 // Helper function to parse topic from question
 const parseQuestionTopic = (questionText) => {
@@ -125,6 +127,7 @@ const CreateTemplate = () => {
   const [ttname, setTtname] = useState("");
   const [toasts, setToasts] = useState([]);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
+  const [showJDModal, setShowJDModal] = useState(false);
   const [formData, setFormData] = useState({
     type: "mcq",
     question: "",
@@ -492,6 +495,15 @@ const CreateTemplate = () => {
     <div className="create-template-page">
       <MobileWarningModal isOpen={showMobileWarning} onClose={() => setShowMobileWarning(false)} />
       <Toast toasts={toasts} removeToast={removeToast} />
+      <CreateTemplateFromJDModal 
+        isOpen={showJDModal} 
+        onClose={() => setShowJDModal(false)} 
+        showToast={showToast}
+        onQuestionsGenerated={(questions) => {
+          setShowSamplePlaceholder(false);
+          setQuestionSet(prev => [...prev, ...questions]);
+        }}
+      />
       <div className="create-template-container">
         <div className="template-header">
           <button onClick={() => navigate(-1)} className="template-back-btn" title="Back">
@@ -713,7 +725,7 @@ const CreateTemplate = () => {
               <p style={{ marginBottom: '15px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
                 Upload a Job Description to automatically extract keywords and generate relevant MCQ questions.
               </p>
-              <button className="btn-primary" onClick={() => navigate("/createTemplateFromJD")}>
+              <button className="btn-primary" onClick={() => setShowJDModal(true)}>
                 Create from Job Description
               </button>
             </div>
