@@ -32,12 +32,12 @@ TEST_USER = {
 }
 
 # Timeouts
-IMPLICIT_WAIT = 10
-EXPLICIT_WAIT = 15
-PAGE_LOAD_TIMEOUT = 30
+IMPLICIT_WAIT = 15
+EXPLICIT_WAIT = 20
+PAGE_LOAD_TIMEOUT = 60
 
 # Browser Settings
-HEADLESS = os.getenv("HEADLESS", "false").lower() == "true"
+HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
 BROWSER = os.getenv("BROWSER", "chrome")
 
 # Test Data

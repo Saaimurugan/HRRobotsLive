@@ -23,6 +23,16 @@ def get_chrome_options():
     # Allow camera/mic for test page
     options.add_argument("--use-fake-ui-for-media-stream")
     options.add_argument("--use-fake-device-for-media-stream")
+    # Additional stability options for headless mode
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--disable-background-networking")
+    options.add_argument("--disable-default-apps")
+    options.add_argument("--disable-sync")
+    options.add_argument("--disable-translate")
+    options.add_argument("--disable-logging")
+    options.add_argument("--log-level=3")
+    options.add_argument("--silent")
+    options.page_load_strategy = 'normal'
     return options
 
 
