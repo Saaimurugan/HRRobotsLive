@@ -684,6 +684,8 @@ textarea {
   
   .test-nav-bar {
     padding: 8px 10px;
+    flex-wrap: nowrap;
+    justify-content: space-between;
   }
   
   .status-badge {
@@ -706,6 +708,7 @@ textarea {
   
   .status-indicators {
     gap: 6px;
+    flex-shrink: 0;
   }
 }
 

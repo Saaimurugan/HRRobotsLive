@@ -7,6 +7,16 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
    const maxTime = testDuration ? testDuration * 60 : DEFAULT_TIME;
    const [time, setTime] = useState(maxTime);
    const [isBlinking, setIsBlinking] = useState(false);
+   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+   // Handle window resize
+   useEffect(() => {
+      const handleResize = () => {
+         setIsMobile(window.innerWidth <= 768);
+      };
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+   }, []);
 
    useEffect(() => {
       if (time <= 0) {
@@ -48,13 +58,11 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
       const minutes = Math.floor((seconds % 3600) / 60);
       const secs = seconds % 60;
 
-      const isMobile = window.innerWidth <= 768;
-
       return isMobile ? (
-         <div style={{ display: 'flex', flexDirection: 'column', flexalignItems: 'center', marginLeft: '10px' }}>
-            <span style={{ borderBottom: '1px solid black', paddingBottom: '1px' }}>{String(hours).padStart(2, '0')}</span>
-            <span style={{ borderBottom: '1px solid black', paddingBottom: '1px' }}>{String(minutes).padStart(2, '0')}</span>
-            <span style={{ paddingBottom: '1px' }}>{String(secs).padStart(2, '0')}</span>
+         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <span style={{ borderBottom: '1px solid currentColor', paddingBottom: '1px', lineHeight: '1.2' }}>{String(hours).padStart(2, '0')}</span>
+            <span style={{ borderBottom: '1px solid currentColor', paddingBottom: '1px', lineHeight: '1.2' }}>{String(minutes).padStart(2, '0')}</span>
+            <span style={{ paddingBottom: '1px', lineHeight: '1.2' }}>{String(secs).padStart(2, '0')}</span>
          </div>
       ) : (
          <div>
@@ -82,21 +90,24 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
    return (
       <div
          style={{
-            display: window.innerWidth <= 768 ? 'flex' : 'block', // Flex for mobile, block for larger screens
-            flexDirection: window.innerWidth <= 768 ? 'column' : 'initial', // Arrange vertically for mobile
-            lineHeight: window.innerWidth <= 768 ? '1.25' : '0', // Adjust line height for mobile
-            marginLeft: window.innerWidth <= 768 ? '10px' : '20px',  // Adjust margin for mobile
-
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginLeft: isMobile ? '8px' : '20px',
+            flexShrink: 0,
+            minWidth: isMobile ? '40px' : 'auto',
          }}
       >
          <div
             style={{
-               fontSize: window.innerWidth <= 768 ? '20px' : '75px', // Adjust font size for mobile devices
-               fontFamily: 'revert', // Calculator-like font
-               textAlign: 'center', // Center the text
-               marginTop: '10px', // Remove default margin
-               marginBottom: '0px', // Remove default margin
-               ...getTimerStyle(), // Apply dynamic styles
+               fontSize: isMobile ? '14px' : '75px',
+               fontFamily: 'revert',
+               textAlign: 'center',
+               marginTop: isMobile ? '0' : '10px',
+               marginBottom: '0px',
+               fontWeight: isMobile ? '600' : 'normal',
+               ...getTimerStyle(),
             }}
          >
             {formatTime(time)}
