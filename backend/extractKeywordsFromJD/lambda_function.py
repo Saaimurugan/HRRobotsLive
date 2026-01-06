@@ -15,7 +15,7 @@ def lambda_handler(event, context):
         if not jd_text:
             return {
                 'statusCode': 400,
-                'body': json.dumps({'message': 'Missing jdText in the request.'})
+                'body': json.dumps({'message': 'Missing Job Description in the request.'})
             }
         
         # Prepare prompt for keyword extraction
