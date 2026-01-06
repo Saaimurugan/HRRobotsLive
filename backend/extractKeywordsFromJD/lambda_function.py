@@ -1,15 +1,16 @@
-import json
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 import boto3
-import os
-
-# Initialize Bedrock client
-bedrock_runtime = boto3.client(
-    service_name='bedrock-runtime',
-    region_name='us-east-1'
-)
+import json
+from datetime import datetime
 
 def lambda_handler(event, context):
     try:
+        # Initialize Bedrock Runtime client
+        client = boto3.client("bedrock-runtime", region_name="us-east-1")
+
+        LITE_MODEL_ID = "amazon.nova-micro-v1:0"
+
         jd_text = event.get('jdText', '')
         
         if not jd_text:
@@ -17,8 +18,8 @@ def lambda_handler(event, context):
                 'statusCode': 400,
                 'body': json.dumps({'message': 'Missing Job Description in the request.'})
             }
-        
-        # Prepare prompt for keyword extraction
+
+        # Construct the prompt for keyword extraction
         prompt = f"""Analyze the following Job Description and extract the most important technical skills, technologies, and competencies that should be tested.
 
 Job Description:
@@ -39,48 +40,70 @@ Return ONLY a valid JSON array in this exact format, no other text:
 
 Extract 5-15 most relevant keywords. Suggest 3-5 questions per keyword based on importance."""
 
-        # Call Bedrock Claude model
-        body = json.dumps({
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 2000,
-            "messages": [
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
-        })
-        
-        response = bedrock_runtime.invoke_model(
-            modelId='anthropic.claude-3-haiku-20240307-v1:0',
-            body=body,
-            contentType='application/json',
-            accept='application/json'
+        message_list = [
+            {"role": "user", "content": [{"text": prompt}]}
+        ]
+
+        system_list = [{"text": "You are an expert HR assistant that extracts relevant technical keywords from job descriptions."}]
+
+        inf_params = {"max_new_tokens": 2000, "top_p": 0.9, "top_k": 20, "temperature": 0.7}
+
+        request_body = {
+            "schemaVersion": "messages-v1",
+            "messages": message_list,
+            "system": system_list,
+            "inferenceConfig": inf_params,
+        }
+
+        # Start time
+        start_time = datetime.now()
+
+        response = client.invoke_model_with_response_stream(
+            modelId=LITE_MODEL_ID,
+            body=json.dumps(request_body)
         )
-        
-        response_body = json.loads(response['body'].read())
-        assistant_message = response_body['content'][0]['text']
-        
+
+        request_id = response.get("ResponseMetadata", {}).get("RequestId", "N/A")
+        stream = response.get("body")
+
+        if not stream:
+            return {
+                'statusCode': 400,
+                'body': json.dumps({
+                    'message': 'No response received.',
+                    'request_id': request_id
+                })
+            }
+
+        response_data = ""
+        for event in stream:
+            chunk = event.get("chunk")
+            if chunk:
+                chunk_json = json.loads(chunk.get("bytes").decode())
+                content_block_delta = chunk_json.get("contentBlockDelta", {}).get("delta", {}).get("text", "")
+                response_data += content_block_delta
+
         # Parse the JSON response
         # Clean up the response in case there's extra text
-        json_start = assistant_message.find('[')
-        json_end = assistant_message.rfind(']') + 1
+        json_start = response_data.find('[')
+        json_end = response_data.rfind(']') + 1
         
         if json_start != -1 and json_end > json_start:
-            json_str = assistant_message[json_start:json_end]
+            json_str = response_data[json_start:json_end]
             keywords = json.loads(json_str)
         else:
             # Fallback: try to parse the whole response
-            keywords = json.loads(assistant_message)
-        
+            keywords = json.loads(response_data)
+
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'keywords': keywords,
-                'message': 'Keywords extracted successfully'
+                'message': 'Keywords extracted successfully',
+                'request_id': request_id
             })
         }
-        
+
     except json.JSONDecodeError as e:
         return {
             'statusCode': 500,
