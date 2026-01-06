@@ -51,7 +51,7 @@ def lambda_handler(event, context):
         if not template_Name:
             return {
                 'statusCode': 400,
-                'message': 'Missing templateName in the request.'
+                'message': 'Missing Template Name in the request.'
             }
 
         email = event.get('globalValue')
