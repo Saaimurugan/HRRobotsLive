@@ -647,44 +647,53 @@ const TestSetupWizard = ({
             </span>
           </div>
 
-          {/* Video Preview */}
-          {photoStage !== 'done' && (
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
-              <video ref={videoRef} style={{ width: '80%', borderRadius: '8px', background: '#000' }} />
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
-              
-              {videoReady && (
-                <div style={{
-                  position: 'absolute',
-                  top: photoStage === 'photo' ? '15%' : '10%',
-                  left: photoStage === 'photo' ? '35%' : '20%',
-                  width: photoStage === 'photo' ? '30%' : '60%',
-                  height: '70%',
-                  border: '3px dashed #FF5722',
-                  borderRadius: photoStage === 'photo' ? '50%' : '8px',
-                  pointerEvents: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <p style={{
-                    color: '#FF5722',
-                    fontWeight: 'bold',
-                    fontSize: '14px',
-                    textAlign: 'center',
-                    background: 'rgba(255,255,255,0.8)',
-                    padding: '5px 10px',
-                    borderRadius: '4px'
+          {/* Video Preview - Fixed height container to prevent layout shift */}
+          <div style={{ 
+            minHeight: photoStage !== 'done' ? '280px' : '0px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            marginBottom: '20px'
+          }}>
+            {photoStage !== 'done' && (
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', width: '100%' }}>
+                <video ref={videoRef} style={{ width: '80%', height: '250px', borderRadius: '8px', background: '#000', objectFit: 'cover' }} />
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+                
+                {videoReady && (
+                  <div style={{
+                    position: 'absolute',
+                    top: photoStage === 'photo' ? '15%' : '10%',
+                    left: photoStage === 'photo' ? '35%' : '20%',
+                    width: photoStage === 'photo' ? '30%' : '60%',
+                    height: '70%',
+                    border: '3px dashed #FF5722',
+                    borderRadius: photoStage === 'photo' ? '50%' : '8px',
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
                   }}>
-                    {photoStage === 'photo' ? 'Align your face here' : 'Align your ID card here'}
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
+                    <p style={{
+                      color: '#FF5722',
+                      fontWeight: 'bold',
+                      fontSize: '14px',
+                      textAlign: 'center',
+                      background: 'rgba(255,255,255,0.8)',
+                      padding: '5px 10px',
+                      borderRadius: '4px'
+                    }}>
+                      {photoStage === 'photo' ? 'Align your face here' : 'Align your ID card here'}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
 
-          {/* Capture Buttons */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+          {/* Capture Buttons - Fixed height container */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', minHeight: photoStage !== 'done' ? '48px' : '0px' }}>
             {videoReady && photoStage === 'photo' && (
               <button
                 onClick={() => captureImage('photo')}
@@ -720,14 +729,15 @@ const TestSetupWizard = ({
             )}
           </div>
 
-          {/* Captured Images Preview */}
-          {(photoImage || idCardImage) && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center', 
-              gap: '20px',
-              flexWrap: 'wrap'
-            }}>
+          {/* Captured Images Preview - Fixed height container */}
+          <div style={{ minHeight: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {(photoImage || idCardImage) && (
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: '20px',
+                flexWrap: 'wrap'
+              }}>
               {photoImage && (
                 <div style={{ textAlign: 'center', position: 'relative' }}>
                   <img src={photoImage} alt="Your Photo" style={{ 
@@ -808,6 +818,7 @@ const TestSetupWizard = ({
               )}
             </div>
           )}
+          </div>
 
           {photoStage === 'done' && (
             <div style={{ 
