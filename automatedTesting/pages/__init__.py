@@ -9,6 +9,7 @@ from pages.dashboard_page import DashboardPage
 from pages.create_jd_page import CreateJDPage
 from pages.profiler_page import ProfilerPage
 from pages.create_template_page import CreateTemplatePage
+from pages.create_template_from_jd_page import CreateTemplateFromJDPage
 from pages.test_page import TestPage
 from pages.result_page import ResultPage
 from pages.profile_page import ProfilePage
@@ -23,6 +24,7 @@ __all__ = [
     "CreateJDPage",
     "ProfilerPage",
     "CreateTemplatePage",
+    "CreateTemplateFromJDPage",
     "TestPage",
     "ResultPage",
     "ProfilePage",
