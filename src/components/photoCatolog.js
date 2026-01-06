@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
+import ImageModal from './ImageModal';
 import '../analsticsOnResult.css';
 
 const PhotoCatalog = ({ searchTerm, showToast }) => {
@@ -8,6 +9,8 @@ const PhotoCatalog = ({ searchTerm, showToast }) => {
    const [Photos, setPhotos] = useState([]);
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState("");
+   const [modalOpen, setModalOpen] = useState(false);
+   const [selectedImage, setSelectedImage] = useState({ url: '', alt: '' });
    const navigate = useNavigate();
    const location = useLocation();
 
@@ -89,6 +92,16 @@ const PhotoCatalog = ({ searchTerm, showToast }) => {
       return 'photo-grid-3';
    };
 
+   const handleImageClick = (url, index) => {
+      setSelectedImage({ url, alt: `Photo ${index + 1}` });
+      setModalOpen(true);
+   };
+
+   const handleCloseModal = () => {
+      setModalOpen(false);
+      setSelectedImage({ url: '', alt: '' });
+   };
+
    return (
       <>
       <div className={`photo-catalog-container ${getGridClass()}`}>
@@ -98,7 +111,14 @@ const PhotoCatalog = ({ searchTerm, showToast }) => {
             <p className="photo-catalog-error">{error}</p>
          ) : Photos && Photos.length > 0 ? (
             Photos.map((photo, index) => (
-               <div key={index} className="photo-card">
+               <div 
+                  key={index} 
+                  className="photo-card photo-card-clickable"
+                  onClick={() => handleImageClick(photo.url, index)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && handleImageClick(photo.url, index)}
+               >
                   <img src={photo.url} alt={`Photo ${index + 1}`} className="photo-card-image" />
                </div>
             ))
@@ -106,6 +126,12 @@ const PhotoCatalog = ({ searchTerm, showToast }) => {
             <p className="photo-catalog-no-photos">No photos available</p>
          )}
       </div>
+      <ImageModal 
+         isOpen={modalOpen}
+         imageUrl={selectedImage.url}
+         imageAlt={selectedImage.alt}
+         onClose={handleCloseModal}
+      />
       </>
    );
 };
