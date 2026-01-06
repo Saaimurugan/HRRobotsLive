@@ -87,6 +87,7 @@ def lambda_handler(event, context):
         image_data = event.get('image')
         user_unique_id = event.get('userUniqueID')
         output_quality = event.get('outputQuality', DEFAULT_OUTPUT_QUALITY)  # Get quality from FE, default to 5
+        capture_type = event.get('captureType', '')  # Get capture type to distinguish photos from screenshots
 
         # Extract base64 string from Data URI
         match = re.match(r'data:(image/\w+);base64,(.*)', image_data)
@@ -100,11 +101,23 @@ def lambda_handler(event, context):
         image_bytes = base64.b64decode(image_base64)
         image_id = str(uuid.uuid4())
 
-        # Get current timestamp for watermark
-        current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # Determine if this is a screenshot (not a photo)
+        # Screenshots have captureType like 'consent_screenshot', 'final_submission_screenshot', 'fullscreen', 'focus', etc.
+        is_screenshot = capture_type and capture_type != ''
         
-        # Add watermark and reduce quality
-        processed_image_bytes = add_watermark_and_reduce_quality(image_bytes, current_timestamp, output_quality)
+        if is_screenshot:
+            # For screenshots: save without watermark, just adjust quality if needed
+            image = Image.open(BytesIO(image_bytes))
+            if image.mode in ('RGBA', 'P'):
+                image = image.convert('RGB')
+            output_buffer = BytesIO()
+            image.save(output_buffer, format='JPEG', quality=output_quality, optimize=True)
+            output_buffer.seek(0)
+            processed_image_bytes = output_buffer.getvalue()
+        else:
+            # For photos: add watermark and reduce quality
+            current_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            processed_image_bytes = add_watermark_and_reduce_quality(image_bytes, current_timestamp, output_quality)
 
         # Always save as JPEG (reduced quality)
         filename = f"face_capture_{uuid.uuid4().hex}.jpg"
