@@ -145,7 +145,7 @@ const CreateTemplateFromJD = () => {
 
     setIsExtracting(true);
     try {
-      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/extractKeywordsFromJD", {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractKeywordsFromJD", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ jdText, token: JWTValue })
