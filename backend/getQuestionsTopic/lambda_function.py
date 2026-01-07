@@ -4,13 +4,14 @@ import boto3
 import random
 from datetime import datetime
 import dateutil.tz
-from boto3.dynamodb.conditions import Attr
+from boto3.dynamodb.conditions import Attr, Key
 
 # Initialize DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
 questions_table = dynamodb.Table('MCQQuestions')
 answers_table = dynamodb.Table('MCQAnswers')
 template_test_table = dynamodb.Table('testTransactions')
+config_table = dynamodb.Table('testConfiguration')
 
 
 def getAllQuestions(template_ID):
@@ -169,13 +170,26 @@ def lambda_handler(event, context):
             )
 
         # Fetch questions for the first template ID
-        questions = getAllQuestions(template_ids[0])
+        template_id = template_ids[0]
+        questions = getAllQuestions(template_id)
 
         if not questions:
             return {
                 'statusCode': 404,
-                'body': json.dumps(f'No questions found for templateID: {template_ids[0]}')
+                'body': json.dumps(f'No questions found for templateID: {template_id}')
             }
+
+        # Fetch test configuration to get numberOfQuestions
+        config_response = config_table.query(
+            KeyConditionExpression=Key('testConfigurationID').eq(template_id)
+        )
+        config_items = config_response.get('Items', [])
+        
+        # Default to 50 if no configuration found
+        if config_items:
+            num_questions_for_test = int(config_items[0].get('numberOfQuestions', 50))
+        else:
+            num_questions_for_test = 50
 
         # Fetch all previously answered questions and their answers
         previous_answers = getAllPreviousAnswers(test_id)
@@ -226,16 +240,51 @@ def lambda_handler(event, context):
         total_questions = len(questions)
         total_answered = len(previous_answers_dict)
 
+        # Use configured numberOfQuestions for the test (capped by available questions)
+        test_question_count = min(num_questions_for_test, total_questions)
+
         # Calculate proportional quota for each topic based on weighted average
-        # Quota = (topic_questions / total_questions) * total_test_questions
-        # For now, we use total available questions as the test size
+        # Quota = (topic_questions / total_questions) * test_question_count
+        # Ensure each topic gets at least 1 question if it has questions available
         topic_quota = {}
+        total_quota_assigned = 0
+        num_topics = len(topics_in_order)
+        
         for topic in topics_in_order:
             topic_total = len(all_by_topic.get(topic, []))
             # Proportional share of questions for this topic
             proportion = topic_total / total_questions if total_questions > 0 else 0
-            # Quota is proportional to total questions in template
-            topic_quota[topic] = round(proportion * total_questions)
+            # Quota is proportional to test question count
+            raw_quota = proportion * test_question_count
+            # Ensure at least 1 question per topic (if we have enough questions)
+            quota = max(1, round(raw_quota)) if topic_total > 0 and test_question_count >= num_topics else round(raw_quota)
+            # But don't exceed available questions for this topic
+            quota = min(quota, topic_total)
+            topic_quota[topic] = quota
+            total_quota_assigned += quota
+        
+        # Adjust if we over-allocated due to rounding up
+        while total_quota_assigned > test_question_count:
+            # Reduce from topic with highest quota that's above its proportion
+            for topic in sorted(topics_in_order, key=lambda t: topic_quota[t], reverse=True):
+                if topic_quota[topic] > 1:
+                    topic_quota[topic] -= 1
+                    total_quota_assigned -= 1
+                    break
+        
+        # Handle under-allocation - distribute remaining to topics with available questions
+        while total_quota_assigned < test_question_count:
+            added = False
+            for topic in topics_in_order:
+                topic_total = len(all_by_topic.get(topic, []))
+                if topic_quota[topic] < topic_total:
+                    topic_quota[topic] += 1
+                    total_quota_assigned += 1
+                    added = True
+                    if total_quota_assigned >= test_question_count:
+                        break
+            if not added:
+                break  # No more questions available
 
         # Determine which topic to pick from:
         # Go through topics in order, pick from current topic until its quota is met
