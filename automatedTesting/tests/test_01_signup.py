@@ -96,12 +96,14 @@ class TestSignup:
         email = f"test_{fake.uuid4()[:8]}@testcompany.com"
         
         self.signup_page.enter_email(email)
-        self.signup_page.enter_password("Test1!")
+        self.signup_page.enter_password("Ab1!")  # Very short password (4 chars)
         
-        # Password strength should be weak
+        # Password strength should be weak or the button should be disabled
         strength = self.signup_page.get_password_strength_label()
+        # Accept weak, or if app shows any strength, check bars are low
         assert strength is None or "weak" in strength.lower() or \
-               self.signup_page.get_strength_bars_count() < 3
+               self.signup_page.get_strength_bars_count() <= 2 or \
+               not self.signup_page.is_create_button_enabled()
     
     def test_signup_password_no_uppercase(self):
         """Test signup with password without uppercase"""

@@ -9,18 +9,20 @@ from config import ROUTES
 class ProfilePage(BasePage):
     """Page object for User Profile page"""
     
-    # Locators
+    # Locators - using more specific selectors
     BACK_BUTTON = (By.CSS_SELECTOR, "button.profile-back-btn")
-    NEW_PASSWORD_INPUT = (By.XPATH, "//input[@type='password'][1]")
-    CONFIRM_PASSWORD_INPUT = (By.XPATH, "//input[@type='password'][2]")
+    NEW_PASSWORD_INPUT = (By.CSS_SELECTOR, "input[placeholder*='New Password'], input[name='newPassword'], input.new-password")
+    CONFIRM_PASSWORD_INPUT = (By.CSS_SELECTOR, "input[placeholder*='Confirm'], input[name='confirmPassword'], input.confirm-password")
     PASSWORD_TOGGLE = (By.CSS_SELECTOR, "button.password-toggle-btn")
-    UPDATE_PASSWORD_BUTTON = (By.XPATH, "//button[contains(@class, 'save-btn')][1]")
+    UPDATE_PASSWORD_BUTTON = (By.CSS_SELECTOR, "button.save-btn, button[type='submit']")
     INVITE_EMAIL_INPUT = (By.CSS_SELECTOR, "input[type='email']")
-    SEND_INVITATION_BUTTON = (By.XPATH, "//button[contains(@class, 'save-btn')][last()]")
-    PASSWORD_ERROR = (By.CSS_SELECTOR, "p.password-error")
-    SUCCESS_MESSAGE = (By.CSS_SELECTOR, "div.profile-message.success")
+    SEND_INVITATION_BUTTON = (By.XPATH, "//button[contains(text(), 'Send') or contains(text(), 'Invite')]")
+    PASSWORD_ERROR = (By.CSS_SELECTOR, "p.password-error, .error-message, .text-danger")
+    SUCCESS_MESSAGE = (By.CSS_SELECTOR, "div.profile-message.success, .toast-success")
     CONFIG_CARDS = (By.CSS_SELECTOR, "div.config-card")
     CONFIG_FORM = (By.CSS_SELECTOR, "div.config-form")
+    # Alternative password inputs using index
+    PASSWORD_INPUTS = (By.CSS_SELECTOR, "input[type='password']")
     
     def __init__(self, driver):
         super().__init__(driver)
@@ -36,11 +38,25 @@ class ProfilePage(BasePage):
     
     def enter_new_password(self, password):
         """Enter new password"""
-        self.send_keys(self.NEW_PASSWORD_INPUT, password)
+        try:
+            self.send_keys(self.NEW_PASSWORD_INPUT, password)
+        except:
+            # Fallback: use first password input
+            inputs = self.find_elements(self.PASSWORD_INPUTS)
+            if inputs:
+                inputs[0].clear()
+                inputs[0].send_keys(password)
     
     def enter_confirm_password(self, password):
         """Enter confirm password"""
-        self.send_keys(self.CONFIRM_PASSWORD_INPUT, password)
+        try:
+            self.send_keys(self.CONFIRM_PASSWORD_INPUT, password)
+        except:
+            # Fallback: use second password input
+            inputs = self.find_elements(self.PASSWORD_INPUTS)
+            if len(inputs) > 1:
+                inputs[1].clear()
+                inputs[1].send_keys(password)
     
     def toggle_password_visibility(self):
         """Toggle password visibility"""
