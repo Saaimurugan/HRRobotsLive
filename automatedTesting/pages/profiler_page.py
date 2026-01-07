@@ -57,12 +57,29 @@ class ProfilerPage(BasePage):
     def generate_profile_report(self, jd_path, resume_path):
         """Generate profile report with JD and resume"""
         self.upload_jd(jd_path)
+        import time
+        time.sleep(1)  # Wait for file to be processed
         self.upload_resume(resume_path)
+        time.sleep(1)  # Wait for file to be processed
         self.click_generate()
     
-    def is_report_generated(self):
+    def is_report_generated(self, timeout=60):
         """Check if report is generated"""
-        return self.is_element_visible(self.REPORT_SECTION)
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        from selenium.common.exceptions import TimeoutException
+        try:
+            wait = WebDriverWait(self.driver, timeout)
+            wait.until(EC.visibility_of_element_located(self.REPORT_SECTION))
+            return True
+        except TimeoutException:
+            # Try alternative selectors
+            try:
+                wait = WebDriverWait(self.driver, 5)
+                wait.until(EC.visibility_of_element_located(self.REPORT_CARD))
+                return True
+            except TimeoutException:
+                return False
     
     def get_suitability_score(self):
         """Get suitability score from badge"""

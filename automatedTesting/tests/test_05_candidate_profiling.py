@@ -13,9 +13,9 @@ from config import TEST_USER, ROUTES
 class TestCandidateProfiling:
     """Test cases for candidate profiling functionality"""
     
-    # Test file paths - update these to actual test files
-    TEST_JD_FILE = os.path.join(os.path.dirname(__file__), "..", "test_data", "sample_jd.pdf")
-    TEST_RESUME_FILE = os.path.join(os.path.dirname(__file__), "..", "test_data", "sample_resume.pdf")
+    # Test file paths - use os.path.abspath to get canonical paths (Chrome requires this)
+    TEST_JD_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "test_data", "sample_jd.pdf"))
+    TEST_RESUME_FILE = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "test_data", "sample_resume.pdf"))
     
     @pytest.fixture(autouse=True)
     def setup(self, driver):

@@ -315,6 +315,7 @@
         .test-dot.passed { background: var(--success); }
         .test-dot.failed { background: var(--danger); }
         .test-dot.skipped { background: var(--warning); }
+        .test-dot.error { background: var(--danger); }
         .test-name { flex: 1; font-size: 13px; }
         .test-screenshots { display: flex; gap: 4px; }
         .thumb {
@@ -622,16 +623,29 @@ function getSelectedSuites() { return Array.from(document.querySelectorAll('.sui
 async function startTests() { 
     const s = getSelectedSuites(); 
     if (!s.length) return alert('Select at least one suite'); 
+    // Clear previous results when starting new tests
+    renderEmptyResults();
+    document.getElementById('details-container').innerHTML = '';
+    testScreenshots = {};
     await fetch('/api/start', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ suites: s }) }); 
 }
 async function pauseTests() { await fetch('/api/pause', { method: 'POST' }); }
 async function resumeTests() { await fetch('/api/resume', { method: 'POST' }); }
 async function stopTests() { await fetch('/api/stop', { method: 'POST' }); }
 async function resetTests() { 
-    await fetch('/api/reset', { method: 'POST' }); 
-    renderEmptyResults(); 
-    document.getElementById('details-container').innerHTML = ''; 
-    testScreenshots = {}; 
+    const response = await fetch('/api/reset', { method: 'POST' }); 
+    const data = await response.json();
+    if (response.ok) {
+        renderEmptyResults(); 
+        document.getElementById('details-container').innerHTML = ''; 
+        testScreenshots = {}; 
+        // Clear live preview
+        document.getElementById('browser-preview').innerHTML = '<div class="no-session"><span class="dot"></span><span class="dot"></span><span class="dot"></span> No active session</div>';
+        document.getElementById('browser-url').textContent = '';
+        document.getElementById('live-indicator').style.display = 'none';
+    } else {
+        console.error('Reset failed:', data.error);
+    }
 }
 function downloadReport() { window.open('/api/report/html', '_blank'); }
 
@@ -693,7 +707,11 @@ async function updateStatus() {
 
 function renderResults(suitesResults) {
     const container = document.getElementById('tab-results');
-    if (Object.keys(suitesResults).length === 0) { renderEmptyResults(); return; }
+    // Only show empty state if no results AND status is idle (not completed)
+    // This preserves results after test completion
+    if (Object.keys(suitesResults).length === 0) { 
+        return; // Don't clear existing results
+    }
     
     let html = '';
     Object.entries(suitesResults).forEach(([suiteName, tests]) => {
@@ -719,9 +737,10 @@ function renderResults(suitesResults) {
                 <div class="test-list" style="display: ${isCollapsed ? 'none' : 'block'};">
                     ${tests.map(t => {
                         const shots = testScreenshots[t.name] || [];
+                        const iconName = t.status === 'passed' ? 'check' : t.status === 'failed' ? 'x' : t.status === 'skipped' ? 'skip-forward' : 'exclamation';
                         return `
                             <div class="test-item" onclick='showDetails(${JSON.stringify(t).replace(/'/g, "\\'")})'>
-                                <div class="test-dot ${t.status}"><i class="bi bi-${t.status === 'passed' ? 'check' : t.status === 'failed' ? 'x' : 'dash'}"></i></div>
+                                <div class="test-dot ${t.status}"><i class="bi bi-${iconName}"></i></div>
                                 <span class="test-name">${t.name}</span>
                                 ${shots.length > 0 ? `
                                     <div class="test-screenshots">
@@ -744,10 +763,21 @@ function toggleSuite(name) {
     else collapsedSuites.add(name);
 }
 
+function getTestDescription(testName) {
+    // Look up test description from testSuites
+    for (const [suiteId, suite] of Object.entries(testSuites)) {
+        if (suite.tests && suite.tests[testName]) {
+            return suite.tests[testName];
+        }
+    }
+    return null;
+}
+
 function showDetails(test) {
     const shots = testScreenshots[test.name] || [];
     const statusBadgeClass = test.status === 'passed' ? 'success' : (test.status === 'skipped' ? 'warning' : 'danger');
     const hasError = test.failed_step || test.details;
+    const description = getTestDescription(test.name);
     
     document.getElementById('details-container').innerHTML = `
         <div class="details-panel">
@@ -768,21 +798,25 @@ function showDetails(test) {
                         <p><strong>Screenshots:</strong> ${shots.length}</p>
                     </div>
                     <div class="col-md-8">
-                        ${test.status === 'passed' && !hasError
-                            ? '<span style="color:var(--success);"><i class="bi bi-check-circle"></i> Test passed successfully</span>'
+                        ${description ? `<p><strong>Description:</strong> ${escapeHtml(description)}</p>` : ''}
+                        ${test.status === 'passed'
+                            ? '<p style="color:var(--success);margin-top:10px;"><i class="bi bi-check-circle"></i> Test passed successfully</p>'
                             : ''}
+                        ${(test.status === 'failed' || test.status === 'error' || test.status === 'skipped') ? `
+                            <div class="mt-2">
+                                <strong style="color: ${test.status === 'skipped' ? 'var(--warning)' : 'var(--danger)'};">
+                                    <i class="bi bi-${test.status === 'skipped' ? 'skip-forward' : 'exclamation-triangle'}"></i>
+                                    ${test.status === 'skipped' ? 'Skip Reason:' : 'Failure Reason:'}
+                                </strong>
+                                <div class="${test.status === 'skipped' ? 'skip-box' : 'error-box'} mt-2">${
+                                    (test.failed_step || test.details) 
+                                        ? escapeHtml(test.failed_step || '') + (test.details ? '\n' + escapeHtml(test.details) : '')
+                                        : '<em>No details captured</em>'
+                                }</div>
+                            </div>
+                        ` : ''}
                     </div>
                 </div>
-                
-                ${hasError ? `
-                    <div class="mb-3">
-                        <strong style="color: ${test.status === 'skipped' ? 'var(--warning)' : 'var(--danger)'};">
-                            <i class="bi bi-${test.status === 'skipped' ? 'skip-forward' : 'exclamation-triangle'}"></i>
-                            ${test.status === 'skipped' ? 'Skip Reason:' : 'Failure Reason:'}
-                        </strong>
-                        <div class="${test.status === 'skipped' ? 'skip-box' : 'error-box'} mt-2">${escapeHtml(test.failed_step || '')}${test.details ? '\n' + escapeHtml(test.details) : ''}</div>
-                    </div>
-                ` : ''}
                 
                 ${shots.length > 0 ? `
                     <hr>

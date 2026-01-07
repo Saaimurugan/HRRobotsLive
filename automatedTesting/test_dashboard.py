@@ -37,7 +37,10 @@ test_state = {
     "current_screenshot": None,
     "current_url": None,
     "test_steps": {},  # {test_name: [{step, screenshot, timestamp, url}]}
-    "suites_results": {}  # {suite_name: [test_results]}
+    "suites_results": {},  # {suite_name: [test_results]}
+    "_in_failure_section": False,  # Track if parsing FAILURES section
+    "_current_failure_test": None,  # Current test being parsed in FAILURES section
+    "_last_failed_test": None  # Track last failed test for error capture
 }
 
 test_queue = queue.Queue()
@@ -277,7 +280,10 @@ def reset_state():
         "current_screenshot": None,
         "current_url": None,
         "test_steps": {},
-        "suites_results": {}
+        "suites_results": {},
+        "_in_failure_section": False,
+        "_current_failure_test": None,
+        "_last_failed_test": None
     }
     # Clear screenshots directory
     if os.path.exists(SCREENSHOTS_DIR):
@@ -314,24 +320,86 @@ def parse_pytest_output(line):
     # Pattern 1: "test_file.py::TestClass::test_name PASSED [ 5%]"
     # Pattern 2: "test_file.py::test_name PASSED"
     # Pattern 3: "PASSED test_file.py::test_name"
+    # Pattern 4: "SKIPPED [1] test_file.py::test_name: reason"
     test_result_detected = False
     test_name = None
     status = None
     
+    # Track if we're in the failure summary section
+    if "FAILURES" in line and "=" in line:
+        test_state["_in_failure_section"] = True
+        test_state["_current_failure_test"] = None
+        return
+    
+    if "short test summary" in line.lower():
+        test_state["_in_failure_section"] = False
+        return
+    
+    # Parse failure details from the FAILURES section
+    if test_state.get("_in_failure_section"):
+        # Detect test name in failure section (e.g., "_____ TestClass.test_name _____")
+        if line.startswith("_") and line.endswith("_") and "test_" in line:
+            # Extract test name
+            test_name_match = line.strip("_ ").strip()
+            if "." in test_name_match:
+                test_name_match = test_name_match.split(".")[-1]
+            test_state["_current_failure_test"] = test_name_match
+            return
+        
+        # Associate failure details with the current failing test
+        current_fail_test = test_state.get("_current_failure_test")
+        if current_fail_test and line.strip():
+            # Find the test result and add details
+            for result in test_state["results"]:
+                if result["name"] == current_fail_test and result["status"] in ["failed", "error"]:
+                    if len(result["details"]) < 3000:
+                        result["details"] += line + "\n"
+                    if not result.get("failed_step") and (
+                        line.startswith("E ") or 
+                        "AssertionError" in line or
+                        "assert " in line.lower() or
+                        "Error" in line
+                    ):
+                        result["failed_step"] = line.strip()
+                    break
+            # Also update in suites_results
+            for suite_results in test_state["suites_results"].values():
+                for result in suite_results:
+                    if result["name"] == current_fail_test and result["status"] in ["failed", "error"]:
+                        if len(result["details"]) < 3000:
+                            if line not in result["details"]:
+                                result["details"] += line + "\n"
+                        if not result.get("failed_step") and (
+                            line.startswith("E ") or 
+                            "AssertionError" in line or
+                            "assert " in line.lower() or
+                            "Error" in line
+                        ):
+                            result["failed_step"] = line.strip()
+                        break
+        return
+    
     if "::" in line:
-        # Check for PASSED/FAILED/SKIPPED/ERROR in the line
-        if "PASSED" in line:
+        # Check for status keywords - use word boundaries to avoid false matches
+        # Check in specific order: SKIPPED first (can contain other words in reason)
+        line_upper = line.upper()
+        
+        # Look for status at word boundaries (space before or start of relevant section)
+        if " PASSED" in line_upper or line_upper.endswith("PASSED") or "PASSED " in line_upper:
             status = "passed"
             test_result_detected = True
-        elif "FAILED" in line:
+        elif " FAILED" in line_upper or line_upper.endswith("FAILED") or "FAILED " in line_upper:
             status = "failed"
             test_result_detected = True
-        elif "SKIPPED" in line:
+        elif " SKIPPED" in line_upper or line_upper.endswith("SKIPPED") or "SKIPPED " in line_upper or "SKIPPED[" in line_upper.replace(" ", ""):
             status = "skipped"
             test_result_detected = True
-        elif "ERROR" in line:
-            status = "error"
-            test_result_detected = True
+        elif " ERROR" in line_upper or line_upper.endswith("ERROR") or "ERROR " in line_upper:
+            # Only mark as error if it's a test collection/setup error, not just "Error" in text
+            # Check if this looks like a pytest error line
+            if "::test_" in line or ":: test_" in line:
+                status = "error"
+                test_result_detected = True
         
         if test_result_detected:
             try:
@@ -367,6 +435,23 @@ def parse_pytest_output(line):
             "failed_step": None
         }
         
+        # For skipped tests, try to extract the skip reason from the line
+        if status == "skipped":
+            # Skip reason often appears after the test name, e.g., "SKIPPED [1] path: reason"
+            if ":" in line:
+                reason_part = line.split(":")[-1].strip()
+                if reason_part and len(reason_part) > 2:
+                    result["failed_step"] = reason_part
+                    result["details"] = reason_part
+            elif "reason=" in line.lower():
+                reason_idx = line.lower().find("reason=")
+                result["failed_step"] = line[reason_idx:].strip()
+                result["details"] = line[reason_idx:].strip()
+        
+        # Track last failed test for capturing subsequent error details
+        if status in ["failed", "error"]:
+            test_state["_last_failed_test"] = test_name
+        
         # Update counters
         if status == "passed":
             test_state["passed"] += 1
@@ -379,19 +464,68 @@ def parse_pytest_output(line):
         
         test_state["results"].append(result)
         test_state["suites_results"][current_suite].append(result)
+        return  # Important: return after processing test result
     
-    # Capture failure details and associate with last test
-    elif (line.startswith("E ") or line.startswith(">") or 
-          "AssertionError" in line or "assert" in line.lower() or
-          "Error" in line or "Exception" in line):
-        if test_state["results"]:
-            test_state["results"][-1]["details"] += line + "\n"
-            # Mark the failed step
-            if not test_state["results"][-1].get("failed_step"):
-                test_state["results"][-1]["failed_step"] = line
+    # Capture failure/skip details - check multiple conditions
+    last_failed = test_state.get("_last_failed_test")
+    has_recent_failed = test_state["results"] and test_state["results"][-1]["status"] in ["failed", "error", "skipped"]
+    
+    if last_failed or has_recent_failed:
+        # Capture error lines
+        is_error_line = (
+            line.startswith("E ") or 
+            line.startswith(">") or
+            line.startswith("    ") or
+            "AssertionError" in line or 
+            "assert " in line.lower() or
+            "Error" in line or 
+            "Exception" in line or
+            "Traceback" in line or
+            "File \"" in line or
+            "SKIP" in line.upper() or 
+            "reason" in line.lower() or
+            "selenium" in line.lower() or
+            "timeout" in line.lower() or
+            "element" in line.lower()
+        )
+        
+        if is_error_line:
+            # Find the test to update
+            target_test = last_failed if last_failed else (test_state["results"][-1]["name"] if test_state["results"] else None)
+            
+            if target_test:
+                # Update in results list
+                for result in test_state["results"]:
+                    if result["name"] == target_test and result["status"] in ["failed", "error", "skipped"]:
+                        if len(result["details"]) < 3000 and line not in result["details"]:
+                            result["details"] += line + "\n"
+                        if not result.get("failed_step") and (
+                            line.startswith("E ") or 
+                            "AssertionError" in line or 
+                            "Error" in line or
+                            "Exception" in line
+                        ):
+                            result["failed_step"] = line.strip()
+                        break
+                
+                # Update in suites_results
+                for suite_results in test_state["suites_results"].values():
+                    for result in suite_results:
+                        if result["name"] == target_test and result["status"] in ["failed", "error", "skipped"]:
+                            if len(result["details"]) < 3000 and line not in result["details"]:
+                                result["details"] += line + "\n"
+                            if not result.get("failed_step") and (
+                                line.startswith("E ") or 
+                                "AssertionError" in line or 
+                                "Error" in line or
+                                "Exception" in line
+                            ):
+                                result["failed_step"] = line.strip()
+                            break
+        return
     
     # Parse collected tests count
-    elif "collected" in line and "item" in line:
+    if "collected" in line and "item" in line:
         try:
             parts = line.split("collected")
             if len(parts) > 1:
@@ -475,13 +609,14 @@ def run_tests_thread(suites):
         test_state["current_suite"] = suite["name"]
         test_state["current_output"] += f"\n{'='*50}\nRunning: {suite['name']}\nFile: {suite['file']}\n{'='*50}\n"
         
-        # Run pytest
+        # Run pytest with full traceback for better error details
         cmd = [
             sys.executable, "-m", "pytest",
             suite["file"],
-            "-v", "--tb=short",
+            "-v", "--tb=long",
             "--no-header",
-            "-s"
+            "-s",
+            "--capture=no"
         ]
         
         working_dir = os.path.dirname(os.path.abspath(__file__))
@@ -688,8 +823,23 @@ def stop_tests():
 @app.route('/api/reset', methods=['POST'])
 def reset_tests():
     """Reset test state"""
-    if test_state["status"] == "running":
-        return jsonify({"error": "Cannot reset while running"}), 400
+    global test_process
+    
+    # If tests are running or paused, stop them first
+    if test_state["status"] in ["running", "paused"]:
+        test_state["stop_requested"] = True
+        test_state["pause_requested"] = False
+        
+        if test_process:
+            try:
+                test_process.terminate()
+                test_process.wait(timeout=5)
+            except:
+                pass
+        
+        # Wait a moment for the thread to finish
+        import time
+        time.sleep(0.5)
     
     reset_state()
     return jsonify({"message": "State reset"})
