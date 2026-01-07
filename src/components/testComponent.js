@@ -240,7 +240,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       });
     } catch (error) {
       // Continue even if screenshot fails
-      console.error('Error capturing submission screenshot:', error);
+      //console.error('Error capturing submission screenshot:', error);
     }
   };
 

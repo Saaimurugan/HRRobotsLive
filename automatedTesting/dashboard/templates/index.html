@@ -644,7 +644,7 @@ async function resetTests() {
         document.getElementById('browser-url').textContent = '';
         document.getElementById('live-indicator').style.display = 'none';
     } else {
-        console.error('Reset failed:', data.error);
+        //console.error('Reset failed:', data.error);
     }
 }
 function downloadReport() { window.open('/api/report/html', '_blank'); }

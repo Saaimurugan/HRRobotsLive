@@ -425,7 +425,7 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
         })
       });
     } catch (error) {
-      console.error("Error updating user status:", error);
+      //console.error("Error updating user status:", error);
     }
     
     onComplete?.();
