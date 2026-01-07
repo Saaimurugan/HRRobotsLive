@@ -194,7 +194,8 @@ def lambda_handler(event, context):
                 previous_questions.append(question_copy)
 
         # ----------------------------
-        # Weighted proportional topic picking
+        # Proportional topic allocation with grouped delivery
+        # Questions are picked proportionally per topic, but delivered topic-by-topic
         # ----------------------------
 
         # Topics in order of first appearance
@@ -221,57 +222,46 @@ def lambda_handler(event, context):
                 topic, _ = extract_topic_from_question(q)
                 answered_by_topic[topic] = answered_by_topic.get(topic, 0) + 1
 
-        # Calculate total questions and determine proportional weights
+        # Calculate total questions available
         total_questions = len(questions)
-        
-        # Calculate the "deficit" for each topic - how far behind it is from its fair share
-        # Fair share = (total answered / total questions) * topic_question_count
         total_answered = len(previous_answers_dict)
-        
-        topic_weights = {}
-        for topic in topics_in_order:
-            if topic not in unanswered_by_topic or not unanswered_by_topic[topic]:
-                continue  # Skip topics with no unanswered questions
-            
-            topic_total = len(all_by_topic.get(topic, []))
-            topic_answered = answered_by_topic.get(topic, 0)
-            
-            # Expected proportion of questions from this topic
-            expected_proportion = topic_total / total_questions if total_questions > 0 else 0
-            
-            # Expected number of answered questions from this topic
-            expected_answered = expected_proportion * total_answered
-            
-            # Deficit: how many more questions should have been picked from this topic
-            # Higher deficit = higher priority for picking from this topic
-            deficit = expected_answered - topic_answered
-            
-            # Weight = deficit + base weight (to ensure all topics have a chance)
-            # Use remaining questions as additional factor to balance
-            remaining = len(unanswered_by_topic[topic])
-            base_weight = expected_proportion * remaining
-            
-            # Final weight: prioritize topics that are behind their fair share
-            topic_weights[topic] = max(0.1, base_weight + deficit)
 
-        # Pick topic based on weighted probability
+        # Calculate proportional quota for each topic based on weighted average
+        # Quota = (topic_questions / total_questions) * total_test_questions
+        # For now, we use total available questions as the test size
+        topic_quota = {}
+        for topic in topics_in_order:
+            topic_total = len(all_by_topic.get(topic, []))
+            # Proportional share of questions for this topic
+            proportion = topic_total / total_questions if total_questions > 0 else 0
+            # Quota is proportional to total questions in template
+            topic_quota[topic] = round(proportion * total_questions)
+
+        # Determine which topic to pick from:
+        # Go through topics in order, pick from current topic until its quota is met
         new_question = None
         current_topic = None
 
-        if topic_weights:
-            topics = list(topic_weights.keys())
-            weights = [topic_weights[t] for t in topics]
-            total_weight = sum(weights)
+        for topic in topics_in_order:
+            topic_answered_count = answered_by_topic.get(topic, 0)
+            quota = topic_quota.get(topic, 0)
+            unanswered = unanswered_by_topic.get(topic, [])
             
-            if total_weight > 0:
-                # Normalize weights to probabilities
-                probabilities = [w / total_weight for w in weights]
-                
-                # Select topic based on weighted probability
-                current_topic = random.choices(topics, weights=probabilities, k=1)[0]
-                
-                # Pick a random question from the selected topic
-                new_question = random.choice(unanswered_by_topic[current_topic])
+            # If this topic hasn't reached its quota and has unanswered questions
+            if topic_answered_count < quota and unanswered:
+                current_topic = topic
+                new_question = random.choice(unanswered)
+                break
+        
+        # If all topics have met their quota but there are still unanswered questions,
+        # pick from any remaining (handles rounding edge cases)
+        if new_question is None:
+            for topic in topics_in_order:
+                unanswered = unanswered_by_topic.get(topic, [])
+                if unanswered:
+                    current_topic = topic
+                    new_question = random.choice(unanswered)
+                    break
 
         if new_question:
             new_question.pop("correctAnswer", None)
