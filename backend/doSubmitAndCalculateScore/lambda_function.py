@@ -128,10 +128,15 @@ def count_submitted_and_correct_answers(report, candidate_Name, test_id, total_q
     submitted_answers = sum(1 for entry in report if entry.get("submittedAnswer"))
     correct_answers = sum(1 for entry in report if entry.get("isCorrect") is True)
 
+    # Ensure total_questions is always the configured value, not the report length
+    # print(f"DEBUG: Using total_questions={total_questions} for test {test_id}")
+    # print(f"DEBUG: Report contains {len(report)} answered questions")
+    # print(f"DEBUG: Submitted answers: {submitted_answers}, Correct answers: {correct_answers}")
+
     return {
         "testID": test_id,
         "candidateName": candidate_Name,
-        "totalQuestions": total_questions,
+        "totalQuestions": total_questions,  # Always use the configured value
         "submittedAnswers": submitted_answers,
         "correctAnswers": correct_answers
     }
@@ -277,7 +282,7 @@ def send_recruiter_notification(test_data, status_type):
         )
     except Exception as e:
         # Log error but don't fail the main operation
-        print(f"Error sending recruiter notification: {str(e)}")
+        # print(f"Error sending recruiter notification: {str(e)}")
 
 def lambda_handler(event, context):
     try:
@@ -301,6 +306,10 @@ def lambda_handler(event, context):
         # Get test configuration for numberOfQuestions
         config = get_test_configuration(template_ID)
         total_questions = config['numberOfQuestions']
+        
+        # print(f"DEBUG: Template ID: {template_ID}")
+        # print(f"DEBUG: Configuration retrieved: {config}")
+        # print(f"DEBUG: Total questions from config: {total_questions}")
             
         if status == "In Progress":
             # Update status to Completed
