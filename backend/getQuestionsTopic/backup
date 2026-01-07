@@ -1,4 +1,3 @@
-
 import json
 import boto3
 import random
@@ -194,17 +193,11 @@ def lambda_handler(event, context):
                 previous_questions.append(question_copy)
 
         # ----------------------------
-        # Weighted proportional topic picking
+        # Topic-by-topic random picking
         # ----------------------------
 
         # Topics in order of first appearance
         topics_in_order = topic_order_from_questions(questions)
-
-        # Group ALL questions by topic (for calculating proportions)
-        all_by_topic = {}
-        for q in questions:
-            topic, q_with_topic = extract_topic_from_question(q)
-            all_by_topic.setdefault(topic, []).append(q_with_topic)
 
         # Group unanswered questions by topic
         unanswered_by_topic = {}
@@ -214,64 +207,15 @@ def lambda_handler(event, context):
             topic, q_with_topic = extract_topic_from_question(q)
             unanswered_by_topic.setdefault(topic, []).append(q_with_topic)
 
-        # Count answered questions per topic
-        answered_by_topic = {}
-        for q in questions:
-            if q['questionID'] in previous_answers_dict:
-                topic, _ = extract_topic_from_question(q)
-                answered_by_topic[topic] = answered_by_topic.get(topic, 0) + 1
-
-        # Calculate total questions and determine proportional weights
-        total_questions = len(questions)
-        
-        # Calculate the "deficit" for each topic - how far behind it is from its fair share
-        # Fair share = (total answered / total questions) * topic_question_count
-        total_answered = len(previous_answers_dict)
-        
-        topic_weights = {}
-        for topic in topics_in_order:
-            if topic not in unanswered_by_topic or not unanswered_by_topic[topic]:
-                continue  # Skip topics with no unanswered questions
-            
-            topic_total = len(all_by_topic.get(topic, []))
-            topic_answered = answered_by_topic.get(topic, 0)
-            
-            # Expected proportion of questions from this topic
-            expected_proportion = topic_total / total_questions if total_questions > 0 else 0
-            
-            # Expected number of answered questions from this topic
-            expected_answered = expected_proportion * total_answered
-            
-            # Deficit: how many more questions should have been picked from this topic
-            # Higher deficit = higher priority for picking from this topic
-            deficit = expected_answered - topic_answered
-            
-            # Weight = deficit + base weight (to ensure all topics have a chance)
-            # Use remaining questions as additional factor to balance
-            remaining = len(unanswered_by_topic[topic])
-            base_weight = expected_proportion * remaining
-            
-            # Final weight: prioritize topics that are behind their fair share
-            topic_weights[topic] = max(0.1, base_weight + deficit)
-
-        # Pick topic based on weighted probability
+        # Pick randomly within the first topic that still has unanswered questions
         new_question = None
         current_topic = None
 
-        if topic_weights:
-            topics = list(topic_weights.keys())
-            weights = [topic_weights[t] for t in topics]
-            total_weight = sum(weights)
-            
-            if total_weight > 0:
-                # Normalize weights to probabilities
-                probabilities = [w / total_weight for w in weights]
-                
-                # Select topic based on weighted probability
-                current_topic = random.choices(topics, weights=probabilities, k=1)[0]
-                
-                # Pick a random question from the selected topic
-                new_question = random.choice(unanswered_by_topic[current_topic])
+        for topic in topics_in_order:
+            if topic in unanswered_by_topic and unanswered_by_topic[topic]:
+                current_topic = topic
+                new_question = random.choice(unanswered_by_topic[topic])
+                break
 
         if new_question:
             new_question.pop("correctAnswer", None)
