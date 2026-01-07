@@ -129,14 +129,14 @@ const TestPage = () => {
   
   // Fetch configuration when templateID is available
   useEffect(() => {
-    console.log("Config useEffect triggered, templateID:", templateID); // Debug log
+    //console.log("Config useEffect triggered, templateID:", templateID); // Debug log
     if (!templateID) {
       // Don't set configLoaded to true if templateID is not available yet
-      console.log("templateID is empty, skipping config fetch"); // Debug log
+      //console.log("templateID is empty, skipping config fetch"); // Debug log
       return;
     }
     
-    console.log("Fetching config for templateID:", templateID); // Debug log
+    //console.log("Fetching config for templateID:", templateID); // Debug log
     fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
       method: "POST",
       headers: {
@@ -146,15 +146,15 @@ const TestPage = () => {
     })
       .then(res => res.json())
       .then(data => {
-        console.log("Config API response:", data); // Debug log
+        //console.log("Config API response:", data); // Debug log
         if (data.statusCode === 200 && data.body) {
           const body = JSON.parse(data.body);
-          console.log("Parsed config body:", body); // Debug log
+          //console.log("Parsed config body:", body); // Debug log
           const config = Array.isArray(body.configurations) && body.configurations.length > 0
             ? body.configurations[0]
             : {};
-          console.log("Config object:", config); // Debug log
-          console.log("numberOfQuestions from config:", config.numberOfQuestions); // Debug log
+          //console.log("Config object:", config); // Debug log
+          //console.log("numberOfQuestions from config:", config.numberOfQuestions); // Debug log
           setFaceRecognition(config.faceRecognition === "True");
           setToleranceLevel(Number(config.toleranceLevel) || 0);
           setAllowedDefaults(Number(config.allowedDefaults) || 10);
@@ -165,7 +165,7 @@ const TestPage = () => {
         setConfigLoaded(true);
       })
       .catch(error => {
-        console.error("Error fetching configuration:", error);
+        //console.error("Error fetching configuration:", error);
         setConfigLoaded(true);
       });
   }, [templateID]);
@@ -201,21 +201,21 @@ const TestPage = () => {
         );
 
         const data = await response.json();
-        console.log("checkTestStatus response:", data); // Debug log
+        //console.log("checkTestStatus response:", data); // Debug log
         
         if (data.statusCode === 200 && data.body) {
           const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-          console.log("checkTestStatus body:", body); // Debug log
-          console.log("templateID from checkTestStatus:", body.templateID); // Debug log
+          //console.log("checkTestStatus body:", body); // Debug log
+          //console.log("templateID from checkTestStatus:", body.templateID); // Debug log
           setTestStatus(body.status);
           setStatusMessage(body.message);
           setCanStartTest(body.canStart);
           // Set templateID for configuration lookup
           if (body.templateID) {
-            console.log("Setting templateID to:", body.templateID); // Debug log
+            //console.log("Setting templateID to:", body.templateID); // Debug log
             setTemplateID(body.templateID);
           } else {
-            console.log("No templateID in response!"); // Debug log
+            //console.log("No templateID in response!"); // Debug log
           }
         } else if (data.body) {
           const body = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;

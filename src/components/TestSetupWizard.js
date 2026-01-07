@@ -160,7 +160,7 @@ const TestSetupWizard = ({
       });
     } catch (error) {
       // Continue even if screenshot fails
-      console.error('Error capturing consent screenshot:', error);
+      //console.error('Error capturing consent screenshot:', error);
     }
   };
 
