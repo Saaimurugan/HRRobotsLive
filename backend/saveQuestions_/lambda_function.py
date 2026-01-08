@@ -114,31 +114,37 @@ def lambda_handler(event, context):
         )
         
         # Filter out ALL sample questions before saving
-        # Check both the flag and question text patterns
         filtered_questions = []
         for question in questions:
             # Skip if marked as sample question
             if question.get('isSampleQuestion', False):
                 continue
-            # Skip if question text contains sample question patterns
+            # Skip sample questions by checking question text patterns
             question_text = question.get('question', '').lower()
-            if 'sample question:::' in question_text or question_text.startswith('sample question'):
+            if 'sample question' in question_text:
                 continue
             filtered_questions.append(question)
         
-        # Create only non-sample questions
+        # Create questions with separate topic field and optional encryption
         for question in filtered_questions:
             question_ID = str(uuid.uuid4())  # Generate a unique ID for each question
-            questions_table.put_item(
-                Item={
-                    'questionID': question_ID,
-                    'templateID': template_ID,
-                    'question': question.get('question'),
-                    'options': question.get('options'),
-                    'correctAnswer': question.get('correctAnswer'),
-                    "datetime": str(datetime.datetime.now())
-                }
-            )
+            
+            # NEW: Use separate topic field directly - NO PARSING
+            topic = question.get('topic', '__NO_TOPIC__')
+            question_text = question.get('question', '')
+            
+            # Prepare question item with separate topic field
+            question_item = {
+                'questionID': question_ID,
+                'templateID': template_ID,
+                'topic': topic,  # Separate topic field
+                'question': question_text,  # Clean question text
+                'options': question.get('options'),
+                'correctAnswer': question.get('correctAnswer'),
+                "datetime": str(datetime.datetime.now())
+            }
+            
+            questions_table.put_item(Item=question_item)
 
         return {
             'statusCode': 200,
