@@ -107,7 +107,7 @@ const ScoreChart = ({ message, showToast }) => {
       }
     };
     fetchTopicScores();
-  }, [testID, JWTValue, checkUnauthorized]);
+  }, [testID, JWTValue]); // Removed checkUnauthorized from dependencies
 
   if (!message) return null;
 

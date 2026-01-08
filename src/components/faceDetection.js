@@ -323,14 +323,21 @@ const handleTimerEnd = () => {
         barCount={5}
         showCount={true}
       />
-      {/* Timer overlay on video for mobile */}
-      {isMobile && !isLoading && isFirstQuestionLoaded && (
+      {/* Timer overlay on video - always shown when test is loaded */}
+      {!isLoading && isFirstQuestionLoaded && (
         <div style={{
           position: 'absolute',
           top: '2px',
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 10
+          zIndex: 10,
+          background: 'rgba(0, 0, 0, 0.8)',
+          borderRadius: '6px',
+          padding: '3px 8px',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)'
         }}>
           <TimerComponent 
             onTimerEnd={handleTimerEnd} 
@@ -341,16 +348,9 @@ const handleTimerEnd = () => {
       )}
     </>
     </div>
-      {isLoading ? 
+      {isLoading && (
         <p style={{ color: 'red', fontSize: '20px', marginTop: '15px' }}>Loading...</p>
-        :
-        !isMobile && isFirstQuestionLoaded ? 
-          <TimerComponent 
-            onTimerEnd={handleTimerEnd} 
-            testDuration={testDuration} 
-            startTimer={isFirstQuestionLoaded}
-          /> : null
-        }
+      )}
     </>
     );
 };

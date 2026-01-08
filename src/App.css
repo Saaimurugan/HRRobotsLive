@@ -511,7 +511,7 @@ textarea {
 }
 
 
-/* Progress dots responsive styles */
+/* Progress dots get more space */
 .progress-dots-desktop {
   display: flex !important;
   flex-wrap: wrap;
@@ -519,8 +519,8 @@ textarea {
   flex: 1;
   justify-content: center;
   align-items: center;
-  padding: 8px 12px;
-  margin: 0 16px;
+  padding: 8px 16px;
+  margin: 0;
   background: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -598,19 +598,42 @@ button.question-dot.unanswered {
 
 .progress-hamburger {
   display: none !important;
-  background: rgba(255, 255, 255, 0.9);
-  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 20px;
+  padding: 8px;
+  font-size: 16px;
   cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
   transition: all 0.2s ease;
+  color: #333;
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse-hint 3s infinite;
 }
 
 .progress-hamburger:hover {
   background: white;
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+  animation: none;
+}
+
+.progress-hamburger svg {
+  width: 20px;
+  height: 20px;
+}
+
+@keyframes pulse-hint {
+  0%, 90%, 100% { 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+  95% { 
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3), 0 0 0 2px rgba(0, 123, 255, 0.2);
+  }
 }
 
 /* Test NAV bar container */
@@ -625,16 +648,17 @@ button.question-dot.unanswered {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Status indicators container */
+/* Status indicators container - more compact */
 .status-indicators {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
+  margin-right: 8px;
 }
 
 .status-badge {
-  height: 40px;
-  width: 40px;
+  height: 36px;
+  width: 36px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -646,8 +670,8 @@ button.question-dot.unanswered {
 }
 
 .status-badge svg {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .status-badge.active {
@@ -706,21 +730,21 @@ button.question-dot.unanswered {
   .progress-hamburger {
     display: flex !important;
     position: absolute;
-    right: 10px;
+    right: 15px;
     top: 50%;
     transform: translateY(-50%);
     z-index: 10;
   }
   
   .test-nav-bar {
-    padding: 8px 10px;
+    padding: 8px 60px 8px 10px; /* Add right padding to make room for hamburger */
     flex-wrap: nowrap;
     position: relative;
   }
   
   .status-badge {
-    height: 34px;
-    width: 34px;
+    height: 32px;
+    width: 32px;
   }
   
   .status-badge svg {
@@ -737,7 +761,7 @@ button.question-dot.unanswered {
   }
   
   .status-indicators {
-    gap: 6px;
+    gap: 4px;
     flex-shrink: 0;
   }
 }
@@ -755,6 +779,7 @@ button.question-dot.unanswered {
   align-items: center;
   z-index: 9998;
   backdrop-filter: blur(4px);
+  padding: 20px;
 }
 
 .progress-modal {
@@ -765,6 +790,33 @@ button.question-dot.unanswered {
   max-height: 80%;
   overflow: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 500px;
+}
+
+@media (max-width: 768px) {
+  .progress-modal-overlay {
+    padding: 10px;
+  }
+  
+  .progress-modal {
+    max-height: 90%;
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .progress-modal-header h3 {
+    font-size: 16px;
+  }
+  
+  .progress-modal-grid {
+    gap: 12px; /* Larger gaps for easier touch targets */
+  }
+  
+  .progress-modal-grid .question-dot {
+    min-width: 44px; /* Minimum touch target size */
+    min-height: 44px;
+  }
 }
 
 .progress-modal-header {

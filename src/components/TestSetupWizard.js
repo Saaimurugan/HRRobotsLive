@@ -271,6 +271,18 @@ const TestSetupWizard = ({
 
   return (
     <FaceDetectionPreloader showLoadingIndicator={currentStep === 4}>
+      <style>
+        {`
+          @keyframes shimmer {
+            0% {
+              background-position: -200% 0;
+            }
+            100% {
+              background-position: 200% 0;
+            }
+          }
+        `}
+      </style>
       <div style={wizardContainerStyle}>
       {/* Step Indicator */}
       <div style={stepIndicatorStyle}>
@@ -635,18 +647,44 @@ const TestSetupWizard = ({
               borderRadius: '20px',
               background: photoStage === 'photo' ? '#1CBBB4' : (photoImage ? '#e8f5e9' : '#e0e0e0'),
               color: photoStage === 'photo' ? 'white' : (photoImage ? '#2e7d32' : '#666'),
-              fontWeight: '500'
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}>
-              {photoImage ? '✓' : '4a.'} Capture Photo
+              {photoImage ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              )}
+              {photoImage ? '' : '4a.'} Capture Photo
             </span>
             <span style={{ 
               padding: '8px 16px', 
               borderRadius: '20px',
               background: photoStage === 'id' ? '#1CBBB4' : (idCardImage ? '#e8f5e9' : '#e0e0e0'),
               color: photoStage === 'id' ? 'white' : (idCardImage ? '#2e7d32' : '#666'),
-              fontWeight: '500'
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}>
-              {idCardImage ? '✓' : '4b.'} Capture ID Card
+              {idCardImage ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/>
+                  <circle cx="7" cy="14" r="1"/>
+                  <path d="M10 13h6v1h-6zm0 2h4v1h-4z"/>
+                </svg>
+              )}
+              {idCardImage ? '' : '4b.'} Capture ID Card
             </span>
           </div>
 
@@ -707,10 +745,18 @@ const TestSetupWizard = ({
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease'
                 }}
               >
-                📸 Capture Photo
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 15.2l-3.14-3.14a.996.996 0 00-1.41 0c-.39.39-.39 1.02 0 1.41L12 17.99l4.55-4.52c.39-.39.39-1.02 0-1.41a.996.996 0 00-1.41 0L12 15.2z"/>
+                  <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                </svg>
+                Capture Photo
               </button>
             )}
 
@@ -724,36 +770,110 @@ const TestSetupWizard = ({
                   border: 'none',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease'
                 }}
               >
-                🪪 Capture ID Card
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/>
+                  <path d="M6 12h2v2H6zm0 3h8v1H6z"/>
+                </svg>
+                Capture ID Card
               </button>
             )}
           </div>
 
-          {/* Captured Images Preview - Fixed height container */}
+          {/* Captured Images Preview with Skeleton Placeholders */}
           <div style={{ minHeight: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {(photoImage || idCardImage) && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                gap: '20px',
-                flexWrap: 'wrap'
-              }}>
-              {photoImage && (
-                <div style={{ textAlign: 'center', position: 'relative' }}>
-                  <img src={photoImage} alt="Your Photo" style={{ 
-                    width: '150px', 
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '20px',
+              flexWrap: 'wrap'
+            }}>
+              {/* Photo Section */}
+              <div style={{ textAlign: 'center', position: 'relative' }}>
+                {photoImage ? (
+                  <>
+                    <img src={photoImage} alt="Your Photo" style={{ 
+                      width: '150px', 
+                      borderRadius: '8px',
+                      border: '2px solid #1CBBB4'
+                    }} />
+                    <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>Your Photo</p>
+                    {photoStage === 'done' && (
+                      <button
+                        onClick={() => {
+                          setPhotoStage('photo');
+                          setPhotoImage(null);
+                          setIdCardImage(null);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '-10px',
+                          right: '-10px',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          background: '#ff4444',
+                          color: 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: '1',
+                          padding: '0'
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  /* Photo Skeleton Placeholder */
+                  <div style={{
+                    width: '150px',
+                    height: '150px',
                     borderRadius: '8px',
-                    border: '2px solid #1CBBB4'
-                  }} />
-                  <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>Your Photo</p>
-                  {photoStage === 'done' && (
+                    border: '2px dashed #ccc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: photoStage === 'photo' ? 'shimmer 1.5s infinite' : 'none',
+                    position: 'relative'
+                  }}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="#ccc" style={{ marginBottom: '8px' }}>
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    <span style={{ fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                      {photoStage === 'photo' ? 'Capturing...' : 'Photo Placeholder'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* ID Card Section */}
+              <div style={{ textAlign: 'center', position: 'relative' }}>
+                {idCardImage ? (
+                  <>
+                    <img src={idCardImage} alt="ID Card" style={{ 
+                      width: '150px', 
+                      borderRadius: '8px',
+                      border: '2px solid #1CBBB4'
+                    }} />
+                    <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>ID Card</p>
                     <button
                       onClick={() => {
-                        setPhotoStage('photo');
-                        setPhotoImage(null);
+                        setPhotoStage('id');
                         setIdCardImage(null);
                       }}
                       style={{
@@ -778,49 +898,35 @@ const TestSetupWizard = ({
                     >
                       ×
                     </button>
-                  )}
-                </div>
-              )}
-              
-              {idCardImage && (
-                <div style={{ textAlign: 'center', position: 'relative' }}>
-                  <img src={idCardImage} alt="ID Card" style={{ 
-                    width: '150px', 
+                  </>
+                ) : (
+                  /* ID Card Skeleton Placeholder */
+                  <div style={{
+                    width: '150px',
+                    height: '95px',
                     borderRadius: '8px',
-                    border: '2px solid #1CBBB4'
-                  }} />
-                  <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>ID Card</p>
-                  <button
-                    onClick={() => {
-                      setPhotoStage('id');
-                      setIdCardImage(null);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '-10px',
-                      right: '-10px',
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '50%',
-                      background: '#ff4444',
-                      color: 'white',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      lineHeight: '1',
-                      padding: '0'
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
+                    border: '2px dashed #ccc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: photoStage === 'id' ? 'shimmer 1.5s infinite' : 'none',
+                    position: 'relative'
+                  }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#ccc" style={{ marginBottom: '4px' }}>
+                      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/>
+                      <circle cx="7" cy="14" r="1.5"/>
+                      <path d="M10 13h6v1h-6zm0 2h4v1h-4z"/>
+                    </svg>
+                    <span style={{ fontSize: '10px', color: '#999', textAlign: 'center' }}>
+                      {photoStage === 'id' ? 'Capturing...' : 'ID Placeholder'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
           </div>
 
           {photoStage === 'done' && (

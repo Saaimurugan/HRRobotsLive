@@ -104,6 +104,7 @@ def calculate_score(test_id, template_ID):
                 report.append({
                     "questionID": question_id,
                     "question": question['question'],
+                    "topic": question.get('topic', '__NO_TOPIC__'),  # Include topic field
                     "submittedAnswer": submitted_answer,
                     "correctAnswer": correct_answer,
                     "isCorrect": is_correct

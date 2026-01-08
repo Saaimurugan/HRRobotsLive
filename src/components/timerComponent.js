@@ -72,16 +72,9 @@ const TimerComponent = ({ onTimerEnd, testDuration, startTimer = true }) => {
       const minutes = Math.floor((seconds % 3600) / 60);
       const secs = seconds % 60;
 
-      return isMobile ? (
+      // Always use compact mobile-style format
+      return (
          <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
-            <span>{String(hours).padStart(2, '0')}</span>
-            <span>:</span>
-            <span>{String(minutes).padStart(2, '0')}</span>
-            <span>:</span>
-            <span>{String(secs).padStart(2, '0')}</span>
-         </div>
-      ) : (
-         <div>
             <span>{String(hours).padStart(2, '0')}</span>
             <span>:</span>
             <span>{String(minutes).padStart(2, '0')}</span>
@@ -93,16 +86,16 @@ const TimerComponent = ({ onTimerEnd, testDuration, startTimer = true }) => {
 
    const getTimerStyle = () => {
       if (!timerStarted) {
-         return { color: 'gray', opacity: 0.7 }; // Show timer as inactive when not started
+         return { color: '#ccc' }; // Show timer as inactive when not started
       }
       if (time < 60) {
          return isBlinking ? { color: 'red', visibility: 'hidden' } : { color: 'red' }; // Blink effect
       } else if (time < 300) {
-         return { color: 'red' }; // Less than 5 minutes
+         return { color: '#ff6b6b' }; // Less than 5 minutes - use mobile red color
       } else if (time < 600) {
          return { color: 'orange' }; // Less than 10 minutes
       } else {
-         return { color: 'black' }; // Default color
+         return { color: 'white' }; // Default white color for overlay
       }
    };
 
@@ -115,41 +108,27 @@ const TimerComponent = ({ onTimerEnd, testDuration, startTimer = true }) => {
             justifyContent: 'center',
             marginLeft: isMobile ? '0' : '20px',
             flexShrink: 0,
-            minWidth: isMobile ? '40px' : 'auto',
-            ...(isMobile && {
-               background: 'rgba(0, 0, 0, 0.6)',
-               borderRadius: '4px',
-               padding: '2px 6px',
-            }),
+            minWidth: '40px',
+            // Always use compact mobile-style background and padding
+            background: 'rgba(0, 0, 0, 0.6)',
+            borderRadius: '4px',
+            padding: '2px 6px',
          }}
          title={!timerStarted ? "Timer will start when first question loads" : undefined}
       >
          <div
             style={{
-               fontSize: isMobile ? '12px' : '75px',
+               fontSize: '12px', // Always use compact mobile font size
                fontFamily: 'revert',
                textAlign: 'center',
-               marginTop: isMobile ? '0' : '10px',
+               marginTop: '0',
                marginBottom: '0px',
-               fontWeight: isMobile ? '600' : 'normal',
-               color: isMobile ? 'white' : undefined,
-               ...(!isMobile && getTimerStyle()),
-               ...(isMobile && time < 300 && timerStarted && { color: '#ff6b6b' }),
-               ...(isMobile && !timerStarted && { color: '#ccc' }),
+               fontWeight: '600', // Always use mobile font weight
+               ...getTimerStyle(), // Apply color styling
             }}
          >
             {formatTime(time)}
          </div>
-         {!timerStarted && !isMobile && (
-            <div style={{
-               fontSize: '12px',
-               color: 'gray',
-               marginTop: '5px',
-               textAlign: 'center'
-            }}>
-               Waiting for question...
-            </div>
-         )}
       </div>
    );
 };
