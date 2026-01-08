@@ -452,7 +452,7 @@ const CreateTemplate = () => {
     const formattedQuestions = questionSet.map(q => q.question).join(", ");
 
     try {
-      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI", {
+      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, level, formattedQuestions, token: JWTValue }),
