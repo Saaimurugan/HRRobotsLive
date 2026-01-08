@@ -7,9 +7,15 @@ import html2canvas from 'html2canvas';
 const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit }) => {
   // State for questions and answers
   const [questions, setQuestions] = useState([]);
+  const [groupedQuestions, setGroupedQuestions] = useState({}); // Group questions by topic
+  const [topicOrder, setTopicOrder] = useState([]); // Track topic order
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loadingError, setLoadingError] = useState('');
+  
+  // Topic pagination state
+  const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
+  const [currentQuestionInTopic, setCurrentQuestionInTopic] = useState(0);
   
   // Existing state
   const [answers, setAnswers] = useState([]);
@@ -32,6 +38,8 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     setLoadingError('');
 
     try {
+      console.log('Loading questions for testID:', testID, 'candidateName:', candidateName);
+      
       const response = await fetch(
         "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getAllQuestionsForTest",
         {
@@ -41,13 +49,44 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         }
       );
 
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
+      console.log('API Response:', data);
 
       if (data.statusCode === 200) {
         const parsedBody = JSON.parse(data.body);
         
+        if (!parsedBody.questions || parsedBody.questions.length === 0) {
+          throw new Error('No questions found in the response');
+        }
+        
         // Store questions directly (no encryption)
         setQuestions(parsedBody.questions);
+        
+        // Group questions by topic
+        const grouped = {};
+        const topics = [];
+        
+        parsedBody.questions.forEach((question, index) => {
+          const topic = question.topic || 'General';
+          
+          if (!grouped[topic]) {
+            grouped[topic] = [];
+            topics.push(topic);
+          }
+          
+          grouped[topic].push({
+            ...question,
+            originalIndex: index // Keep track of original position for navigation
+          });
+        });
+        
+        setGroupedQuestions(grouped);
+        setTopicOrder(topics);
+        
         setTotalQuestions(parsedBody.test_config?.max_questions || parsedBody.total_questions || numberOfQuestions);
         setQuestionCount(parsedBody.answered_count);
         
@@ -60,17 +99,31 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         const actualTotalQuestions = parsedBody.test_config?.max_questions || parsedBody.total_questions || numberOfQuestions;
         setAnswers(new Array(actualTotalQuestions).fill(''));
         
-        console.log(`Loaded ${parsedBody.questions.length} questions out of ${actualTotalQuestions} total`);
+        console.log(`Loaded ${parsedBody.questions.length} questions grouped by ${topics.length} topics`);
         
       } else if (data.statusCode === 404) {
-        const errorBody = JSON.parse(data.body);
-        setMessage(errorBody);
+        const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        setLoadingError(`Test not found: ${errorBody.message || 'Test ID not found'}`);
       } else {
-        throw new Error(`API returned status ${data.statusCode}`);
+        const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+        throw new Error(`API Error ${data.statusCode}: ${errorBody.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error loading questions:', error);
-      setLoadingError(`Failed to load questions: ${error.message}`);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to load questions';
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        errorMessage = 'Network error: Unable to connect to the server. Please check your internet connection.';
+      } else if (error.message.includes('HTTP 500')) {
+        errorMessage = 'Server error: Please try again in a few moments.';
+      } else if (error.message.includes('HTTP 404')) {
+        errorMessage = 'Test not found: This test may have expired or been removed.';
+      } else {
+        errorMessage = `Failed to load questions: ${error.message}`;
+      }
+      
+      setLoadingError(errorMessage);
     } finally {
       setIsInitialLoading(false);
     }
@@ -78,14 +131,94 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
 
   // Load questions on component mount
   useEffect(() => {
-    loadAllQuestions();
+    if (testID && candidateName) {
+      console.log('TestComponent mounted with:', { testID, candidateName, numberOfQuestions });
+      loadAllQuestions();
+    } else {
+      console.error('Missing required props:', { testID, candidateName });
+      setLoadingError('Missing test ID or candidate name');
+      setIsInitialLoading(false);
+    }
   }, [testID, candidateName]);
 
-  // Navigate between questions (instant - no API calls)
+  // Navigate between questions (topic-wise pagination)
   const navigateToQuestion = (newIndex) => {
     if (newIndex >= 0 && newIndex < questions.length) {
       setCurrentQuestion(questions[newIndex]);
       setCurrentQuestionIndex(newIndex);
+      
+      // Find which topic and question index within that topic
+      let foundTopicIndex = 0;
+      let foundQuestionInTopic = 0;
+      
+      for (let topicIdx = 0; topicIdx < topicOrder.length; topicIdx++) {
+        const topicQuestions = groupedQuestions[topicOrder[topicIdx]] || [];
+        const questionInTopicIdx = topicQuestions.findIndex(q => q.originalIndex === newIndex);
+        
+        if (questionInTopicIdx !== -1) {
+          foundTopicIndex = topicIdx;
+          foundQuestionInTopic = questionInTopicIdx;
+          break;
+        }
+      }
+      
+      setCurrentTopicIndex(foundTopicIndex);
+      setCurrentQuestionInTopic(foundQuestionInTopic);
+    }
+  };
+
+  // Navigate to next question within current topic or next topic
+  const goToNextQuestion = () => {
+    const currentTopic = topicOrder[currentTopicIndex];
+    const currentTopicQuestions = groupedQuestions[currentTopic] || [];
+    
+    if (currentQuestionInTopic < currentTopicQuestions.length - 1) {
+      // Next question in same topic
+      const nextQuestionInTopic = currentQuestionInTopic + 1;
+      const nextGlobalIndex = currentTopicQuestions[nextQuestionInTopic].originalIndex;
+      navigateToQuestion(nextGlobalIndex);
+    } else if (currentTopicIndex < topicOrder.length - 1) {
+      // First question of next topic
+      const nextTopicIndex = currentTopicIndex + 1;
+      const nextTopic = topicOrder[nextTopicIndex];
+      const nextTopicQuestions = groupedQuestions[nextTopic] || [];
+      if (nextTopicQuestions.length > 0) {
+        const nextGlobalIndex = nextTopicQuestions[0].originalIndex;
+        navigateToQuestion(nextGlobalIndex);
+      }
+    }
+  };
+
+  // Navigate to previous question within current topic or previous topic
+  const goToPreviousQuestion = () => {
+    if (currentQuestionInTopic > 0) {
+      // Previous question in same topic
+      const currentTopic = topicOrder[currentTopicIndex];
+      const currentTopicQuestions = groupedQuestions[currentTopic] || [];
+      const prevQuestionInTopic = currentQuestionInTopic - 1;
+      const prevGlobalIndex = currentTopicQuestions[prevQuestionInTopic].originalIndex;
+      navigateToQuestion(prevGlobalIndex);
+    } else if (currentTopicIndex > 0) {
+      // Last question of previous topic
+      const prevTopicIndex = currentTopicIndex - 1;
+      const prevTopic = topicOrder[prevTopicIndex];
+      const prevTopicQuestions = groupedQuestions[prevTopic] || [];
+      if (prevTopicQuestions.length > 0) {
+        const prevGlobalIndex = prevTopicQuestions[prevTopicQuestions.length - 1].originalIndex;
+        navigateToQuestion(prevGlobalIndex);
+      }
+    }
+  };
+
+  // Navigate to specific topic
+  const navigateToTopic = (topicIndex) => {
+    if (topicIndex >= 0 && topicIndex < topicOrder.length) {
+      const topic = topicOrder[topicIndex];
+      const topicQuestions = groupedQuestions[topic] || [];
+      if (topicQuestions.length > 0) {
+        const firstQuestionIndex = topicQuestions[0].originalIndex;
+        navigateToQuestion(firstQuestionIndex);
+      }
     }
   };
 
@@ -94,15 +227,6 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     const newAnswers = [...answers];
     newAnswers[currentQuestionIndex] = selectedAnswer;
     setAnswers(newAnswers);
-  };
-
-  // Navigation functions
-  const goToNextQuestion = () => {
-    navigateToQuestion(currentQuestionIndex + 1);
-  };
-
-  const goToPreviousQuestion = () => {
-    navigateToQuestion(currentQuestionIndex - 1);
   };
 
   // Capture screenshot of the page before final submission
@@ -234,89 +358,168 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     )}
     
     {/* Test Interface */}
-    {!isSubmitted && !isInitialLoading && !loadingError && currentQuestion && (
+    {!isSubmitted && !isInitialLoading && !loadingError && questions.length > 0 && (
     <div className="MCQOuterWrap" role="region" aria-label="Test Questions">
-      <div>
-        <h2 id="question-heading">
-          Question {currentQuestionIndex + 1}
-          <span aria-hidden="true">/</span>{totalQuestions}
-          {currentQuestion.topic && currentQuestion.topic !== '__NO_TOPIC__' && (
-            <span className="question-topic-tag" aria-label={`Topic: ${currentQuestion.topic}`}>
-              {currentQuestion.topic}
-            </span>
-          )}
-        </h2>
-        <p id="question-text">
-          {currentQuestion.question}
-        </p>
-        <fieldset aria-labelledby="question-heading question-text">
-          <legend className="sr-only">Select your answer for question {currentQuestionIndex + 1}</legend>
-          <ul className="MCQUL" role="radiogroup" aria-label="Answer options">
-            {currentQuestion.options.map((option, index) => {
-              const isSelected = answers[currentQuestionIndex] === option;
-              return (
-              <li 
-                key={index} 
-                onClick={() => saveAnswer(option)} 
-                className={`${isSelected ? 'selected' : ''}`}
-                role="presentation"
-              >
-                <input
-                  type="radio"
-                  id={`option-${index}`}
-                  name="answer"
-                  value={option}
-                  checked={isSelected}
-                  onChange={() => saveAnswer(option)}
-                  aria-describedby="question-text"
-                />
-                <label htmlFor={`option-${index}`} className="option-label">
-                  {option}
-                </label>
-              </li>
-              );
-            })}
-          </ul>
-        </fieldset>
-
-        {/* Navigation Controls */}
-        <div className="navigation-controls">
-          <button
-            onClick={goToPreviousQuestion}
-            disabled={currentQuestionIndex === 0}
-            className="nav-button prev-button"
-          >
-            Previous
-          </button>
-          
-          <span className="question-progress">
-            {currentQuestionIndex + 1} of {totalQuestions}
-          </span>
-          
-          {currentQuestionIndex < questions.length - 1 ? (
-            <button
-              onClick={goToNextQuestion}
-              className="nav-button next-button"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="submit-button"
-              style={{ backgroundColor: "#007bff" }}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Test"}
-            </button>
-          )}
+      
+      {/* Test Progress Summary */}
+      <div className="test-summary">
+        <h1 className="test-title">Test Questions</h1>
+        <div className="progress-stats">
+          <div className="stat-item">
+            <span className="stat-number">{questions.length}</span>
+            <span className="stat-label">Total Questions</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{answers.filter(a => a && a !== '').length}</span>
+            <span className="stat-label">Answered</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-number">{topicOrder.length}</span>
+            <span className="stat-label">Topics</span>
+          </div>
         </div>
+      </div>
+
+      {/* Topic Navigation Bar */}
+      <div className="topic-navigation-bar">
+        <h3 className="nav-title">Topics</h3>
+        <div className="topic-nav-buttons">
+          {topicOrder.map((topic, topicIndex) => {
+            const topicQuestions = groupedQuestions[topic] || [];
+            const answeredInTopic = topicQuestions.filter(q => answers[q.originalIndex] && answers[q.originalIndex] !== '').length;
+            const isCurrentTopic = topicIndex === currentTopicIndex;
+            
+            return (
+              <button
+                key={topic}
+                className={`topic-nav-button ${isCurrentTopic ? 'current-topic' : ''}`}
+                onClick={() => navigateToTopic(topicIndex)}
+                title={`${topic} (${answeredInTopic}/${topicQuestions.length} answered)`}
+              >
+                {topic} ({answeredInTopic}/{topicQuestions.length})
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Current Topic Display */}
+      {topicOrder.length > 0 && currentTopicIndex < topicOrder.length && (
+        <div className="current-topic-container">
+          <div className="topic-section">
+            <div className="topic-header">
+              <h2 className="topic-title">{topicOrder[currentTopicIndex]}</h2>
+              <div className="topic-stats">
+                <span className="topic-question-count">
+                  Question {currentQuestionInTopic + 1} of {groupedQuestions[topicOrder[currentTopicIndex]]?.length || 0}
+                </span>
+                <span className="topic-progress">
+                  Topic {currentTopicIndex + 1} of {topicOrder.length}
+                </span>
+              </div>
+            </div>
+            
+            {/* Current Question Display */}
+            {currentQuestion && (
+              <div className="current-question-display">
+                <div className="question-card current-question">
+                  <div className="question-header">
+                    <span className="question-number">Q{currentQuestionInTopic + 1}</span>
+                    <span className={`question-status ${answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? 'answered' : 'unanswered'}`}>
+                      {answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? '✓' : '○'}
+                    </span>
+                  </div>
+                  
+                  <div className="question-content">
+                    <h3 className="question-text">{currentQuestion.question}</h3>
+                    
+                    <fieldset className="question-options">
+                      <legend className="sr-only">Select your answer for question {currentQuestionInTopic + 1} in {topicOrder[currentTopicIndex]}</legend>
+                      <ul className="options-list" role="radiogroup">
+                        {currentQuestion.options?.map((option, optionIndex) => {
+                          const isSelected = answers[currentQuestionIndex] === option;
+                          return (
+                            <li 
+                              key={optionIndex} 
+                              onClick={() => saveAnswer(option)}
+                              className={`option-item ${isSelected ? 'selected' : ''}`}
+                              role="presentation"
+                            >
+                              <input
+                                type="radio"
+                                id={`q${currentQuestionIndex}-option-${optionIndex}`}
+                                name={`question-${currentQuestionIndex}`}
+                                value={option}
+                                checked={isSelected}
+                                onChange={() => saveAnswer(option)}
+                              />
+                              <label htmlFor={`q${currentQuestionIndex}-option-${optionIndex}`} className="option-label">
+                                <span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span>
+                                <span className="option-text">{option}</span>
+                              </label>
+                            </li>
+                          );
+                        }) || []}
+                      </ul>
+                    </fieldset>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Navigation Controls */}
+      <div className="navigation-controls">
+        <button
+          onClick={goToPreviousQuestion}
+          disabled={currentTopicIndex === 0 && currentQuestionInTopic === 0}
+          className="nav-button prev-button"
+        >
+          Previous
+        </button>
+        
+        <span className="question-progress">
+          {topicOrder[currentTopicIndex]} - Question {currentQuestionInTopic + 1} of {groupedQuestions[topicOrder[currentTopicIndex]]?.length || 0}
+        </span>
+        
+        {/* Check if we're at the last question of the last topic */}
+        {currentTopicIndex === topicOrder.length - 1 && 
+         currentQuestionInTopic === (groupedQuestions[topicOrder[currentTopicIndex]]?.length || 1) - 1 ? (
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="submit-button"
+            style={{ backgroundColor: "#007bff" }}
+          >
+            {isSubmitting ? "Submitting..." : "Submit Test"}
+          </button>
+        ) : (
+          <button
+            onClick={goToNextQuestion}
+            className="nav-button next-button"
+          >
+            {currentQuestionInTopic === (groupedQuestions[topicOrder[currentTopicIndex]]?.length || 1) - 1 
+              ? `Next Topic: ${topicOrder[currentTopicIndex + 1] || ''}` 
+              : 'Next Question'}
+          </button>
+        )}
       </div>
     </div>
     )}
 
+    {/* No Questions Available */}
+    {!isSubmitted && !isInitialLoading && !loadingError && questions.length === 0 && (
+      <div className="error-container">
+        <h3>No Questions Available</h3>
+        <p>No questions were found for this test. Please contact support.</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    )}
+
     {/* Message Display */}
-    {message && <DisplayMessage message={message}/>}
+    {message && <DisplayMessage message={message} />}
     
     {/* Submitted State */}
     {isSubmitted && <SubmittedMessage />}

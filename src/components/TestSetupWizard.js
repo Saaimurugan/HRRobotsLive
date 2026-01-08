@@ -338,14 +338,19 @@ const TestSetupWizard = ({
           </div>
 
           {!canProceedToStep2 && (
-            <p style={{ color: '#c62828', marginTop: '20px', fontSize: '14px' }}>
-              ⚠️ Camera, microphone, clipboard access, and single screen are required to continue.
-              {singleScreenOnly === false && (
-                <span style={{ display: 'block', marginTop: '5px' }}>
-                  Please disconnect additional monitors/screens to proceed.
-                </span>
-              )}
-            </p>
+            <div className="system-check-alert" style={{ marginTop: '20px' }}>
+              <div className="alert-title">System Requirements Not Met</div>
+              <div className="alert-content">
+                <div style={{ marginBottom: '12px' }}>
+                  <span className="alert-highlight">Camera, microphone, clipboard access, and single screen are required to continue.</span>
+                </div>
+                {singleScreenOnly === false && (
+                  <div style={{ marginTop: '8px', fontSize: '16px' }}>
+                    <span className="alert-highlight">Please disconnect additional monitors/screens to proceed.</span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           <div style={{ marginTop: '25px', textAlign: 'right' }}>

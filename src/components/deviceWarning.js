@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import DisplayMessage from "./displayMessage.js";
 
 const DeviceWarning = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -12,10 +13,11 @@ const DeviceWarning = () => {
   return (
     <div>
       {isMobile && (
-        <div style={{ color: "red", backgroundColor: "white", padding: "20px", borderRadius: "8px", marginTop: "20px" }} className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md mt-4">
-          <p className="font-semibold">We recommend using a laptop or PC</p>
-          <p>For a stable camera and better UI/UX experience, please access this site on a desktop device.</p>
-        </div>
+        <DisplayMessage 
+          message="We recommend using a laptop or PC. For a stable camera and better UI/UX experience, please access this site on a desktop device."
+          type="warning"
+          isSystemCheck={true}
+        />
       )}
     </div>
   );
