@@ -380,7 +380,7 @@ const TestPage = () => {
         
         // Calculate and save the score for attempted questions
         try {
-          await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore", {
+          await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore__", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -577,7 +577,7 @@ useEffect(() => {
       
       // Then, calculate and save the score for attempted questions
       try {
-        await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore", {
+        await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore__", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

@@ -4,6 +4,12 @@ import uuid
 import datetime
 from decimal import Decimal
 from boto3.dynamodb.conditions import Key, Attr
+import sys
+import os
+
+# Add utils directory to path for encryption utilities
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'utils'))
+from encryption import QuestionEncryption
 
 # Custom JSON encoder to handle Decimal types from DynamoDB
 class DecimalEncoder(json.JSONEncoder):
@@ -27,6 +33,9 @@ template_table = dynamodb.Table('template')
 lambda_client = boto3.client('lambda')
 
 def getAllQuestions(template_ID):
+    """
+    Updated to use separate topic field directly - NO MORE PARSING
+    """
     questions = []
     last_evaluated_key = None
     
@@ -39,7 +48,15 @@ def getAllQuestions(template_ID):
             scan_params['ExclusiveStartKey'] = last_evaluated_key
 
         response = mcq_questions_table.scan(**scan_params)
-        questions.extend(response.get('Items', []))
+        
+        # Process questions to ensure topic field exists
+        items = response.get('Items', [])
+        for item in items:
+            # Ensure topic field exists - use default if missing
+            if 'topic' not in item or not item['topic']:
+                item['topic'] = '__NO_TOPIC__'
+        
+        questions.extend(items)
         last_evaluated_key = response.get('LastEvaluatedKey')
 
         if not last_evaluated_key:
@@ -287,6 +304,194 @@ def send_recruiter_notification(test_data, status_type):
 def lambda_handler(event, context):
     try:
         test_id = event.get('testID')
+        encrypted_answers = event.get('encrypted_answers', [])
+        encryption_key = event.get('encryption_key')
+        
+        # Handle both new encrypted format and legacy format
+        if encrypted_answers and encryption_key:
+            # NEW: Process encrypted bulk answers
+            return handle_encrypted_submission(test_id, encrypted_answers, encryption_key)
+        else:
+            # LEGACY: Process individual answers (backward compatibility)
+            return handle_legacy_submission(test_id)
+            
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f"An error occurred: {str(e)}")
+        }
+
+
+def handle_encrypted_submission(test_id, encrypted_answers, encryption_key):
+    """
+    Handle new encrypted bulk answer submission
+    """
+    try:
+        # Get test data
+        response = table.scan(
+            FilterExpression=Attr('testID').eq(test_id)
+        )
+        
+        items = response.get('Items', [])
+        if not items:
+            return {
+                'statusCode': 404,
+                'body': json.dumps(f'No test found for testID: {test_id}')
+            }
+        
+        test_data = items[0]
+        status = test_data.get('status')
+        template_ID = test_data.get('templateID')
+        candidate_Name = test_data.get('candidateName')
+        
+        if status != "In Progress":
+            return {
+                'statusCode': 400,
+                'body': json.dumps(f'Test is not in progress. Current status: {status}')
+            }
+        
+        # Decrypt and save answers
+        key_bytes = bytes.fromhex(encryption_key)
+        saved_answers = []
+        
+        for encrypted_answer in encrypted_answers:
+            if 'error' in encrypted_answer:
+                continue  # Skip failed encryptions
+                
+            try:
+                # Decrypt answer
+                encrypted_data = encrypted_answer['encrypted_answer']
+                
+                # Decode base64
+                import base64
+                from Crypto.Cipher import AES
+                from Crypto.Util.Padding import unpad
+                
+                encrypted_bytes = base64.b64decode(encrypted_data)
+                iv = encrypted_bytes[:16]
+                ciphertext = encrypted_bytes[16:]
+                
+                # Decrypt
+                cipher = AES.new(key_bytes, AES.MODE_CBC, iv)
+                decrypted_padded = cipher.decrypt(ciphertext)
+                decrypted_data = unpad(decrypted_padded, AES.block_size)
+                
+                # Parse JSON
+                answer_data = json.loads(decrypted_data.decode('utf-8'))
+                
+                # Save to database
+                answer_id = str(uuid.uuid4())
+                mcq_answers_table.put_item(
+                    Item={
+                        'answerID': answer_id,
+                        'testID': answer_data['testID'],
+                        'questionID': answer_data['questionID'],
+                        'answer': answer_data['answer'],
+                        'datetime': answer_data.get('timestamp', datetime.datetime.now().isoformat())
+                    }
+                )
+                
+                saved_answers.append(answer_data)
+                
+            except Exception as e:
+                print(f"Failed to decrypt/save answer: {str(e)}")
+                continue
+        
+        # Update test status to Completed
+        table.update_item(
+            Key={'testID': test_id},
+            UpdateExpression='SET #status = :new_status',
+            ExpressionAttributeNames={'#status': 'status'},
+            ExpressionAttributeValues={':new_status': 'Completed'}
+        )
+        
+        # Calculate score
+        score_result = calculate_score_from_answers(test_id, template_ID, saved_answers)
+        
+        # Send notifications
+        try:
+            send_recruiter_notification(test_id, candidate_Name, score_result)
+        except Exception as e:
+            print(f"Failed to send notification: {str(e)}")
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({
+                'message': 'Test submitted and scored successfully',
+                'score': score_result,
+                'answers_processed': len(saved_answers)
+            }, cls=DecimalEncoder)
+        }
+        
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f"Error processing encrypted submission: {str(e)}")
+        }
+
+
+def calculate_score_from_answers(test_id, template_id, saved_answers):
+    """
+    Calculate score from decrypted answers
+    """
+    try:
+        # Get all questions for the template
+        questions = getAllQuestions(template_id)
+        
+        # Create a mapping of questionID to correct answer
+        correct_answers = {}
+        for question in questions:
+            correct_answers[question['questionID']] = question.get('correctAnswer', '')
+        
+        # Calculate score
+        total_questions = len(saved_answers)
+        correct_count = 0
+        
+        for answer in saved_answers:
+            question_id = answer['questionID']
+            user_answer = answer['answer']
+            correct_answer = correct_answers.get(question_id, '')
+            
+            if user_answer == correct_answer:
+                correct_count += 1
+        
+        # Calculate percentage
+        percentage = (correct_count / total_questions * 100) if total_questions > 0 else 0
+        
+        # Save result to database
+        result_id = str(uuid.uuid4())
+        savedResult_table.put_item(
+            Item={
+                'resultID': result_id,
+                'testID': test_id,
+                'totalQuestions': total_questions,
+                'correctAnswers': correct_count,
+                'percentage': Decimal(str(round(percentage, 2))),
+                'datetime': datetime.datetime.now().isoformat()
+            }
+        )
+        
+        return {
+            'total_questions': total_questions,
+            'correct_answers': correct_count,
+            'percentage': round(percentage, 2)
+        }
+        
+    except Exception as e:
+        print(f"Error calculating score: {str(e)}")
+        return {
+            'total_questions': 0,
+            'correct_answers': 0,
+            'percentage': 0,
+            'error': str(e)
+        }
+
+
+def handle_legacy_submission(test_id):
+    """
+    Handle legacy individual answer submission (backward compatibility)
+    """
+    try:
         response = table.scan(
             FilterExpression=Attr('testID').eq(test_id)
         )
@@ -306,10 +511,6 @@ def lambda_handler(event, context):
         # Get test configuration for numberOfQuestions
         config = get_test_configuration(template_ID)
         total_questions = config['numberOfQuestions']
-        
-        # print(f"DEBUG: Template ID: {template_ID}")
-        # print(f"DEBUG: Configuration retrieved: {config}")
-        # print(f"DEBUG: Total questions from config: {total_questions}")
             
         if status == "In Progress":
             # Update status to Completed
