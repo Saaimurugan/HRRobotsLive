@@ -139,11 +139,11 @@ const LoginPage = () => {
     }, [loading, requireCaptcha, executeRecaptcha, email, password, eulaAccepted, setGlobalValue, setJWTValue, getAndClearRedirectPath, navigate]);
 
     return (
-        <div className="login-page">
-            <div className="login-left">
+        <div className="login-page" role="main">
+            <div className="login-left" aria-hidden="true">
                 <div className="login-branding">
                     <div className="login-logo">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -153,21 +153,21 @@ const LoginPage = () => {
                     <p>Sign in to continue to your dashboard and manage your interviews seamlessly.</p>
                     <div className="login-features">
                         <div className="feature-item">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                             <span>AI-Powered Interviews</span>
                         </div>
                         <div className="feature-item">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                             <span>Smart Analytics</span>
                         </div>
                         <div className="feature-item">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
@@ -180,15 +180,15 @@ const LoginPage = () => {
             <div className="login-right">
                 <div className="login-card">
                     <div className="login-header">
-                        <h2>Sign In</h2>
-                        <p>Enter your credentials to access your account</p>
+                        <h2 id="login-heading">Sign In</h2>
+                        <p id="login-description">Enter your credentials to access your account</p>
                     </div>
                     
-                    <form onSubmit={handleLogin} className="login-form">
+                    <form onSubmit={handleLogin} className="login-form" aria-labelledby="login-heading" aria-describedby="login-description">
                         <div className={`input-group ${focusedField === 'email' ? 'focused' : ''} ${email ? 'has-value' : ''}`}>
-                            <label htmlFor="email">Email Address</label>
+                            <label htmlFor="email">Email Address <span className="sr-only">(required)</span></label>
                             <div className="input-wrapper">
-                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
@@ -201,15 +201,17 @@ const LoginPage = () => {
                                     onChange={(e) => setEmail(e.target.value)}
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
-                                    required 
+                                    required
+                                    aria-required="true"
+                                    autoComplete="email"
                                 />
                             </div>
                         </div>
                         
                         <div className={`input-group ${focusedField === 'password' ? 'focused' : ''} ${password ? 'has-value' : ''}`}>
-                            <label htmlFor="password">Password</label>
+                            <label htmlFor="password">Password <span className="sr-only">(required)</span></label>
                             <div className="input-wrapper">
-                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
@@ -222,21 +224,24 @@ const LoginPage = () => {
                                     onChange={(e) => setPassword(e.target.value)}
                                     onFocus={() => setFocusedField('password')}
                                     onBlur={() => setFocusedField(null)}
-                                    required 
+                                    required
+                                    aria-required="true"
+                                    autoComplete="current-password"
                                 />
                                 <button 
                                     type="button" 
                                     className="password-toggle" 
                                     onClick={() => setShowPassword(!showPassword)}
-                                    aria-label="Toggle password visibility"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-pressed={showPassword}
                                 >
                                     {showPassword ? (
-                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                             <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                             <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
                                     ) : (
-                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                             <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
@@ -246,22 +251,22 @@ const LoginPage = () => {
                         </div>
                         
                         <div className="form-options">
-                            <span 
+                            <button 
+                                type="button"
                                 className="forgot-link" 
                                 onClick={() => {
                                     setGlobalValue(email);
                                     navigate("/forgot-password");
                                 }}
-                                style={{ cursor: 'pointer' }}
                             >
                                 Forgot password?
-                            </span>
+                            </button>
                         </div>
                         
                         {/* Show message when CAPTCHA is active */}
                         {requireCaptcha && (
-                            <div className="captcha-notice">
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
+                            <div className="captcha-notice" role="alert">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16" aria-hidden="true">
                                     <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" stroke="currentColor" strokeWidth="2"/>
                                     <path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                                 </svg>
@@ -277,8 +282,9 @@ const LoginPage = () => {
                                     checked={eulaAccepted}
                                     onChange={(e) => setEulaAccepted(e.target.checked)}
                                     className="eula-input"
+                                    aria-describedby="eula-description"
                                 />
-                                <span className="eula-text">
+                                <span className="eula-text" id="eula-description">
                                     I agree to the{' '}
                                     <a 
                                         href="/eula" 
@@ -288,23 +294,24 @@ const LoginPage = () => {
                                         onClick={(e) => e.stopPropagation()}
                                     >
                                         End User License Agreement
+                                        <span className="sr-only"> (opens in new tab)</span>
                                     </a>
                                 </span>
                             </label>
                         </div>
                         
-                        <button type="submit" className="login-btn" disabled={loading}>
+                        <button type="submit" className="login-btn" disabled={loading} aria-busy={loading}>
                             {loading ? (
                                 <>
-                                    <svg className="spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <svg className="spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="31.4 31.4" strokeDashoffset="0"/>
                                     </svg>
-                                    Signing in...
+                                    <span>Signing in...</span>
                                 </>
                             ) : (
                                 <>
                                     Sign In
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         <polyline points="12,5 19,12 12,19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     </svg>
@@ -313,8 +320,8 @@ const LoginPage = () => {
                         </button>
                         
                         {message && (
-                            <div className={`message-box ${messageType}`}>
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <div className={`message-box ${messageType}`} role="alert" aria-live="polite">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     {messageType === 'success' ? (
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     ) : (

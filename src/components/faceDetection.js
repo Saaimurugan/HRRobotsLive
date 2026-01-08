@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import * as faceapi from 'face-api.js';
 import TimerComponent from "./timerComponent.js";
 import AudioWaveOverlay from "./AudioWaveOverlay.js";
+import modelPreloader from '../services/modelPreloader.js';
 
 const FaceTracking = ({
   userUniqueID, 
@@ -28,6 +29,7 @@ const FaceTracking = ({
   const waitTimeRef = useRef(0); // Ref to store the current waitTime value
   const photoIntervalRef = useRef(null); // Ref to store the 5-minute photo capture interval
   const multipleFaceStartRef = useRef(null); // Ref to track when multiple faces started being detected
+  const lastPhotoCaptureRef = useRef(null); // Ref to track last photo capture time
   const [isLoading, setIsLoading] = useState(false);
   //const [waitTime, setWaitTime] = useState(0);
 /*   const [confidence, setConfidence] = useState(0); */
@@ -37,22 +39,30 @@ const FaceTracking = ({
     const loadModels = async () => {
       setIsLoading(true);
       try {
-        const MODEL_URL = '/models';
-        // Load required models
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        //console.log("SSD Mobilenetv1 Model Loaded");
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        //console.log("Face Landmark Model Loaded");
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);  // Load face recognition model if needed
-        //console.log("Face Recognition Model Loaded");
+        // Check if models are already preloaded
+        if (modelPreloader.isLoaded()) {
+          // console.log('Using preloaded face-api.js models');
+          await startVideo();
+          capturePhoto('initial'); // Mark as initial capture
+          setIsLoading(false);
+          if (onLoadComplete) {
+            onLoadComplete(true);
+          }
+          return;
+        }
+
+        // If not preloaded, load them now (fallback)
+        // console.log('Models not preloaded, loading now...');
+        await modelPreloader.loadModels();
+        // console.log("Face-api.js models loaded successfully");
         await startVideo();
-        capturePhoto();
+        capturePhoto('initial'); // Mark as initial capture
         setIsLoading(false);
         if (onLoadComplete) {
           onLoadComplete(true);
         }
       } catch (error) {
-        //console.error("Error loading models:", error);
+        console.error("Error loading models:", error);
         setIsLoading(false);
         if (onLoadComplete) {
           onLoadComplete(false);
@@ -75,10 +85,18 @@ const FaceTracking = ({
       }
     };
 
-    const capturePhoto = async () => {
-
+    const capturePhoto = async (captureType = 'routine') => {
       if (!userUniqueID) {
         //console.error("userUniqueID is required");
+        return;
+      }
+
+      // Prevent duplicate captures within 30 seconds (except for initial capture)
+      const now = Date.now();
+      const minInterval = captureType === 'initial' ? 0 : 30000; // 30 seconds minimum between captures
+      
+      if (lastPhotoCaptureRef.current && (now - lastPhotoCaptureRef.current) < minInterval) {
+        //console.log(`Photo capture skipped - too soon (${captureType})`);
         return;
       }
 
@@ -89,20 +107,25 @@ const FaceTracking = ({
         const ctx = canvas.getContext('2d');
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
         const imageData = canvas.toDataURL('image/jpeg');
-        if (imageData) 
-          {
-            sendToAPI(imageData);
-          }
+        if (imageData) {
+          lastPhotoCaptureRef.current = now; // Update last capture time
+          sendToAPI(imageData, captureType);
+        }
       }
     };
 
-    const sendToAPI = async (imageData) => {
+    const sendToAPI = async (imageData, captureType = 'routine') => {
       //console.log("Captured Image Data:", imageData);
       try {
         await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: imageData, userUniqueID, outputQuality: 5 }),  // Low quality for face photos
+          body: JSON.stringify({ 
+            image: imageData, 
+            userUniqueID, 
+            outputQuality: 5,
+            captureType: captureType // Add capture type for backend tracking
+          }),
         });
       } catch (error) {
         //console.error('Error sending image:', error);
@@ -198,7 +221,7 @@ const FaceTracking = ({
                   if (onMultipleFacesDetected) {
                     onMultipleFacesDetected(detections.length);
                   }
-                  capturePhoto(); // Capture photo when multiple faces detected
+                  capturePhoto('multiple_faces'); // Capture photo when multiple faces detected
                   multipleFaceStartRef.current = Date.now(); // Reset timer after triggering
                 }
               }
@@ -214,7 +237,7 @@ const FaceTracking = ({
             //console.log("Current waitTime:", waitTimeRef.current);
 
             if (confidenceScore < toleranceLevel && waitTimeRef.current >= 20) {
-               capturePhoto();		  
+               capturePhoto('low_confidence'); // Mark as low confidence capture
                waitTimeRef.current = 0; // Reset waitTime after capturing photo
               }
           } catch (error) {
@@ -232,12 +255,12 @@ const FaceTracking = ({
     setIsLoading(true);
     // Load models and start video
     loadModels();
-    capturePhoto();
+    // Remove redundant capturePhoto call here - it's already called in loadModels
     setIsLoading(false);
 
     // Set up 5-minute interval for capturing photos during test
     photoIntervalRef.current = setInterval(() => {
-      capturePhoto();
+      capturePhoto('interval'); // Mark as interval capture
     }, 5 * 60 * 1000); // 5 minutes in milliseconds
 
     // Cleanup the video stream and interval on component unmount
@@ -309,7 +332,11 @@ const handleTimerEnd = () => {
           transform: 'translateX(-50%)',
           zIndex: 10
         }}>
-          <TimerComponent onTimerEnd={handleTimerEnd} testDuration={testDuration} />
+          <TimerComponent 
+            onTimerEnd={handleTimerEnd} 
+            testDuration={testDuration} 
+            startTimer={isFirstQuestionLoaded}
+          />
         </div>
       )}
     </>
@@ -317,7 +344,12 @@ const handleTimerEnd = () => {
       {isLoading ? 
         <p style={{ color: 'red', fontSize: '20px', marginTop: '15px' }}>Loading...</p>
         :
-        !isMobile && isFirstQuestionLoaded ? <TimerComponent onTimerEnd={handleTimerEnd} testDuration={testDuration} /> : null
+        !isMobile && isFirstQuestionLoaded ? 
+          <TimerComponent 
+            onTimerEnd={handleTimerEnd} 
+            testDuration={testDuration} 
+            startTimer={isFirstQuestionLoaded}
+          /> : null
         }
     </>
     );

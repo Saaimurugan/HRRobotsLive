@@ -3,6 +3,11 @@ import "../testComponent.css";
 import SubmittedMessage from "./submittedMessage.js";
 import DisplayMessage from "./displayMessage.js";
 import html2canvas from 'html2canvas';
+import questionPreloader from '../services/questionPreloader.js';
+import answerQueue from '../services/answerQueue.js';
+import QuestionPreloadIndicator from './QuestionPreloadIndicator.js';
+import AnswerQueueIndicator from './AnswerQueueIndicator.js';
+import performanceMonitor from '../utils/performanceMonitor.js';
 /* import { useRouter } from "next/router";
  */
 /* import { useNavigate } from "react-router-dom"; */
@@ -16,19 +21,19 @@ const parseQuestionTopic = (questionText) => {
   return { topic: '', question: questionText };
 };
 
-const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit }) => {
+const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, showPreloadIndicator = false, showAnswerQueueIndicator = false }) => {
   const [answers, setAnswers] = useState([]);
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
   const [isLoadingPrev, setIsLoadingPrev] = useState(false);
-  const [isSavingAnswer, setIsSavingAnswer] = useState(false);
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [questionCount, setQuestionCount] = useState(0);
-  const [savedQuestions, setSavedQuestions] = useState([]);
   const questionCountSetRef = React.useRef(false); // Track if questionCount has been set
+  const firstQuestionLoadStartRef = React.useRef(null); // Track first question load time
+  const fetchedRef = React.useRef(false); // Prevent double fetch in StrictMode
 
   /* const router = useRouter();
  */
@@ -59,8 +64,6 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       return () => clearTimeout(timer);
     }
   }, [message]);
-
-  const fetchedRef = React.useRef(false);
 
   // Report progress to parent component
   useEffect(() => {
@@ -95,12 +98,55 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     // Fetch the first question when the component loads (prevent double fetch in StrictMode)
     if (!fetchedRef.current) {
       fetchedRef.current = true;
+      // Start timing the first question load
+      firstQuestionLoadStartRef.current = performance.now();
+      performanceMonitor.startTiming('First Question Load');
       fetchQuestion();
     }
-  }, []);
 
-  const fetchQuestion = async () => {
+    // Cleanup function to clear preloaded data when component unmounts
+    return () => {
+      if (testID && candidateName) {
+        questionPreloader.clearPreloadedData(testID, candidateName);
+        answerQueue.clearTestData(testID);
+      }
+    };
+  }, [testID, candidateName]);
+
+  const fetchQuestion = async (usePreloaded = true) => {
     try {
+      // Try to get preloaded question first
+      if (usePreloaded) {
+        const preloadedData = questionPreloader.getPreloadedQuestion(testID, candidateName);
+        if (preloadedData) {
+          // console.log('Using preloaded question');
+          setQuestions((prevQuestions) => {
+            const newQuestions = [...prevQuestions, preloadedData.question];
+            
+            // Track first question load time
+            if (newQuestions.length === 1 && firstQuestionLoadStartRef.current) {
+              performanceMonitor.endTiming('First Question Load');
+              const loadTime = performance.now() - firstQuestionLoadStartRef.current;
+              console.log(`🎯 First question loaded in ${loadTime.toFixed(2)}ms (preloaded)`);
+            }
+            
+            return newQuestions;
+          });
+          
+          // Only set questionCount on the very first fetch
+          if (!questionCountSetRef.current) {
+            questionCountSetRef.current = true;
+            setQuestionCount(preloadedData.questionCount);
+          }
+          
+          // Start preloading the next question
+          const currentQuestionNumber = questionCount + questions.length + 1;
+          questionPreloader.preloadNextQuestion(testID, candidateName, currentQuestionNumber, numberOfQuestions);
+          
+          return;
+        }
+      }
+
       //console.log("Fetching question for testID:", testID, "and candidateName:", candidateName);
       const response = await fetch(
         "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestionsTopic",
@@ -115,7 +161,19 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       if (data.statusCode === 200) {
         const parsedBody = JSON.parse(data.body);
         const question = parsedBody.new_question;
-        setQuestions((prevQuestions) => [...prevQuestions, question]);
+        setQuestions((prevQuestions) => {
+          const newQuestions = [...prevQuestions, question];
+          
+          // Track first question load time
+          if (newQuestions.length === 1 && firstQuestionLoadStartRef.current) {
+            performanceMonitor.endTiming('First Question Load');
+            const loadTime = performance.now() - firstQuestionLoadStartRef.current;
+            console.log(`🎯 First question loaded in ${loadTime.toFixed(2)}ms (API fetch)`);
+          }
+          
+          return newQuestions;
+        });
+        
         // Only set questionCount on the very first fetch
         // This represents the starting question number and should not change
         // Using a ref to ensure this only happens once, regardless of React re-renders
@@ -123,6 +181,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           questionCountSetRef.current = true;
           setQuestionCount(parsedBody.question_count);
         }
+        
+        // Start preloading the next question after successfully loading current one
+        const currentQuestionNumber = parsedBody.question_count + questions.length + 1;
+        questionPreloader.preloadNextQuestion(testID, candidateName, currentQuestionNumber, numberOfQuestions);
       }
       else if (data.statusCode === 404) {
         setMessage(data.body);
@@ -138,53 +200,34 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   };
 
   const saveAnswer = async (answer) => {
-    if (isSavingAnswer || isLoadingNext || isLoadingPrev) return; // Prevent saving during navigation
-    
     const currentQuestion = questions[currentQuestionIndex];
-    setIsSavingAnswer(true);
+    if (!currentQuestion) return;
 
-    // Save the answer locally
+    // Save answer locally immediately (instant UI response)
     const newAnswers = [...answers];
     newAnswers[currentQuestionIndex] = answer;
     setAnswers(newAnswers);
 
-    // Call API to save the answer
-    try {
-      const response = await fetch(
-        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveAnswerSubmitted",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            testID,
-            questionID: currentQuestion.questionID,
-            answer,
-          }),
-        }
-      );
-      const data = await response.json();
-      if (data.statusCode === 200)
-      {
-        setSavedQuestions((prevQuestionIDs) => [...prevQuestionIDs, currentQuestion.questionID]);
-      }
+    // Queue answer for background saving (no waiting)
+    answerQueue.queueAnswer(testID, currentQuestion.questionID, answer);
 
-      if (data.statusCode !== 200) {
-        setMessage("Failed to save answer: " + data.statusCode + "-" + data.body);
-        //console.error("Failed to save answer", data);
-      }
-    } catch (error) {
-      setMessage("Failed to save answer: " + error.message);
-      //console.error("Error saving answer:", error);
-    } finally {
-      setIsSavingAnswer(false);
+    // Trigger preloading of next question when user answers current question
+    // This is the optimal time to preload as user is engaged with current question
+    const currentQuestionNumber = currentQuestionIndex + questionCount + 1;
+    if (currentQuestionNumber < numberOfQuestions) {
+      questionPreloader.preloadNextQuestion(testID, candidateName, currentQuestionNumber, numberOfQuestions);
     }
+
+    // console.log(`Answer "${answer}" saved locally and queued for background sync`);
   };
 
   const handlePrev = async () => {
-    if (isLoadingPrev || isLoadingNext || isSavingAnswer) return; // Prevent during other operations
+    if (isLoadingPrev || isLoadingNext) return; // Prevent during other operations
     if (currentQuestionIndex > 0) {
       setIsLoadingPrev(true);
       try {
+        // Trigger background saving of current answers before navigation
+        answerQueue.saveQueuedAnswers(testID);
         setCurrentQuestionIndex(currentQuestionIndex - 1);
       } finally {
         setIsLoadingPrev(false);
@@ -193,16 +236,18 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   };
 
   const handleNext = async () => {
-    if (isLoadingNext || isLoadingPrev || isSavingAnswer) return; // Prevent double-clicks and during other operations
+    if (isLoadingNext || isLoadingPrev) return; // Prevent double-clicks and during other operations
     setIsLoadingNext(true);
     try {
-      //check whether setSavedQuestionCount has the currentQuestion.questionID
-      //console.log("savedQuestions: ", savedQuestions);
-      //console.log("currentQuestion.questionID: ", currentQuestion.questionID);
-      if (!savedQuestions.includes(currentQuestion.questionID)) {
-        //console.log("Saving answer for question: ", currentQuestion.questionID);
-        await saveAnswer("");
+      const currentQuestion = questions[currentQuestionIndex];
+      
+      // Queue empty answer if no answer was selected
+      if (currentQuestion && !answers[currentQuestionIndex]) {
+        answerQueue.queueAnswer(testID, currentQuestion.questionID, "");
       }
+
+      // Trigger background saving of queued answers
+      answerQueue.saveQueuedAnswers(testID);
       
       // If we already have the next question loaded, just move to it
       if (currentQuestionIndex < questions.length - 1) {
@@ -247,18 +292,20 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Save the current answer before submitting if not already saved
-      if (currentQuestion && !savedQuestions.includes(currentQuestion.questionID)) {
-        await saveAnswer(answers[currentQuestionIndex] || "");
+      // Queue current answer if not already saved
+      const currentQuestion = questions[currentQuestionIndex];
+      if (currentQuestion && answers[currentQuestionIndex]) {
+        answerQueue.queueAnswer(testID, currentQuestion.questionID, answers[currentQuestionIndex]);
       }
+
+      // Flush all queued answers before submission (ensure all answers are saved)
+      // console.log('Flushing answer queue before test submission...');
+      await answerQueue.flushQueue(testID);
+      // console.log('All answers saved, proceeding with test submission');
 
       // Capture screenshot of the page before submission
       await captureSubmissionScreenshot();
 
-/*       const correctAnswers = answers.reduce((total, answer, index) => {
-        return answer === questions[index].correctAnswer ? total + 1 : total;
-      }, 0);
- */
       const response = await fetch(
         "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore",
         {
@@ -290,67 +337,98 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
 
   return (
     <>
+    {/* Question Preload Indicator (for development/debugging) */}
+    <QuestionPreloadIndicator 
+      testID={testID} 
+      candidateName={candidateName} 
+      show={showPreloadIndicator} 
+    />
+    
+    {/* Answer Queue Indicator (for development/debugging) */}
+    <AnswerQueueIndicator 
+      testID={testID} 
+      show={showAnswerQueueIndicator} 
+    />
+    
     {!isSubmitted?
-    <div className="MCQOuterWrap">
+    <div className="MCQOuterWrap" role="region" aria-label="Test Questions">
       {currentQuestion ?
       <>
       {(currentQuestionIndex + questionCount + 1) <= numberOfQuestions? 
-        <div>{/* {currentQuestionIndex} - {questionCount} -  */}
-          <h2>
+        <div>
+          <h2 id="question-heading">
             Question {currentQuestionIndex + questionCount + 1}
-            /{numberOfQuestions}
+            <span aria-hidden="true">/</span>{numberOfQuestions}
             {parseQuestionTopic(currentQuestion.question).topic && (
-              <span className="question-topic-tag">{parseQuestionTopic(currentQuestion.question).topic}</span>
+              <span className="question-topic-tag" aria-label={`Topic: ${parseQuestionTopic(currentQuestion.question).topic}`}>{parseQuestionTopic(currentQuestion.question).topic}</span>
             )}
           </h2>
-          <p>{parseQuestionTopic(currentQuestion.question).question}</p>
-          <ul className="MCQUL">
-            {currentQuestion.options.map((option, index) => {
-              const isDisabled = isLoadingNext || isLoadingPrev || isSavingAnswer;
-              return (
-              <li key={index} onClick={() => !isDisabled && saveAnswer(option)} className={isDisabled ? 'disabled' : ''}>
-                <input
-                  type="radio"
-                  id={`option-${currentQuestionIndex}-${index}`}
-                  name={`question-${currentQuestionIndex}`}
-                  value={option}
-                  checked={answers[currentQuestionIndex] === option}
-                  onChange={() => !isDisabled && saveAnswer(option)}
-                  onClick={(e) => e.stopPropagation()}
-                  disabled={isDisabled}
-                />
-                <label 
-                  htmlFor={`option-${currentQuestionIndex}-${index}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (!isDisabled) saveAnswer(option);
-                  }}
+          <p id="question-text">{parseQuestionTopic(currentQuestion.question).question}</p>
+          <fieldset aria-labelledby="question-heading question-text">
+            <legend className="sr-only">Select your answer for question {currentQuestionIndex + questionCount + 1}</legend>
+            <ul className="MCQUL" role="radiogroup" aria-label="Answer options">
+              {currentQuestion.options.map((option, index) => {
+                const isDisabled = isLoadingNext || isLoadingPrev;
+                const isSelected = answers[currentQuestionIndex] === option;
+                return (
+                <li 
+                  key={index} 
+                  onClick={() => !isDisabled && saveAnswer(option)} 
+                  className={`${isDisabled ? 'disabled' : ''} ${isSelected ? 'selected' : ''}`}
+                  role="presentation"
                 >
-                  {option}
-                </label>
-              </li>
-            )})}
-          </ul>
-          <div>
+                  <input
+                    type="radio"
+                    id={`option-${currentQuestionIndex}-${index}`}
+                    name={`question-${currentQuestionIndex}`}
+                    value={option}
+                    checked={isSelected}
+                    onChange={() => !isDisabled && saveAnswer(option)}
+                    onClick={(e) => e.stopPropagation()}
+                    disabled={isDisabled}
+                    aria-describedby={isSelected ? "selected-answer-status" : undefined}
+                  />
+                  <label 
+                    htmlFor={`option-${currentQuestionIndex}-${index}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!isDisabled) saveAnswer(option);
+                    }}
+                  >
+                    {option}
+                  </label>
+                </li>
+              )})}
+            </ul>
+          </fieldset>
+          <span id="selected-answer-status" className="sr-only" aria-live="polite">
+            {answers[currentQuestionIndex] ? `Selected answer: ${answers[currentQuestionIndex]}` : 'No answer selected'}
+          </span>
+          <div role="group" aria-label="Navigation buttons" style={{ marginTop: '20px' }}>
             <button
               onClick={handlePrev}
-              disabled={currentQuestionIndex === 0 || isLoadingNext || isLoadingPrev || isSavingAnswer}
+              disabled={currentQuestionIndex === 0 || isLoadingNext || isLoadingPrev}
               style={{ backgroundColor: "#6c757d" }}
+              aria-label="Go to previous question"
             >
               {isLoadingPrev ? "Loading..." : "Previous"}
             </button>&ensp;
             {(currentQuestionIndex + questionCount + 1) >= numberOfQuestions ? (
               <button
                 onClick={handleSubmit}
-                disabled={isSubmitting || isSavingAnswer}
+                disabled={isSubmitting}
                 style={{ backgroundColor: "#007bff" }}
+                aria-label="Submit test"
+                aria-busy={isSubmitting}
               >
                 {isSubmitting ? "Submitting..." : "Submit"}
               </button>
             ) : (
               <button
                 onClick={handleNext}
-                disabled={isLoadingNext || isLoadingPrev || isSavingAnswer}
+                disabled={isLoadingNext || isLoadingPrev}
+                aria-label="Go to next question"
+                aria-busy={isLoadingNext}
               >{isLoadingNext ? "Loading..." : "Next"}
               </button>
             )}
@@ -363,7 +441,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
        :  
        <>    
        {message?
-        <DisplayMessage message={message}/>:<p className="loading">Loading question</p>}
+        <DisplayMessage message={message}/>:<p className="loading" role="status" aria-live="polite">Loading question</p>}
        </>
       }
       </div>

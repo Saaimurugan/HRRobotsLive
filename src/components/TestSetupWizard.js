@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DeviceWarning from './deviceWarning.js';
 import html2canvas from 'html2canvas';
+import FaceDetectionPreloader from './FaceDetectionPreloader.js';
 
 const TestSetupWizard = ({ 
   userUniqueID, 
@@ -269,7 +270,8 @@ const TestSetupWizard = ({
   });
 
   return (
-    <div style={wizardContainerStyle}>
+    <FaceDetectionPreloader showLoadingIndicator={currentStep === 4}>
+      <div style={wizardContainerStyle}>
       {/* Step Indicator */}
       <div style={stepIndicatorStyle}>
         <div style={stepCircleStyle(1)}>1</div>
@@ -850,6 +852,7 @@ const TestSetupWizard = ({
         </div>
       )}
     </div>
+    </FaceDetectionPreloader>
   );
 };
 

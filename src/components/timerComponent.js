@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 
 const DEFAULT_TIME = 3600; // 1 hour in seconds (default)
 
-const TimerComponent = ({ onTimerEnd, testDuration }) => {
+const TimerComponent = ({ onTimerEnd, testDuration, startTimer = true }) => {
    // testDuration is in minutes, convert to seconds. Default to 60 minutes if not provided
    const maxTime = testDuration ? testDuration * 60 : DEFAULT_TIME;
    const [time, setTime] = useState(maxTime);
    const [isBlinking, setIsBlinking] = useState(false);
    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+   const [timerStarted, setTimerStarted] = useState(false);
 
    // Handle window resize
    useEffect(() => {
@@ -17,6 +18,14 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
    }, []);
+
+   // Start timer only when startTimer becomes true
+   useEffect(() => {
+      if (startTimer && !timerStarted) {
+         setTimerStarted(true);
+         console.log('🕐 Test timer started - first question loaded');
+      }
+   }, [startTimer, timerStarted]);
 
    useEffect(() => {
       if (time <= 0) {
@@ -29,6 +38,11 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
    }, [time, onTimerEnd]);
 
    useEffect(() => {
+      // Only start the countdown if timer has been started
+      if (!timerStarted) {
+         return;
+      }
+
       const timer = setInterval(() => {
          setTime((prevTime) => {
             if (prevTime <= 0) {
@@ -40,7 +54,7 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
       }, 1000);
 
       return () => clearInterval(timer); // Cleanup on unmount
-   }, []); // Empty dependency array ensures this runs only once
+   }, [timerStarted]); // Depend on timerStarted instead of empty array
 
    useEffect(() => {
       if (time < 60) {
@@ -78,6 +92,9 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
    };
 
    const getTimerStyle = () => {
+      if (!timerStarted) {
+         return { color: 'gray', opacity: 0.7 }; // Show timer as inactive when not started
+      }
       if (time < 60) {
          return isBlinking ? { color: 'red', visibility: 'hidden' } : { color: 'red' }; // Blink effect
       } else if (time < 300) {
@@ -105,6 +122,7 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
                padding: '2px 6px',
             }),
          }}
+         title={!timerStarted ? "Timer will start when first question loads" : undefined}
       >
          <div
             style={{
@@ -116,11 +134,22 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
                fontWeight: isMobile ? '600' : 'normal',
                color: isMobile ? 'white' : undefined,
                ...(!isMobile && getTimerStyle()),
-               ...(isMobile && time < 300 && { color: '#ff6b6b' }),
+               ...(isMobile && time < 300 && timerStarted && { color: '#ff6b6b' }),
+               ...(isMobile && !timerStarted && { color: '#ccc' }),
             }}
          >
             {formatTime(time)}
          </div>
+         {!timerStarted && !isMobile && (
+            <div style={{
+               fontSize: '12px',
+               color: 'gray',
+               marginTop: '5px',
+               textAlign: 'center'
+            }}>
+               Waiting for question...
+            </div>
+         )}
       </div>
    );
 };

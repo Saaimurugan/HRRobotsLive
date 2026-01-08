@@ -45,19 +45,26 @@ const ScoreChart = ({ message, showToast }) => {
   const parsedBody = message;
   const { testID, candidateName, templateName, submittedAt, totalQuestions: configTotalQuestions } = parsedBody || {};
   
+  // Always prioritize the totalQuestions from the backend response
+  // This should be the configured numberOfQuestions value (e.g., 10)
+  const backendTotalQuestions = parsedBody?.totalQuestions || configTotalQuestions;
+  
   // Calculate totals from topic scores when available, otherwise fall back to message data
-  // Use totalQuestions from config if available, otherwise default to 50
   const calculatedTotals = topicScores.length > 0 
     ? {
-        totalQuestions: configTotalQuestions || 50,
+        totalQuestions: backendTotalQuestions || 10, // Use backend value, fallback to 10
         correctAnswers: topicScores.reduce((acc, topic) => acc + (topic.correct || 0), 0),
         submittedAnswers: topicScores.reduce((acc, topic) => acc + (topic.attempted || 0), 0),
       }
     : {
-        totalQuestions: parsedBody?.totalQuestions || 50,
+        totalQuestions: backendTotalQuestions || 10, // Use backend value, fallback to 10
         correctAnswers: parsedBody?.correctAnswers || 0,
         submittedAnswers: parsedBody?.submittedAnswers || 0,
       };
+
+  // console.log('DEBUG ScoreChart - parsedBody:', parsedBody);
+  // console.log('DEBUG ScoreChart - backendTotalQuestions:', backendTotalQuestions);
+  // console.log('DEBUG ScoreChart - calculatedTotals:', calculatedTotals);
 
   const { totalQuestions, correctAnswers, submittedAnswers } = calculatedTotals;
   const scorePercent = totalQuestions ? correctAnswers / totalQuestions : 0;
@@ -180,7 +187,7 @@ const ScoreChart = ({ message, showToast }) => {
                     <td>{topic.topic}</td>
                     <td>{topic.attempted}</td>
                     <td>{topic.correct}</td>
-                    <td>{((topic.correct / totalQuestions) * 100).toFixed(0)}%</td>
+                    <td>{topic.attempted > 0 ? ((topic.correct / topic.attempted) * 100).toFixed(0) : 0}%</td>
                   </tr>
                 ))}
               </tbody>

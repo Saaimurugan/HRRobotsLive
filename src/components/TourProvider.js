@@ -108,8 +108,17 @@ export const TourProvider = ({ children }) => {
         return;
       }
 
+      // Check localStorage first for immediate feedback
+      const tourCompleted = localStorage.getItem(`tour_completed_${globalValue}`);
+      if (tourCompleted === 'true') {
+        setIsNewUser(false);
+        setShowWelcome(false);
+        setShowTourButton(true);
+        return;
+      }
+
       try {
-        const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userUpdate", {
+        const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
@@ -134,6 +143,8 @@ export const TourProvider = ({ children }) => {
             setIsNewUser(false);
             setShowWelcome(false);
             setShowTourButton(true);
+            // Update localStorage to match backend state
+            localStorage.setItem(`tour_completed_${globalValue}`, 'true');
           }
         } else {
           // If user details not found, assume new user
@@ -160,26 +171,49 @@ export const TourProvider = ({ children }) => {
     setShowWelcome(false);
     setShowTourButton(true);
     
-    // Mark user as not new
+    // Mark user as not new and update localStorage
     try {
-      await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userUpdate", {
+      await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           email: globalValue, 
           newUser: "no",
+          action: "update",
           token: JWTValue 
         })
       });
+      localStorage.setItem(`tour_completed_${globalValue}`, 'true');
     } catch (error) {
       // console.error("Error updating user status:", error);
+      // Still update localStorage even if backend fails
+      localStorage.setItem(`tour_completed_${globalValue}`, 'true');
     }
   };
 
-  const handleTourComplete = () => {
+  const handleTourComplete = async () => {
     setShowTour(false);
     setShowTourButton(true);
     setIsNewUser(false);
+    
+    // Mark user as not new when tour is completed and update localStorage
+    try {
+      await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          email: globalValue, 
+          newUser: "no",
+          action: "update",
+          token: JWTValue 
+        })
+      });
+      localStorage.setItem(`tour_completed_${globalValue}`, 'true');
+    } catch (error) {
+      // console.error("Error updating user status:", error);
+      // Still update localStorage even if backend fails
+      localStorage.setItem(`tour_completed_${globalValue}`, 'true');
+    }
   };
 
   const handleCloseTour = () => {

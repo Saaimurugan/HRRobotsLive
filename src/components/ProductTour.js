@@ -415,12 +415,13 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
   const handleComplete = async () => {
     // Mark user as not new
     try {
-      await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userUpdate", {
+      await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           email: globalValue, 
           newUser: "no",
+          action: "update",
           token: JWTValue 
         })
       });

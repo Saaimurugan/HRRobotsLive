@@ -547,19 +547,37 @@ textarea {
   transition: all 0.2s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   flex-shrink: 0;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: none; /* Reset button background */
+  font-family: inherit; /* Use parent font */
+  outline: none; /* Remove default focus outline, we have custom focus styles */
 }
 
-.question-dot:hover:not(.disabled) {
+/* Ensure button styling is applied */
+button.question-dot {
+  border: none !important;
+  background: none !important;
+  padding: 0 !important;
+  margin: 0;
+  font-family: inherit;
+  outline: none;
+}
+
+.question-dot:hover:not(.disabled):not(:disabled) {
   transform: scale(1.15);
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
 }
 
-.question-dot.answered {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+.question-dot.answered,
+button.question-dot.answered {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
 }
 
-.question-dot.unanswered {
-  background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
+.question-dot.unanswered,
+button.question-dot.unanswered {
+  background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%) !important;
 }
 
 .question-dot.current {
@@ -567,7 +585,8 @@ textarea {
   animation: pulse-current 2s infinite;
 }
 
-.question-dot.disabled {
+.question-dot.disabled,
+.question-dot:disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }

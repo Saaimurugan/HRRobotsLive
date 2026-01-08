@@ -36,10 +36,18 @@
   background: var(--color-primary-light);
 }
 
-.MCQUL li.selected {
+.MCQUL li.selected,
+.MCQUL li:has(input:checked) {
   border-color: var(--color-primary);
   background: var(--color-primary-light);
   font-weight: var(--font-weight-medium);
+}
+
+/* Focus styles for keyboard navigation */
+.MCQUL li:focus-within {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
+  border-color: var(--color-primary);
 }
 
 .MCQUL li input[type="radio"] {
@@ -92,4 +100,25 @@
 .MCQUL li.disabled input[type="radio"],
 .MCQUL li.disabled label {
   cursor: not-allowed;
+}
+
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Fieldset reset for accessibility */
+fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
 }
