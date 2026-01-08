@@ -489,7 +489,7 @@ const EditTemplate = () => {
     const formattedQuestions = questionSet.map(q => q.question).join(", ");
 
     try {
-      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic, level, formattedQuestions, token: JWTValue }),
@@ -559,7 +559,7 @@ const EditTemplate = () => {
                   >
                     Total: {questionSet.length}
                   </span>
-                  {Object.entries(topicCounts.counts).sort((a, b) => a[0].localeCompare(b[0])).map(([topicName, count]) => (
+                  {topicCounts && Object.entries(topicCounts).filter(([key]) => key !== '__no_topic__').sort((a, b) => a[0].localeCompare(b[0])).map(([topicName, count]) => (
                     <span 
                       key={topicName} 
                       className={`topic-count-badge ${selectedTopicFilter === topicName ? 'topic-count-active' : 'topic-count-inactive'}`}
@@ -569,13 +569,13 @@ const EditTemplate = () => {
                       {topicName}: {count}
                     </span>
                   ))}
-                  {topicCounts.noTopicCount > 0 && (
+                  {topicCounts && topicCounts.__no_topic__ > 0 && (
                     <span 
                       className={`topic-count-badge ${selectedTopicFilter === '__no_topic__' ? 'topic-count-active' : 'topic-count-inactive'} topic-count-no-topic`}
                       onClick={() => setSelectedTopicFilter('__no_topic__')}
                       style={{ cursor: 'pointer' }}
                     >
-                      No Topic: {topicCounts.noTopicCount}
+                      No Topic: {topicCounts.__no_topic__}
                     </span>
                   )}
                 </div>

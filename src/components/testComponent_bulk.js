@@ -3,16 +3,10 @@ import "../testComponent.css";
 import SubmittedMessage from "./submittedMessage.js";
 import DisplayMessage from "./displayMessage.js";
 import html2canvas from 'html2canvas';
-import { QuestionDecryption, AnswerEncryption } from '../utils/encryption.js';
-import performanceMonitor from '../utils/performanceMonitor.js';
-
-// REMOVED: Topic parsing functions are no longer needed
-// Frontend now handles topics as separate entities throughout
 
 const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit }) => {
-  // NEW: Bulk loading state
-  const [encryptedQuestions, setEncryptedQuestions] = useState([]);
-  const [encryptionKey, setEncryptionKey] = useState('');
+  // State for questions and answers
+  const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loadingError, setLoadingError] = useState('');
@@ -27,17 +21,15 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const [totalQuestions, setTotalQuestions] = useState(numberOfQuestions);
   
   // Refs for tracking
-  const firstQuestionLoadStartRef = React.useRef(null);
   const fetchedRef = React.useRef(false);
 
-  // NEW: Load all questions at once with encryption
+  // Load all questions at once (no encryption)
   const loadAllQuestions = async () => {
     if (fetchedRef.current) return; // Prevent double fetch
     fetchedRef.current = true;
     
     setIsInitialLoading(true);
     setLoadingError('');
-    firstQuestionLoadStartRef.current = Date.now();
 
     try {
       const response = await fetch(
@@ -54,31 +46,21 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       if (data.statusCode === 200) {
         const parsedBody = JSON.parse(data.body);
         
-        // Store encrypted questions and key
-        setEncryptedQuestions(parsedBody.questions);
-        setEncryptionKey(parsedBody.encryption_key);
-        setTotalQuestions(parsedBody.total_questions);
+        // Store questions directly (no encryption)
+        setQuestions(parsedBody.questions);
+        setTotalQuestions(parsedBody.test_config?.max_questions || parsedBody.total_questions || numberOfQuestions);
         setQuestionCount(parsedBody.answered_count);
         
-        // Validate encryption key
-        if (!QuestionDecryption.validateKey(parsedBody.questions, parsedBody.encryption_key)) {
-          throw new Error('Invalid encryption key received');
-        }
-        
-        // Decrypt and set first question
+        // Set first question
         if (parsedBody.questions.length > 0) {
-          const firstQuestion = QuestionDecryption.decryptCurrentQuestion(
-            parsedBody.questions, 
-            0, 
-            parsedBody.encryption_key
-          );
-          setCurrentQuestion(firstQuestion);
+          setCurrentQuestion(parsedBody.questions[0]);
         }
         
-        // Initialize answers array
-        setAnswers(new Array(parsedBody.total_questions).fill(''));
+        // Initialize answers array with the correct total questions count
+        const actualTotalQuestions = parsedBody.test_config?.max_questions || parsedBody.total_questions || numberOfQuestions;
+        setAnswers(new Array(actualTotalQuestions).fill(''));
         
-        console.log(`Loaded ${parsedBody.total_questions} questions in ${Date.now() - firstQuestionLoadStartRef.current}ms`);
+        console.log(`Loaded ${parsedBody.questions.length} questions out of ${actualTotalQuestions} total`);
         
       } else if (data.statusCode === 404) {
         const errorBody = JSON.parse(data.body);
@@ -99,36 +81,19 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     loadAllQuestions();
   }, [testID, candidateName]);
 
-  // NEW: Navigate between questions (instant - no API calls)
+  // Navigate between questions (instant - no API calls)
   const navigateToQuestion = (newIndex) => {
-    if (newIndex >= 0 && newIndex < encryptedQuestions.length) {
-      try {
-        const question = QuestionDecryption.decryptCurrentQuestion(
-          encryptedQuestions, 
-          newIndex, 
-          encryptionKey
-        );
-        setCurrentQuestion(question);
-        setCurrentQuestionIndex(newIndex);
-      } catch (error) {
-        console.error('Error decrypting question:', error);
-        setLoadingError(`Failed to decrypt question ${newIndex + 1}`);
-      }
+    if (newIndex >= 0 && newIndex < questions.length) {
+      setCurrentQuestion(questions[newIndex]);
+      setCurrentQuestionIndex(newIndex);
     }
   };
 
-  // NEW: Save answer locally (no immediate API call)
+  // Save answer locally (no immediate API call)
   const saveAnswer = (selectedAnswer) => {
     const newAnswers = [...answers];
     newAnswers[currentQuestionIndex] = selectedAnswer;
     setAnswers(newAnswers);
-    
-    // Auto-advance to next question
-    if (currentQuestionIndex < encryptedQuestions.length - 1) {
-      setTimeout(() => {
-        navigateToQuestion(currentQuestionIndex + 1);
-      }, 500); // Small delay for better UX
-    }
   };
 
   // Navigation functions
@@ -167,17 +132,17 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     }
   };
 
-  // NEW: Submit all answers with encryption
+  // Submit all answers (no encryption)
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
       // Prepare answers for submission
       const answersToSubmit = [];
       
-      for (let i = 0; i < encryptedQuestions.length; i++) {
+      for (let i = 0; i < questions.length; i++) {
         if (answers[i]) {
           const answerData = {
-            questionID: encryptedQuestions[i].questionID,
+            questionID: questions[i].questionID,
             answer: answers[i],
             testID: testID,
             timestamp: new Date().toISOString()
@@ -186,13 +151,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         }
       }
       
-      // Encrypt answers for secure submission
-      const encryptedAnswers = AnswerEncryption.encryptAnswers(answersToSubmit, encryptionKey);
-      
       // Capture screenshot before submission
       await captureSubmissionScreenshot();
 
-      // Submit encrypted answers
+      // Submit answers directly (no encryption)
       const response = await fetch(
         "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore__",
         {
@@ -200,8 +162,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             testID,
-            encrypted_answers: encryptedAnswers,
-            encryption_key: encryptionKey
+            answers: answersToSubmit
           }),
         }
       );
@@ -228,13 +189,13 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     if (onProgressUpdate) {
       onProgressUpdate({
         currentQuestion: currentQuestionIndex,
-        questionCount,
+        questionCount: 0, // No previously answered questions in bulk load
         answers,
         totalQuestions: totalQuestions,
-        questionsLoaded: encryptedQuestions.length
+        questionsLoaded: questions.length
       });
     }
-  }, [currentQuestionIndex, questionCount, answers, onProgressUpdate, encryptedQuestions.length, totalQuestions]);
+  }, [currentQuestionIndex, answers, onProgressUpdate, questions.length, totalQuestions]);
 
   // Expose navigation function to parent via ref
   useEffect(() => {
@@ -279,7 +240,6 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         <h2 id="question-heading">
           Question {currentQuestionIndex + 1}
           <span aria-hidden="true">/</span>{totalQuestions}
-          {/* NEW: Use separate topic field directly */}
           {currentQuestion.topic && currentQuestion.topic !== '__NO_TOPIC__' && (
             <span className="question-topic-tag" aria-label={`Topic: ${currentQuestion.topic}`}>
               {currentQuestion.topic}
@@ -287,7 +247,6 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           )}
         </h2>
         <p id="question-text">
-          {/* NEW: Display clean question text directly */}
           {currentQuestion.question}
         </p>
         <fieldset aria-labelledby="question-heading question-text">
@@ -334,7 +293,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
             {currentQuestionIndex + 1} of {totalQuestions}
           </span>
           
-          {currentQuestionIndex < encryptedQuestions.length - 1 ? (
+          {currentQuestionIndex < questions.length - 1 ? (
             <button
               onClick={goToNextQuestion}
               className="nav-button next-button"
@@ -355,12 +314,12 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       </div>
     </div>
     )}
+
+    {/* Message Display */}
+    {message && <DisplayMessage message={message}/>}
     
-    {/* Submitted Message */}
+    {/* Submitted State */}
     {isSubmitted && <SubmittedMessage />}
-    
-    {/* Error/Completion Message */}
-    {message && <DisplayMessage message={message} />}
     </>
   );
 };

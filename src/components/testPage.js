@@ -504,13 +504,12 @@ const TestPage = () => {
   };
 
   const handleQuestionDotClick = (questionNum) => {
+    // Convert question number to index (questionNum is 1-based, index is 0-based)
+    const targetIndex = questionNum - 1;
+    
     // Only allow navigation to questions that have been loaded
-    // questionCount is the number of previously answered questions
-    // So question (questionCount + 1) is at index 0
-    const targetIndex = questionNum - testProgress.questionCount - 1;
-    const questionsLoaded = testProgress.questionsLoaded || 0;
-    if (targetIndex >= 0 && targetIndex < questionsLoaded && navigateToQuestionRef.current) {
-      navigateToQuestionRef.current(questionNum);
+    if (targetIndex >= 0 && targetIndex < questions.length && navigateToQuestionRef.current) {
+      navigateToQuestionRef.current(targetIndex);
     }
   };
 
@@ -1288,13 +1287,10 @@ if (userUniqueID != '')
         }}>
           {Array.from({ length: numberOfQuestions }, (_, i) => {
             const questionNum = i + 1;
-            const currentDisplayQuestion = testProgress.currentQuestion + testProgress.questionCount + 1;
-            const answersIndex = i - testProgress.questionCount;
-            const isAnswered = answersIndex >= 0 && testProgress.answers[answersIndex] && testProgress.answers[answersIndex] !== "";
+            const currentDisplayQuestion = testProgress.currentQuestion + 1;
+            const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
             const isCurrent = questionNum === currentDisplayQuestion;
-            const targetIndex = questionNum - testProgress.questionCount - 1;
-            const questionsLoaded = testProgress.questionsLoaded || 0;
-            const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
+            const isClickable = i < testProgress.questionsLoaded;
             
             return (
               <button
@@ -1426,13 +1422,10 @@ if (userUniqueID != '')
           >
             {Array.from({ length: numberOfQuestions }, (_, i) => {
               const questionNum = i + 1;
-              const currentDisplayQuestion = testProgress.currentQuestion + testProgress.questionCount + 1;
-              const answersIndex = i - testProgress.questionCount;
-              const isAnswered = answersIndex >= 0 && testProgress.answers[answersIndex] && testProgress.answers[answersIndex] !== "";
+              const currentDisplayQuestion = testProgress.currentQuestion + 1;
+              const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
               const isCurrent = questionNum === currentDisplayQuestion;
-              const targetIndex = questionNum - testProgress.questionCount - 1;
-              const questionsLoaded = testProgress.questionsLoaded || 0;
-              const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
+              const isClickable = i < testProgress.questionsLoaded;
               return (
                 <button
                   key={i}

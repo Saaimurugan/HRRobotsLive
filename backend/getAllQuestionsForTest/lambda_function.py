@@ -6,12 +6,6 @@ import dateutil.tz
 from boto3.dynamodb.conditions import Attr, Key
 from concurrent.futures import ThreadPoolExecutor
 import threading
-import sys
-import os
-
-# Add utils directory to path for encryption utilities
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'utils'))
-from encryption import QuestionEncryption
 
 # Initialize DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
@@ -298,28 +292,20 @@ def lambda_handler(event, context):
                 })
             }
 
-        # Generate encryption key for this test session
-        encryption_key = QuestionEncryption.generate_test_key(test_id, candidate_name)
-        key_hint = QuestionEncryption.create_key_hint(encryption_key)
-
-        # Encrypt all questions
-        encrypted_questions = QuestionEncryption.encrypt_questions_bulk(selected_questions, encryption_key)
-
         # Build topic summary
         topic_summary = {}
         for question in selected_questions:
             topic = question.get('topic', '__NO_TOPIC__')
             topic_summary[topic] = topic_summary.get(topic, 0) + 1
 
+        # Return questions directly (no encryption)
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'questions': encrypted_questions,
-                'total_questions': len(encrypted_questions),
+                'questions': selected_questions,
+                'total_questions': len(selected_questions),
                 'answered_count': len(previous_answers_dict),
                 'topic_summary': topic_summary,
-                'encryption_key': encryption_key.hex(),  # Send key as hex string
-                'key_hint': key_hint,
                 'test_config': {
                     'template_id': template_id,
                     'max_questions': num_questions_for_test

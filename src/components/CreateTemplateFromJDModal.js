@@ -194,7 +194,7 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
           const batchSize = Math.min(20, remaining);
           const existingQuestions = [...allQuestions, ...questionsForKeyword].map(q => q.question).join(", ");
           
-          const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
+          const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
