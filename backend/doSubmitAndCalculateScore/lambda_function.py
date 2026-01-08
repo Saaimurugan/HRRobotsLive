@@ -282,7 +282,7 @@ def send_recruiter_notification(test_data, status_type):
         )
     except Exception as e:
         # Log error but don't fail the main operation
-        # print(f"Error sending recruiter notification: {str(e)}")
+        print(f"Error sending recruiter notification: {str(e)}")
 
 def lambda_handler(event, context):
     try:
