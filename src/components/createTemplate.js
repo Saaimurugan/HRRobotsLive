@@ -247,15 +247,6 @@ const CreateTemplate = () => {
     
     return { ...counts, __no_topic__: noTopicCount };
   }, [questionSet]);
-      if (topic) {
-        counts[topic] = (counts[topic] || 0) + 1;
-      } else {
-        noTopicCount++;
-      }
-    });
-    
-    return { counts, noTopicCount };
-  }, [questionSet]);
 
   // Check for mobile screen on mount
   useEffect(() => {
