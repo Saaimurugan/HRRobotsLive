@@ -93,30 +93,35 @@ def send_verification_email(email, token):
 def clone_gk_template_for_user(email):
     """Create a sample GK template with 5 questions for a new user."""
     try:
-        # Sample GK questions
+        # Sample GK questions with separate topic field
         gk_questions = [
             {
-                'question': 'General Knowledge::: What is the capital of France?',
+                'question': 'What is the capital of France?',
+                'topic': 'General Knowledge',
                 'options': ['Paris', 'London', 'Berlin', 'Madrid'],
                 'correctAnswer': 'Paris'
             },
             {
-                'question': 'General Knowledge::: Which planet is known as the Red Planet?',
+                'question': 'Which planet is known as the Red Planet?',
+                'topic': 'General Knowledge',
                 'options': ['Venus', 'Mars', 'Jupiter', 'Saturn'],
                 'correctAnswer': 'Mars'
             },
             {
-                'question': 'General Knowledge::: Who wrote the play "Romeo and Juliet"?',
+                'question': 'Who wrote the play "Romeo and Juliet"?',
+                'topic': 'General Knowledge',
                 'options': ['Charles Dickens', 'William Shakespeare', 'Jane Austen', 'Mark Twain'],
                 'correctAnswer': 'William Shakespeare'
             },
             {
-                'question': 'General Knowledge::: What is the largest ocean on Earth?',
+                'question': 'What is the largest ocean on Earth?',
+                'topic': 'General Knowledge',
                 'options': ['Atlantic Ocean', 'Indian Ocean', 'Arctic Ocean', 'Pacific Ocean'],
                 'correctAnswer': 'Pacific Ocean'
             },
             {
-                'question': 'General Knowledge::: In which year did World War II end?',
+                'question': 'In which year did World War II end?',
+                'topic': 'General Knowledge',
                 'options': ['1943', '1944', '1945', '1946'],
                 'correctAnswer': '1945'
             }
@@ -135,13 +140,14 @@ def clone_gk_template_for_user(email):
             }
         )
         
-        # Create questions
+        # Create questions with separate topic field
         for question in gk_questions:
             questions_table.put_item(
                 Item={
                     'questionID': str(uuid.uuid4()),
                     'templateID': template_id,
                     'question': question['question'],
+                    'topic': question['topic'],  # Store topic as separate field
                     'options': question['options'],
                     'correctAnswer': question['correctAnswer'],
                     'datetime': str(datetime.datetime.now())
