@@ -107,6 +107,9 @@ class QuestionPreloader {
    * @param {string} testID - The test ID
    * @param {string} candidateName - The candidate name
    * @returns {Promise<Object|null>} - Promise that resolves to question data or null
+   * 
+   * NOTE: This service automatically handles both old format (topic embedded in question text)
+   * and new format (separate topic field) since the API handles the conversion.
    */
   async _fetchQuestion(testID, candidateName) {
     try {

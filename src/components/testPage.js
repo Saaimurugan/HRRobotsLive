@@ -6,7 +6,7 @@ import TestIDMissing from "./testIDMissing.js";
 import SubmittedMessage from "./submittedMessage.js";
 import FaceTracking from "./faceDetection.js";
 import "../App.css";
-import TestComponent from "./testComponent.js";
+import TestComponent from "./testComponent_bulk.js";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
 import TestSetupWizard from "./TestSetupWizard.js";
 import useAudioDetection from "./useAudioDetection.js";

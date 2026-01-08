@@ -218,7 +218,8 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
 
           const questionsWithTopic = generatedBatch.slice(0, batchSize).map(q => ({
             type: "mcq",
-            question: `${kw.keyword}::: ${q.question}`,
+            topic: kw.keyword,  // NEW: Use separate topic field
+            question: q.question,  // Clean question text without topic prefix
             options: q.options || [],
             correctAnswer: q.correctAnswer,
             correctAnswerIndex: q.options ? q.options.indexOf(q.correctAnswer) : -1
@@ -244,13 +245,8 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
     setGeneratedQuestions(prev => prev.filter((_, i) => i !== index));
   };
 
-  const parseQuestionTopic = (questionText) => {
-    if (questionText && questionText.includes(':::')) {
-      const [topic, ...rest] = questionText.split(':::');
-      return { topic: topic.trim(), question: rest.join(':::').trim() };
-    }
-    return { topic: '', question: questionText };
-  };
+  // REMOVED: Topic parsing functions are no longer needed
+  // Frontend now handles topics as separate entities throughout
 
   if (!isOpen) return null;
 
@@ -432,11 +428,12 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
 
                 <div className="questions-list-modal">
                   {generatedQuestions.map((q, index) => {
-                    const { topic, question } = parseQuestionTopic(q.question);
+                    // NEW: Use separate topic field directly
+                    const topic = q.topic || '__NO_TOPIC__';
                     return (
                       <div key={index} className="qcard">
-                        {topic && <span className="question-topic-tag">{topic}</span>}
-                        <h4>{index + 1}. {question}</h4>
+                        {topic && topic !== '__NO_TOPIC__' && <span className="question-topic-tag">{topic}</span>}
+                        <h4>{index + 1}. {q.question}</h4>
                         <ul>
                           {q.options.map((opt, optIndex) => (
                             <li key={optIndex} className={optIndex === q.correctAnswerIndex ? 'correct-answer' : ''}>{opt}</li>

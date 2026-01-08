@@ -6,22 +6,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
 import CreateTemplateFromJDModal from "./CreateTemplateFromJDModal";
 
-// Helper function to parse topic from question
-const parseQuestionTopic = (questionText) => {
-  if (questionText && questionText.includes(':::')) {
-    const [topic, ...rest] = questionText.split(':::');
-    return { topic: topic.trim(), question: rest.join(':::').trim() };
-  }
-  return { topic: '', question: questionText };
-};
-
-// Helper function to format question with topic
-const formatQuestionWithTopic = (topic, question) => {
-  if (topic && topic.trim()) {
-    return `${topic.trim()}::: ${question}`;
-  }
-  return question;
-};
+// REMOVED: Topic parsing functions are no longer needed
+// Frontend now handles topics as separate entities throughout
 
 // Topic Combobox Component
 const TopicCombobox = ({ value, onChange, existingTopics, placeholder = "Select or type a topic" }) => {
@@ -151,7 +137,8 @@ const CreateTemplate = () => {
   // Sample placeholder question (frontend only - never saved)
   const SAMPLE_PLACEHOLDER = {
     type: "mcq",
-    question: "Sample Question::: This is a sample placeholder question. Add your own questions using the form on the right or generate them with AI. This sample will disappear once you add real questions.",
+    question: "This is a sample placeholder question. Add your own questions using the form on the right or generate them with AI. This sample will disappear once you add real questions.",
+    topic: "Sample Topic",
     options: ["Option A (example)", "Option B (example)", "Option C (example)", "Option D (example)"],
     correctAnswer: "Option A (example)",
     correctAnswerIndex: 0,
@@ -180,26 +167,27 @@ const CreateTemplate = () => {
   // Session handler for unauthorized responses
   const { checkUnauthorized } = useSessionHandler(showToast);
 
-  // Extract unique topics from questions
+  // Extract unique topics from questions - UPDATED to use separate topic field
   const existingTopics = useMemo(() => {
     const topics = new Set();
     questionSet.forEach(q => {
-      const { topic } = parseQuestionTopic(q.question);
-      if (topic) topics.add(topic);
+      // NEW: Use separate topic field directly
+      if (q.topic && q.topic !== '__NO_TOPIC__') {
+        topics.add(q.topic);
+      }
     });
     return Array.from(topics).sort();
   }, [questionSet]);
 
-  // Group and sort questions by topic, with optional filtering
+  // Group and sort questions by topic - UPDATED to use separate topic field
   const groupedQuestions = useMemo(() => {
     // If no questions, show sample placeholder
     if (questionSet.length === 0 && showSamplePlaceholder) {
-      const { topic, question } = parseQuestionTopic(SAMPLE_PLACEHOLDER.question);
       return [{
         ...SAMPLE_PLACEHOLDER,
         originalIndex: 0,
-        displayQuestion: question,
-        topic
+        displayQuestion: SAMPLE_PLACEHOLDER.question,
+        topic: SAMPLE_PLACEHOLDER.topic || '__NO_TOPIC__'
       }];
     }
 
@@ -207,10 +195,11 @@ const CreateTemplate = () => {
     const noTopicQuestions = [];
 
     questionSet.forEach((q, originalIndex) => {
-      const { topic, question } = parseQuestionTopic(q.question);
-      const questionWithMeta = { ...q, originalIndex, displayQuestion: question, topic };
+      // NEW: Use separate topic field directly
+      const topic = q.topic || '__NO_TOPIC__';
+      const questionWithMeta = { ...q, originalIndex, displayQuestion: q.question, topic };
       
-      if (topic) {
+      if (topic && topic !== '__NO_TOPIC__') {
         if (!groups[topic]) groups[topic] = [];
         groups[topic].push(questionWithMeta);
       } else {
@@ -240,13 +229,24 @@ const CreateTemplate = () => {
     return result;
   }, [questionSet, selectedTopicFilter, showSamplePlaceholder]);
 
-  // Calculate topic counts for display
+  // Calculate topic counts for display - UPDATED to use separate topic field
   const topicCounts = useMemo(() => {
     const counts = {};
     let noTopicCount = 0;
     
     questionSet.forEach(q => {
-      const { topic } = parseQuestionTopic(q.question);
+      // NEW: Use separate topic field directly
+      const topic = q.topic || '__NO_TOPIC__';
+      
+      if (topic && topic !== '__NO_TOPIC__') {
+        counts[topic] = (counts[topic] || 0) + 1;
+      } else {
+        noTopicCount++;
+      }
+    });
+    
+    return { ...counts, __no_topic__: noTopicCount };
+  }, [questionSet]);
       if (topic) {
         counts[topic] = (counts[topic] || 0) + 1;
       } else {
@@ -303,7 +303,12 @@ const CreateTemplate = () => {
   };
 
   const addQuestion = () => {
-    const newQuestion = { type: formData.type, question: formatQuestionWithTopic(manualTopic, formData.question) };
+    // NEW: Use separate topic field instead of embedding in question text
+    const newQuestion = { 
+      type: formData.type, 
+      topic: manualTopic || '__NO_TOPIC__',  // NEW: Separate topic field
+      question: formData.question  // Clean question text without topic prefix
+    };
 
     if (formData.type === "mcq") {
       if (!formData.options.length) {
@@ -345,16 +350,17 @@ const CreateTemplate = () => {
 
   const editQuestion = (originalIndex) => {
     const questionToEdit = questionSet[originalIndex];
-    const { topic, question } = parseQuestionTopic(questionToEdit.question);
+    // NEW: Use separate topic field directly
+    const topic = questionToEdit.topic || '__NO_TOPIC__';
     const correctIndex = questionToEdit.options ? questionToEdit.options.indexOf(questionToEdit.correctAnswer) : -1;
     setFormData({
       type: questionToEdit.type,
-      question: question,
+      question: questionToEdit.question, // Clean question text
       options: questionToEdit.options || [],
       correctAnswer: questionToEdit.correctAnswer || "",
       correctAnswerIndex: correctIndex,
     });
-    setManualTopic(topic);
+    setManualTopic(topic === '__NO_TOPIC__' ? '' : topic);
     setIsEditing(true);
     setEditingOriginalIndex(originalIndex);
   };
@@ -463,7 +469,7 @@ const CreateTemplate = () => {
         const correctAnswerIndex = q.options ? q.options.indexOf(q.correctAnswer) : -1;
         return {
           ...q,
-          question: groupByTopic ? `${topic}::: ${q.question}` : q.question,
+          topic: topic, // Use separate topic field
           correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : undefined
         };
       });
