@@ -75,7 +75,7 @@ class TestEditScreeningTest:
             
             # Add new question
             template_page.add_question(
-                question_text="New::: New question added during edit?",
+                question_text="New question added during edit?",
                 topic="New",
                 options=["A", "B", "C", "D"],
                 correct_answer="A"
@@ -118,7 +118,7 @@ class TestEditScreeningTest:
             
             # Add a question
             template_page.add_question(
-                question_text="Edit::: Question added during edit test?",
+                question_text="Question added during edit test?",
                 topic="Edit",
                 options=["A", "B", "C", "D"],
                 correct_answer="A"

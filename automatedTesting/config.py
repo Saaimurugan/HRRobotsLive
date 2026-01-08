@@ -52,13 +52,15 @@ TEST_TEMPLATE_DATA = {
     "name": "Python Fundamentals Test",
     "questions": [
         {
-            "text": "Python::: What is the output of print(2 ** 3)?",
+            "text": "What is the output of print(2 ** 3)?",
+            "topic": "Python",
             "options": ["8", "6", "9", "3"],
             "correct": "8",
             "level": "fresher"
         },
         {
-            "text": "Python::: Which keyword is used to define a function?",
+            "text": "Which keyword is used to define a function?",
+            "topic": "Python",
             "options": ["def", "function", "func", "define"],
             "correct": "def",
             "level": "fresher"
