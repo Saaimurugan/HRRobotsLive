@@ -373,6 +373,7 @@ const TestSetupWizard = ({
               value={candidateName}
               onChange={(e) => setCandidateName(e.target.value)}
               placeholder="Your full name"
+              autoFocus
               style={{
                 padding: '12px',
                 borderRadius: '6px',
