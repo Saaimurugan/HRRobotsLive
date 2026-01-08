@@ -329,7 +329,9 @@ def lambda_handler(event, context):
                 'previous_questions': previous_questions,
                 'previous_answers': previous_answers_list,
                 'question_count': len(previous_answers),
-                'current_topic': current_topic
+                'current_topic': current_topic,
+                'topic_quota': topic_quota,
+                'answered_by_topic': answered_by_topic
             })
         }
 
