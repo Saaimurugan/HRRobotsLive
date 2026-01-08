@@ -33,6 +33,9 @@ class QuestionPreloader {
       return Promise.resolve(this.preloadedQuestions.get(preloadKey));
     }
 
+    // Add a small delay to reduce concurrent API calls
+    await new Promise(resolve => setTimeout(resolve, 200));
+
     // console.log(`Preloading next question for ${preloadKey} (current: ${currentQuestionNumber}/${totalQuestions})`);
     
     // Start preloading
