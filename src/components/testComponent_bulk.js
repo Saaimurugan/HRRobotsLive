@@ -361,28 +361,26 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     {!isSubmitted && !isInitialLoading && !loadingError && questions.length > 0 && (
     <div className="MCQOuterWrap" role="region" aria-label="Test Questions">
       
-      {/* Test Progress Summary */}
-      <div className="test-summary">
-        <h1 className="test-title">Test Questions</h1>
-        <div className="progress-stats">
-          <div className="stat-item">
-            <span className="stat-number">{questions.length}</span>
-            <span className="stat-label">Total Questions</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{answers.filter(a => a && a !== '').length}</span>
-            <span className="stat-label">Answered</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-number">{topicOrder.length}</span>
-            <span className="stat-label">Topics</span>
+      {/* Topic Navigation Bar with Counts */}
+      <div className="topic-navigation-bar">
+        <div className="nav-header">
+          <h3 className="nav-title">Topics</h3>
+          <div className="nav-stats">
+            <div className="stat-item">
+              <span className="stat-number">{questions.length}</span>
+              <span className="stat-label">Total Questions</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{answers.filter(a => a && a !== '').length}</span>
+              <span className="stat-label">Answered</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{topicOrder.length}</span>
+              <span className="stat-label">Topics</span>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Topic Navigation Bar */}
-      <div className="topic-navigation-bar">
-        <h3 className="nav-title">Topics</h3>
+        
         <div className="topic-nav-buttons">
           {topicOrder.map((topic, topicIndex) => {
             const topicQuestions = groupedQuestions[topic] || [];

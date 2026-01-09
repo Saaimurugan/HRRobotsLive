@@ -320,12 +320,47 @@ fieldset {
   box-shadow: var(--shadow-sm);
 }
 
+.nav-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
 .nav-title {
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-  margin: 0 0 16px 0;
-  text-align: center;
+  margin: 0;
+}
+
+.nav-stats {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.nav-stats .stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.nav-stats .stat-number {
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary);
+}
+
+.nav-stats .stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Topic Navigation Buttons */
@@ -391,9 +426,28 @@ fieldset {
     margin-bottom: 20px;
   }
   
+  .nav-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  
   .nav-title {
-    font-size: var(--font-size-base);
-    margin-bottom: 12px;
+    font-size: var(--font-size-lg);
+  }
+  
+  .nav-stats {
+    gap: 16px;
+  }
+  
+  .nav-stats .stat-number {
+    font-size: var(--font-size-xl);
+  }
+  
+  .nav-stats .stat-label {
+    font-size: var(--font-size-xs);
   }
   
   .topic-nav-buttons {
@@ -409,6 +463,24 @@ fieldset {
 @media (max-width: 480px) {
   .topic-navigation-bar {
     padding: 12px;
+  }
+  
+  .nav-header {
+    gap: 12px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+  
+  .nav-title {
+    font-size: var(--font-size-base);
+  }
+  
+  .nav-stats {
+    gap: 12px;
+  }
+  
+  .nav-stats .stat-number {
+    font-size: var(--font-size-lg);
   }
   
   .topic-nav-buttons {
