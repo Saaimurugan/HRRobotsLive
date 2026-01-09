@@ -328,21 +328,48 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     }
   };
 
+  // Create ordered questions array based on topic order
+  const getOrderedQuestions = () => {
+    const orderedQuestions = [];
+    topicOrder.forEach(topic => {
+      const topicQuestions = groupedQuestions[topic] || [];
+      topicQuestions.forEach(question => {
+        orderedQuestions.push({
+          originalIndex: question.originalIndex,
+          topic: topic,
+          questionID: question.questionID
+        });
+      });
+    });
+    return orderedQuestions;
+  };
+
+  // Calculate the display question number based on ordered sequence
+  const getDisplayQuestionNumber = () => {
+    const orderedQuestions = getOrderedQuestions();
+    const displayIndex = orderedQuestions.findIndex(q => q.originalIndex === currentQuestionIndex);
+    return displayIndex !== -1 ? displayIndex + 1 : currentQuestionIndex + 1;
+  };
+
+  // Check if current question is the first in display order
+  const isFirstQuestion = () => {
+    const orderedQuestions = getOrderedQuestions();
+    const displayIndex = orderedQuestions.findIndex(q => q.originalIndex === currentQuestionIndex);
+    return displayIndex === 0;
+  };
+
+  // Check if current question is the last in display order
+  const isLastQuestion = () => {
+    const orderedQuestions = getOrderedQuestions();
+    const displayIndex = orderedQuestions.findIndex(q => q.originalIndex === currentQuestionIndex);
+    return displayIndex === orderedQuestions.length - 1;
+  };
+
   // Report progress to parent component
   useEffect(() => {
     if (onProgressUpdate) {
       // Create ordered question list for progress dots
-      const orderedQuestions = [];
-      topicOrder.forEach(topic => {
-        const topicQuestions = groupedQuestions[topic] || [];
-        topicQuestions.forEach(question => {
-          orderedQuestions.push({
-            originalIndex: question.originalIndex,
-            topic: topic,
-            questionID: question.questionID
-          });
-        });
-      });
+      const orderedQuestions = getOrderedQuestions();
 
       onProgressUpdate({
         currentQuestion: currentQuestionIndex,
@@ -516,7 +543,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
               <h2 className="topic-title">{topicOrder[currentTopicIndex]}</h2>
               <div className="topic-stats">
                 <span className="topic-question-count">
-                  Question {currentQuestionInTopic + 1} of {groupedQuestions[topicOrder[currentTopicIndex]]?.length || 0}
+                  Question {getDisplayQuestionNumber()} of {questions.length}
                 </span>
                 <span className="topic-progress">
                   Topic {currentTopicIndex + 1} of {topicOrder.length}
@@ -529,7 +556,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
               <div className="current-question-display">
                 <div className="question-card current-question">
                   <div className="question-header">
-                    <span className="question-number">Q{currentQuestionInTopic + 1}</span>
+                    <span className="question-number">Q{getDisplayQuestionNumber()}</span>
                     <div className="question-title-container">
                       <h3 className="question-text">{currentQuestion.question}</h3>
                       <span className={`question-status ${answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? 'answered' : 'unanswered'}`}>
@@ -541,7 +568,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                   <div className="question-content">
                     
                     <fieldset className="question-options">
-                      <legend className="sr-only">Select your answer for question {currentQuestionInTopic + 1} in {topicOrder[currentTopicIndex]}</legend>
+                      <legend className="sr-only">Select your answer for question {getDisplayQuestionNumber()}</legend>
                       <ul className="options-list" role="radiogroup">
                         {currentQuestion.options?.map((option, optionIndex) => {
                           const isSelected = answers[currentQuestionIndex] === option;
@@ -581,19 +608,18 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       <div className="navigation-controls">
         <button
           onClick={goToPreviousQuestion}
-          disabled={currentTopicIndex === 0 && currentQuestionInTopic === 0}
+          disabled={isFirstQuestion()}
           className="nav-button prev-button"
         >
           Previous
         </button>
         
         <span className="question-progress">
-          {topicOrder[currentTopicIndex]} - Question {currentQuestionInTopic + 1} of {groupedQuestions[topicOrder[currentTopicIndex]]?.length || 0}
+          Question {getDisplayQuestionNumber()} of {questions.length} - {topicOrder[currentTopicIndex]}
         </span>
         
-        {/* Check if we're at the last question of the last topic */}
-        {currentTopicIndex === topicOrder.length - 1 && 
-         currentQuestionInTopic === (groupedQuestions[topicOrder[currentTopicIndex]]?.length || 1) - 1 ? (
+        {/* Check if we're at the last question */}
+        {isLastQuestion() ? (
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
@@ -607,9 +633,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
             onClick={goToNextQuestion}
             className="nav-button next-button"
           >
-            {currentQuestionInTopic === (groupedQuestions[topicOrder[currentTopicIndex]]?.length || 1) - 1 
-              ? `Next Topic: ${topicOrder[currentTopicIndex + 1] || ''}` 
-              : 'Next Question'}
+            {isLastQuestion() ? 'Last Question' : 'Next Question'}
           </button>
         )}
       </div>
