@@ -1285,33 +1285,66 @@ if (userUniqueID != '')
           '--dot-size': numberOfQuestions <= 20 ? '28px' : numberOfQuestions <= 35 ? '24px' : numberOfQuestions <= 50 ? '20px' : '16px',
           '--dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 35 ? '10px' : numberOfQuestions <= 50 ? '9px' : '8px',
         }}>
-          {Array.from({ length: numberOfQuestions }, (_, i) => {
-            const questionNum = i + 1;
-            const currentDisplayQuestion = testProgress.currentQuestion + 1;
-            const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
-            const isCurrent = questionNum === currentDisplayQuestion;
-            const isClickable = i < testProgress.questionsLoaded;
-            
-            return (
-              <button
-                key={i}
-                onClick={() => isClickable && handleQuestionDotClick(questionNum)}
-                className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
-                style={{
-                  width: 'var(--dot-size)',
-                  height: 'var(--dot-size)',
-                  fontSize: 'var(--dot-font)',
-                }}
-                title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
-                aria-label={`Question ${questionNum}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
-                aria-current={isCurrent ? 'step' : undefined}
-                disabled={!isClickable}
-                tabIndex={isClickable ? 0 : -1}
-              >
-                {questionNum}
-              </button>
-            );
-          })}
+          {testProgress.orderedQuestions ? (
+            // Use the ordered questions from TestComponent
+            testProgress.orderedQuestions.map((questionInfo, displayIndex) => {
+              const questionNum = displayIndex + 1; // Sequential numbering in display order
+              const originalIndex = questionInfo.originalIndex;
+              const currentDisplayQuestion = testProgress.currentQuestion + 1;
+              const isAnswered = testProgress.answers[originalIndex] && testProgress.answers[originalIndex] !== "";
+              const isCurrent = originalIndex === testProgress.currentQuestion;
+              const isClickable = displayIndex < testProgress.questionsLoaded;
+              
+              return (
+                <button
+                  key={`${questionInfo.questionID}-${displayIndex}`}
+                  onClick={() => isClickable && handleQuestionDotClick(originalIndex + 1)}
+                  className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+                  style={{
+                    width: 'var(--dot-size)',
+                    height: 'var(--dot-size)',
+                    fontSize: 'var(--dot-font)',
+                  }}
+                  title={isClickable ? `Go to Question ${questionNum} (${questionInfo.topic})` : `Question ${questionNum} (not loaded yet)`}
+                  aria-label={`Question ${questionNum} from ${questionInfo.topic}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  disabled={!isClickable}
+                  tabIndex={isClickable ? 0 : -1}
+                >
+                  {questionNum}
+                </button>
+              );
+            })
+          ) : (
+            // Fallback to original sequential numbering if orderedQuestions not available
+            Array.from({ length: numberOfQuestions }, (_, i) => {
+              const questionNum = i + 1;
+              const currentDisplayQuestion = testProgress.currentQuestion + 1;
+              const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
+              const isCurrent = questionNum === currentDisplayQuestion;
+              const isClickable = i < testProgress.questionsLoaded;
+              
+              return (
+                <button
+                  key={i}
+                  onClick={() => isClickable && handleQuestionDotClick(questionNum)}
+                  className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+                  style={{
+                    width: 'var(--dot-size)',
+                    height: 'var(--dot-size)',
+                    fontSize: 'var(--dot-font)',
+                  }}
+                  title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
+                  aria-label={`Question ${questionNum}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  disabled={!isClickable}
+                  tabIndex={isClickable ? 0 : -1}
+                >
+                  {questionNum}
+                </button>
+              );
+            })
+          )}
         </nav>
         ) : (
         <div className="progress-dots-desktop" style={{ justifyContent: 'center' }} role="status" aria-live="polite">
@@ -1425,37 +1458,71 @@ if (userUniqueID != '')
               '--modal-dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 50 ? '10px' : '9px',
             }}
           >
-            {Array.from({ length: numberOfQuestions }, (_, i) => {
-              const questionNum = i + 1;
-              const currentDisplayQuestion = testProgress.currentQuestion + 1;
-              const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
-              const isCurrent = questionNum === currentDisplayQuestion;
-              const isClickable = i < testProgress.questionsLoaded;
-              return (
-                <button
-                  key={i}
-                  onClick={() => {
-                    if (isClickable) {
-                      handleQuestionDotClick(questionNum);
-                      setShowProgressModal(false);
-                    }
-                  }}
-                  className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
-                  style={{
-                    width: 'var(--modal-dot-size)',
-                    height: 'var(--modal-dot-size)',
-                    fontSize: 'var(--modal-dot-font)',
-                    margin: '0 auto',
-                  }}
-                  title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
-                  aria-label={`Question ${questionNum}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
-                  aria-current={isCurrent ? 'step' : undefined}
-                  disabled={!isClickable}
-                >
-                  {questionNum}
-                </button>
-              );
-            })}
+            {testProgress.orderedQuestions ? (
+              // Use the ordered questions from TestComponent
+              testProgress.orderedQuestions.map((questionInfo, displayIndex) => {
+                const questionNum = displayIndex + 1; // Sequential numbering in display order
+                const originalIndex = questionInfo.originalIndex;
+                const currentDisplayQuestion = testProgress.currentQuestion + 1;
+                const isAnswered = testProgress.answers[originalIndex] && testProgress.answers[originalIndex] !== "";
+                const isCurrent = originalIndex === testProgress.currentQuestion;
+                const isClickable = displayIndex < testProgress.questionsLoaded;
+                
+                return (
+                  <button
+                    key={`${questionInfo.questionID}-${displayIndex}`}
+                    onClick={() => {
+                      if (isClickable) {
+                        handleQuestionDotClick(originalIndex + 1);
+                        setShowProgressModal(false);
+                      }
+                    }}
+                    className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+                    style={{
+                      width: 'var(--modal-dot-size)',
+                      height: 'var(--modal-dot-size)',
+                      fontSize: 'var(--modal-dot-font)',
+                    }}
+                    title={isClickable ? `Go to Question ${questionNum} (${questionInfo.topic})` : `Question ${questionNum} (not loaded yet)`}
+                    aria-label={`Question ${questionNum} from ${questionInfo.topic}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
+                    disabled={!isClickable}
+                  >
+                    {questionNum}
+                  </button>
+                );
+              })
+            ) : (
+              // Fallback to original sequential numbering if orderedQuestions not available
+              Array.from({ length: numberOfQuestions }, (_, i) => {
+                const questionNum = i + 1;
+                const currentDisplayQuestion = testProgress.currentQuestion + 1;
+                const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
+                const isCurrent = questionNum === currentDisplayQuestion;
+                const isClickable = i < testProgress.questionsLoaded;
+                return (
+                  <button
+                    key={i}
+                    onClick={() => {
+                      if (isClickable) {
+                        handleQuestionDotClick(questionNum);
+                        setShowProgressModal(false);
+                      }
+                    }}
+                    className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+                    style={{
+                      width: 'var(--modal-dot-size)',
+                      height: 'var(--modal-dot-size)',
+                      fontSize: 'var(--modal-dot-font)',
+                    }}
+                    title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
+                    aria-label={`Question ${questionNum}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
+                    disabled={!isClickable}
+                  >
+                    {questionNum}
+                  </button>
+                );
+              })
+            )}
           </nav>
           <div className="progress-modal-legend" aria-hidden="true">
             <span className="legend-item">

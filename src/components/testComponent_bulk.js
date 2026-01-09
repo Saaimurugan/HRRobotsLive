@@ -311,15 +311,31 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   // Report progress to parent component
   useEffect(() => {
     if (onProgressUpdate) {
+      // Create ordered question list for progress dots
+      const orderedQuestions = [];
+      topicOrder.forEach(topic => {
+        const topicQuestions = groupedQuestions[topic] || [];
+        topicQuestions.forEach(question => {
+          orderedQuestions.push({
+            originalIndex: question.originalIndex,
+            topic: topic,
+            questionID: question.questionID
+          });
+        });
+      });
+
       onProgressUpdate({
         currentQuestion: currentQuestionIndex,
         questionCount: 0, // No previously answered questions in bulk load
         answers,
         totalQuestions: totalQuestions,
-        questionsLoaded: questions.length
+        questionsLoaded: questions.length,
+        orderedQuestions: orderedQuestions, // Add ordered questions for progress dots
+        currentTopicIndex: currentTopicIndex,
+        currentQuestionInTopic: currentQuestionInTopic
       });
     }
-  }, [currentQuestionIndex, answers, onProgressUpdate, questions.length, totalQuestions]);
+  }, [currentQuestionIndex, answers, onProgressUpdate, questions.length, totalQuestions, topicOrder, groupedQuestions, currentTopicIndex, currentQuestionInTopic]);
 
   // Expose navigation function to parent via ref
   useEffect(() => {
