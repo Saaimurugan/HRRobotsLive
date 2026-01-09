@@ -16,6 +16,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   // Topic pagination state
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
   const [currentQuestionInTopic, setCurrentQuestionInTopic] = useState(0);
+  const [isTopicsCollapsed, setIsTopicsCollapsed] = useState(false);
   
   // Existing state
   const [answers, setAnswers] = useState([]);
@@ -140,6 +141,17 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       setIsInitialLoading(false);
     }
   }, [testID, candidateName]);
+
+  // Scroll detection for collapsible topics
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      setIsTopicsCollapsed(scrollTop > 100); // Collapse after 100px scroll
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Navigate between questions (topic-wise pagination)
   const navigateToQuestion = (newIndex) => {
@@ -440,7 +452,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     <div className="MCQOuterWrap" role="region" aria-label="Test Questions">
       
       {/* Topic Navigation Bar with Counts */}
-      <div className="topic-navigation-bar">
+      <div className={`topic-navigation-bar ${isTopicsCollapsed ? 'collapsed' : ''}`}>
         <div className="nav-header">
           <h3 className="nav-title">Topics</h3>
           <div className="nav-stats">
@@ -457,9 +469,26 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
               <span className="stat-label">Topics</span>
             </div>
           </div>
+          <button 
+            className="collapse-toggle"
+            onClick={() => setIsTopicsCollapsed(!isTopicsCollapsed)}
+            aria-label={isTopicsCollapsed ? 'Expand topics' : 'Collapse topics'}
+          >
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              className={`collapse-icon ${isTopicsCollapsed ? 'rotated' : ''}`}
+            >
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </button>
         </div>
         
-        <div className="topic-nav-buttons">
+        <div className={`topic-nav-buttons ${isTopicsCollapsed ? 'hidden' : ''}`}>
           {topicOrder.map((topic, topicIndex) => {
             const topicQuestions = groupedQuestions[topic] || [];
             const answeredInTopic = topicQuestions.filter(q => answers[q.originalIndex] && answers[q.originalIndex] !== '').length;
