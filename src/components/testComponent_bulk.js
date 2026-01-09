@@ -530,13 +530,15 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                 <div className="question-card current-question">
                   <div className="question-header">
                     <span className="question-number">Q{currentQuestionInTopic + 1}</span>
-                    <span className={`question-status ${answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? 'answered' : 'unanswered'}`}>
-                      {answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? '✓' : '○'}
-                    </span>
+                    <div className="question-title-container">
+                      <h3 className="question-text">{currentQuestion.question}</h3>
+                      <span className={`question-status ${answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? 'answered' : 'unanswered'}`}>
+                        {answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? '✓' : '○'}
+                      </span>
+                    </div>
                   </div>
                   
                   <div className="question-content">
-                    <h3 className="question-text">{currentQuestion.question}</h3>
                     
                     <fieldset className="question-options">
                       <legend className="sr-only">Select your answer for question {currentQuestionInTopic + 1} in {topicOrder[currentTopicIndex]}</legend>
