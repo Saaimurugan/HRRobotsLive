@@ -23,7 +23,7 @@ const TimerComponent = ({ onTimerEnd, testDuration, startTimer = true }) => {
    useEffect(() => {
       if (startTimer && !timerStarted) {
          setTimerStarted(true);
-         console.log('🕐 Test timer started - first question loaded');
+         //console.log('🕐 Test timer started - first question loaded');
       }
    }, [startTimer, timerStarted]);
 

@@ -38,7 +38,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     setLoadingError('');
 
     try {
-      console.log('Loading questions for testID:', testID, 'candidateName:', candidateName);
+      //console.log('Loading questions for testID:', testID, 'candidateName:', candidateName);
       
       const response = await fetch(
         "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getAllQuestionsForTest",
@@ -54,7 +54,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       }
 
       const data = await response.json();
-      console.log('API Response:', data);
+      //console.log('API Response:', data);
 
       if (data.statusCode === 200) {
         const parsedBody = JSON.parse(data.body);
@@ -99,7 +99,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         const actualTotalQuestions = parsedBody.test_config?.max_questions || parsedBody.total_questions || numberOfQuestions;
         setAnswers(new Array(actualTotalQuestions).fill(''));
         
-        console.log(`Loaded ${parsedBody.questions.length} questions grouped by ${topics.length} topics`);
+        //console.log(`Loaded ${parsedBody.questions.length} questions grouped by ${topics.length} topics`);
         
       } else if (data.statusCode === 404) {
         const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
@@ -132,7 +132,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   // Load questions on component mount
   useEffect(() => {
     if (testID && candidateName) {
-      console.log('TestComponent mounted with:', { testID, candidateName, numberOfQuestions });
+      //console.log('TestComponent mounted with:', { testID, candidateName, numberOfQuestions });
       loadAllQuestions();
     } else {
       console.error('Missing required props:', { testID, candidateName });
@@ -306,11 +306,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         setIsSubmitted(true);
       } else {
         setMessage("Failed to submit test, please take screenshot and contact support.");
-        console.error("Failed to submit test", data);
+        //console.error("Failed to submit test", data);
       }
     } catch (error) {
       setMessage("Error submitting test.");
-      console.error("Error submitting test:", error);
+      //console.error("Error submitting test:", error);
     } finally {
       setIsSubmitting(false);
     }

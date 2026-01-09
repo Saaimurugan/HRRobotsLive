@@ -507,7 +507,7 @@ const TestPage = () => {
   };
 
   const handleQuestionDotClick = (questionNum) => {
-    console.log('Navigating to question:', questionNum); // Debug log
+    //console.log('Navigating to question:', questionNum); // Debug log
     
     // For ordered questions, we need to find the actual question index
     if (testProgress.orderedQuestions && testProgress.orderedQuestions.length > 0) {
@@ -518,25 +518,25 @@ const TestPage = () => {
         const questionInfo = testProgress.orderedQuestions[displayIndex];
         const targetIndex = questionInfo.originalIndex;
         
-        console.log('Display index:', displayIndex, 'Target index:', targetIndex, 'Question info:', questionInfo);
+        //console.log('Display index:', displayIndex, 'Target index:', targetIndex, 'Question info:', questionInfo);
         
         if (navigateToQuestionRef.current) {
           navigateToQuestionRef.current(targetIndex);
         } else {
-          console.log('Navigation ref not available');
+          //console.log('Navigation ref not available');
         }
       } else {
-        console.log('Display index out of range:', displayIndex, 'Max:', testProgress.orderedQuestions.length);
+        //console.log('Display index out of range:', displayIndex, 'Max:', testProgress.orderedQuestions.length);
       }
     } else {
       // Fallback to original logic if orderedQuestions not available
       const targetIndex = questionNum - 1;
-      console.log('Using fallback navigation to index:', targetIndex);
+      //console.log('Using fallback navigation to index:', targetIndex);
       
       if (targetIndex >= 0 && targetIndex < questions.length && navigateToQuestionRef.current) {
         navigateToQuestionRef.current(targetIndex);
       } else {
-        console.log('Fallback navigation failed:', { targetIndex, questionsLength: questions.length, hasRef: !!navigateToQuestionRef.current });
+        //console.log('Fallback navigation failed:', { targetIndex, questionsLength: questions.length, hasRef: !!navigateToQuestionRef.current });
       }
     }
   };

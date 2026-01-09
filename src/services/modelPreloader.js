@@ -27,7 +27,7 @@ class ModelPreloader {
       await this.loadingPromise;
       this.modelsLoaded = true;
       const loadTime = performance.now() - this.loadStartTime;
-      console.log(`Face-api.js models loaded in ${loadTime.toFixed(2)}ms`);
+      //console.log(`Face-api.js models loaded in ${loadTime.toFixed(2)}ms`);
     } catch (error) {
       console.error('Error loading face-api.js models:', error);
       this.loadingPromise = null; // Reset so we can try again
@@ -77,7 +77,7 @@ class ModelPreloader {
         timeoutPromise
       ]);
 
-      console.log('All face-api.js models loaded successfully');
+      //console.log('All face-api.js models loaded successfully');
     } catch (error) {
       console.error('Failed to load face-api.js models:', error);
       throw error;

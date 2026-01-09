@@ -25,7 +25,7 @@ class PerformanceMonitor {
       metric.endTime = performance.now();
       metric.duration = metric.endTime - metric.startTime;
       
-      console.log(`⏱️ ${label}: ${metric.duration.toFixed(2)}ms`);
+      //console.log(`⏱️ ${label}: ${metric.duration.toFixed(2)}ms`);
       return metric.duration;
     }
   }
@@ -78,14 +78,14 @@ class PerformanceMonitor {
     // Largest Contentful Paint
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        console.log('🎯 LCP:', entry.startTime.toFixed(2) + 'ms');
+        //console.log('🎯 LCP:', entry.startTime.toFixed(2) + 'ms');
       }
     }).observe({ entryTypes: ['largest-contentful-paint'] });
 
     // First Input Delay
     new PerformanceObserver((list) => {
       for (const entry of list.getEntries()) {
-        console.log('⚡ FID:', entry.processingStart - entry.startTime + 'ms');
+        //console.log('⚡ FID:', entry.processingStart - entry.startTime + 'ms');
       }
     }).observe({ entryTypes: ['first-input'] });
 
@@ -97,7 +97,7 @@ class PerformanceMonitor {
           clsValue += entry.value;
         }
       }
-      console.log('📐 CLS:', clsValue.toFixed(4));
+      //console.log('📐 CLS:', clsValue.toFixed(4));
     }).observe({ entryTypes: ['layout-shift'] });
   }
 
@@ -108,13 +108,13 @@ class PerformanceMonitor {
     // Log navigation timing
     const navigation = performance.getEntriesByType('navigation')[0];
     if (navigation) {
-      console.log('📦 Bundle Performance:');
-      console.log(`  DNS Lookup: ${(navigation.domainLookupEnd - navigation.domainLookupStart).toFixed(2)}ms`);
-      console.log(`  TCP Connect: ${(navigation.connectEnd - navigation.connectStart).toFixed(2)}ms`);
-      console.log(`  Request: ${(navigation.responseStart - navigation.requestStart).toFixed(2)}ms`);
-      console.log(`  Response: ${(navigation.responseEnd - navigation.responseStart).toFixed(2)}ms`);
-      console.log(`  DOM Processing: ${(navigation.domContentLoadedEventEnd - navigation.responseEnd).toFixed(2)}ms`);
-      console.log(`  Total Load Time: ${(navigation.loadEventEnd - navigation.navigationStart).toFixed(2)}ms`);
+      //console.log('📦 Bundle Performance:');
+      //console.log(`  DNS Lookup: ${(navigation.domainLookupEnd - navigation.domainLookupStart).toFixed(2)}ms`);
+      //console.log(`  TCP Connect: ${(navigation.connectEnd - navigation.connectStart).toFixed(2)}ms`);
+      //console.log(`  Request: ${(navigation.responseStart - navigation.requestStart).toFixed(2)}ms`);
+      //console.log(`  Response: ${(navigation.responseEnd - navigation.responseStart).toFixed(2)}ms`);
+      //console.log(`  DOM Processing: ${(navigation.domContentLoadedEventEnd - navigation.responseEnd).toFixed(2)}ms`);
+      //console.log(`  Total Load Time: ${(navigation.loadEventEnd - navigation.navigationStart).toFixed(2)}ms`);
     }
   }
 

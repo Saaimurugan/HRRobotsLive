@@ -59,7 +59,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         // Initialize answers array
         setAnswers(new Array(parsedBody.total_questions).fill(''));
         
-        console.log(`Loaded ${parsedBody.total_questions} questions`);
+        //console.log(`Loaded ${parsedBody.total_questions} questions`);
         
       } else if (data.statusCode === 404) {
         const errorBody = JSON.parse(data.body);
@@ -68,7 +68,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         throw new Error(`API returned status ${data.statusCode}`);
       }
     } catch (error) {
-      console.error('Error loading questions:', error);
+      //console.error('Error loading questions:', error);
       setLoadingError(`Failed to load questions: ${error.message}`);
     } finally {
       setIsInitialLoading(false);
@@ -180,11 +180,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         if (onSubmit) onSubmit(); // Notify parent that test is submitted
       } else {
         setMessage("Failed to submit test, please take screenshot and contact support.");
-        console.error("Failed to submit test", data);
+        //console.error("Failed to submit test", data);
       }
     } catch (error) {
       setMessage("Error submitting test.");
-      console.error("Error submitting test:", error);
+      //console.error("Error submitting test:", error);
     } finally {
       setIsSubmitting(false);
     }
