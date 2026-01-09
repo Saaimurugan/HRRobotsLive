@@ -333,6 +333,34 @@ fieldset {
   margin-bottom: 6px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--color-border);
+  gap: 12px;
+}
+
+.nav-submit-button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.nav-submit-button:hover:not(:disabled) {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.nav-submit-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .nav-title {
@@ -443,10 +471,15 @@ fieldset {
   
   .nav-header {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     align-items: center;
     margin-bottom: 16px;
     padding-bottom: 12px;
+  }
+  
+  .nav-submit-button {
+    order: 1;
+    margin-top: 8px;
   }
   
   .nav-title {
@@ -484,6 +517,11 @@ fieldset {
     gap: 12px;
     margin-bottom: 12px;
     padding-bottom: 8px;
+  }
+  
+  .nav-submit-button {
+    padding: 4px 12px;
+    font-size: 10px;
   }
   
   .nav-title {
@@ -1253,6 +1291,11 @@ fieldset {
   margin: 0;
 }
 
+.topic-navigation-bar.collapsed .nav-submit-button {
+  padding: 4px 12px;
+  font-size: 10px;
+}
+
 .topic-navigation-bar.collapsed .nav-stats {
   gap: 16px;
 }
@@ -1425,5 +1468,19 @@ fieldset {
     top: -5px;
     font-size: 6px;
     padding: 1px 3px;
+  }
+}
+/* Responsive styles for nav submit button on small heights */
+@media (max-height: 700px) {
+  .nav-submit-button {
+    padding: 4px 12px;
+    font-size: 10px;
+  }
+}
+
+@media (max-height: 600px) {
+  .nav-submit-button {
+    padding: 3px 10px;
+    font-size: 9px;
   }
 }

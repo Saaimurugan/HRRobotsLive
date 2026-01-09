@@ -482,6 +482,14 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       <div className={`topic-navigation-bar ${isTopicsCollapsed ? 'collapsed' : ''}`}>
         <div className="nav-header">
           <h3 className="nav-title">Topics</h3>
+          <button 
+            className="nav-submit-button"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            title="Submit test - you can submit at any time"
+          >
+            {isSubmitting ? "SUBMITTING..." : "SUBMIT"}
+          </button>
           <div className="nav-stats">
             <div className="stat-item">
               <span className="stat-number">{questions.length}</span>
