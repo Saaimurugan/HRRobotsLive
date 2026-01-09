@@ -4,7 +4,7 @@ import SubmittedMessage from "./submittedMessage.js";
 import DisplayMessage from "./displayMessage.js";
 import html2canvas from 'html2canvas';
 
-const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit }) => {
+const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, submitTestRef }) => {
   // State for questions and answers
   const [questions, setQuestions] = useState([]);
   const [groupedQuestions, setGroupedQuestions] = useState({}); // Group questions by topic
@@ -258,6 +258,15 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
 
   // Submit all answers (no encryption)
   const handleSubmit = async () => {
+    // First, ask parent to show confirmation modal
+    if (onSubmit) {
+      onSubmit();
+      return; // Don't proceed with submission yet
+    }
+  };
+
+  // Actual submission function that will be called after confirmation
+  const performActualSubmit = async () => {
     setIsSubmitting(true);
     try {
       // Prepare answers for submission
@@ -295,7 +304,6 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       if (data.statusCode === 200) {
         setMessage("Test submitted successfully!");
         setIsSubmitted(true);
-        if (onSubmit) onSubmit(); // Notify parent that test is submitted
       } else {
         setMessage("Failed to submit test, please take screenshot and contact support.");
         console.error("Failed to submit test", data);
@@ -344,6 +352,13 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     }
   }, [navigateToQuestionRef]);
 
+  // Expose submit function to parent via ref
+  useEffect(() => {
+    if (submitTestRef) {
+      submitTestRef.current = performActualSubmit;
+    }
+  }, [submitTestRef]);
+
   // Handle redirect after submission or error
   useEffect(() => {
     if (isSubmitted || message) {
@@ -358,9 +373,56 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     <>
     {/* Loading State */}
     {isInitialLoading && (
-      <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading your test questions...</p>
+      <div className="test-skeleton-container">
+        <div className="skeleton-header">
+          <div className="skeleton-loader skeleton-title"></div>
+          <div className="skeleton-stats">
+            <div className="skeleton-stat">
+              <div className="skeleton-loader skeleton-stat-number"></div>
+              <div className="skeleton-loader skeleton-stat-label"></div>
+            </div>
+            <div className="skeleton-stat">
+              <div className="skeleton-loader skeleton-stat-number"></div>
+              <div className="skeleton-loader skeleton-stat-label"></div>
+            </div>
+            <div className="skeleton-stat">
+              <div className="skeleton-loader skeleton-stat-number"></div>
+              <div className="skeleton-loader skeleton-stat-label"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="skeleton-nav-bar">
+          <div className="skeleton-loader skeleton-nav-title"></div>
+          <div className="skeleton-nav-buttons">
+            {Array.from({ length: 6 }, (_, i) => (
+              <div key={i} className="skeleton-loader skeleton-topic-button"></div>
+            ))}
+          </div>
+          <div className="skeleton-question-dots">
+            {Array.from({ length: 20 }, (_, i) => (
+              <div key={i} className="skeleton-loader skeleton-question-dot"></div>
+            ))}
+          </div>
+        </div>
+        
+        <div className="skeleton-question-container">
+          <div className="skeleton-question-header">
+            <div className="skeleton-loader skeleton-topic-title"></div>
+            <div className="skeleton-loader skeleton-question-info"></div>
+          </div>
+          <div className="skeleton-loader skeleton-question-text"></div>
+          <div className="skeleton-options">
+            {Array.from({ length: 4 }, (_, i) => (
+              <div key={i} className="skeleton-loader skeleton-option"></div>
+            ))}
+          </div>
+          <div className="skeleton-navigation">
+            <div className="skeleton-loader skeleton-nav-button"></div>
+            <div className="skeleton-loader skeleton-progress-text"></div>
+            <div className="skeleton-loader skeleton-nav-button"></div>
+          </div>
+        </div>
       </div>
     )}
     

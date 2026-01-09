@@ -296,8 +296,11 @@ const TestPage = () => {
   const [ isTimeOut, setIsTimeOut ] = useState(true);
   const [testProgress, setTestProgress] = useState({ currentQuestion: 0, questionCount: 0, answers: [], totalQuestions: numberOfQuestions, questionsLoaded: 0 });
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isFaceDetectionLoaded, setIsFaceDetectionLoaded] = useState(false);
   const navigateToQuestionRef = useRef(null);
+  const submitTestRef = useRef(null);
   const lastClipboardCheckRef = useRef(null); // Track last clipboard state
 
   // Proctor warning modal states
@@ -504,12 +507,37 @@ const TestPage = () => {
   };
 
   const handleQuestionDotClick = (questionNum) => {
-    // Convert question number to index (questionNum is 1-based, index is 0-based)
-    const targetIndex = questionNum - 1;
+    console.log('Navigating to question:', questionNum); // Debug log
     
-    // Only allow navigation to questions that have been loaded
-    if (targetIndex >= 0 && targetIndex < questions.length && navigateToQuestionRef.current) {
-      navigateToQuestionRef.current(targetIndex);
+    // For ordered questions, we need to find the actual question index
+    if (testProgress.orderedQuestions && testProgress.orderedQuestions.length > 0) {
+      // questionNum is 1-based display order, convert to 0-based
+      const displayIndex = questionNum - 1;
+      
+      if (displayIndex >= 0 && displayIndex < testProgress.orderedQuestions.length) {
+        const questionInfo = testProgress.orderedQuestions[displayIndex];
+        const targetIndex = questionInfo.originalIndex;
+        
+        console.log('Display index:', displayIndex, 'Target index:', targetIndex, 'Question info:', questionInfo);
+        
+        if (navigateToQuestionRef.current) {
+          navigateToQuestionRef.current(targetIndex);
+        } else {
+          console.log('Navigation ref not available');
+        }
+      } else {
+        console.log('Display index out of range:', displayIndex, 'Max:', testProgress.orderedQuestions.length);
+      }
+    } else {
+      // Fallback to original logic if orderedQuestions not available
+      const targetIndex = questionNum - 1;
+      console.log('Using fallback navigation to index:', targetIndex);
+      
+      if (targetIndex >= 0 && targetIndex < questions.length && navigateToQuestionRef.current) {
+        navigateToQuestionRef.current(targetIndex);
+      } else {
+        console.log('Fallback navigation failed:', { targetIndex, questionsLength: questions.length, hasRef: !!navigateToQuestionRef.current });
+      }
     }
   };
 
@@ -739,6 +767,30 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated && !isSubmitted) {
       document.removeEventListener("fullscreenchange", onFullScreenChange);
       document.removeEventListener("webkitfullscreenchange", onFullScreenChange);
       document.removeEventListener("msfullscreenchange", onFullScreenChange);
+    };
+  }, []);
+
+  // Scroll detection for floating navigation
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const shouldFloat = scrollTop > 50;
+      setIsScrolled(shouldFloat);
+      
+      // Add/remove body class for content spacing
+      if (shouldFloat) {
+        document.body.classList.add('has-floating-nav');
+      } else {
+        document.body.classList.remove('has-floating-nav');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.body.classList.remove('has-floating-nav');
     };
   }, []);
 
@@ -1280,12 +1332,12 @@ if (userUniqueID != '')
         />
         {/* Progress dots for larger screens - auto-scaling based on question count */}
         {configLoaded ? (
-        <nav className="progress-dots-desktop" role="navigation" aria-label="Question navigation" style={{
+        <nav className={`progress-dots-desktop ${isScrolled ? 'floating transparent' : ''}`} role="navigation" aria-label="Question navigation" style={{
           // Auto-scale: fewer questions = larger dots, more questions = smaller dots
           '--dot-size': numberOfQuestions <= 20 ? '28px' : numberOfQuestions <= 35 ? '24px' : numberOfQuestions <= 50 ? '20px' : '16px',
           '--dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 35 ? '10px' : numberOfQuestions <= 50 ? '9px' : '8px',
         }}>
-          {testProgress.orderedQuestions ? (
+          {testProgress.orderedQuestions && testProgress.questionsLoaded > 0 ? (
             // Use the ordered questions from TestComponent
             testProgress.orderedQuestions.map((questionInfo, displayIndex) => {
               const questionNum = displayIndex + 1; // Sequential numbering in display order
@@ -1298,7 +1350,7 @@ if (userUniqueID != '')
               return (
                 <button
                   key={`${questionInfo.questionID}-${displayIndex}`}
-                  onClick={() => isClickable && handleQuestionDotClick(originalIndex + 1)}
+                  onClick={() => isClickable && handleQuestionDotClick(questionNum)}
                   className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
                   style={{
                     width: 'var(--dot-size)',
@@ -1316,38 +1368,23 @@ if (userUniqueID != '')
               );
             })
           ) : (
-            // Fallback to original sequential numbering if orderedQuestions not available
-            Array.from({ length: numberOfQuestions }, (_, i) => {
-              const questionNum = i + 1;
-              const currentDisplayQuestion = testProgress.currentQuestion + 1;
-              const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
-              const isCurrent = questionNum === currentDisplayQuestion;
-              const isClickable = i < testProgress.questionsLoaded;
-              
-              return (
-                <button
-                  key={i}
-                  onClick={() => isClickable && handleQuestionDotClick(questionNum)}
-                  className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
-                  style={{
-                    width: 'var(--dot-size)',
-                    height: 'var(--dot-size)',
-                    fontSize: 'var(--dot-font)',
-                  }}
-                  title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
-                  aria-label={`Question ${questionNum}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
-                  aria-current={isCurrent ? 'step' : undefined}
-                  disabled={!isClickable}
-                  tabIndex={isClickable ? 0 : -1}
-                >
-                  {questionNum}
-                </button>
-              );
-            })
+            // Show skeleton loaders when questions are loading
+            Array.from({ length: numberOfQuestions }, (_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className="question-dot-skeleton skeleton-loader"
+                style={{
+                  width: 'var(--dot-size)',
+                  height: 'var(--dot-size)',
+                  borderRadius: '50%',
+                }}
+                aria-hidden="true"
+              />
+            ))
           )}
         </nav>
         ) : (
-        <div className="progress-dots-desktop" style={{ justifyContent: 'center' }} role="status" aria-live="polite">
+        <div className={`progress-dots-desktop ${isScrolled ? 'floating transparent' : ''}`} style={{ justifyContent: 'center' }} role="status" aria-live="polite">
           <span style={{ fontSize: '12px', color: '#666' }}>Loading...</span>
         </div>
         )}
@@ -1394,7 +1431,7 @@ if (userUniqueID != '')
         <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
         {isFaceDetectionLoaded && configLoaded ? (
-          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} numberOfQuestions={numberOfQuestions} onSubmit={() => setIsSubmitted(true)}/>
+          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} submitTestRef={submitTestRef} numberOfQuestions={numberOfQuestions} onSubmit={() => setShowSubmitConfirmModal(true)}/>
         ) : (
           <div style={{
             display: 'flex',
@@ -1458,7 +1495,7 @@ if (userUniqueID != '')
               '--modal-dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 50 ? '10px' : '9px',
             }}
           >
-            {testProgress.orderedQuestions ? (
+            {testProgress.orderedQuestions && testProgress.questionsLoaded > 0 ? (
               // Use the ordered questions from TestComponent
               testProgress.orderedQuestions.map((questionInfo, displayIndex) => {
                 const questionNum = displayIndex + 1; // Sequential numbering in display order
@@ -1473,7 +1510,7 @@ if (userUniqueID != '')
                     key={`${questionInfo.questionID}-${displayIndex}`}
                     onClick={() => {
                       if (isClickable) {
-                        handleQuestionDotClick(originalIndex + 1);
+                        handleQuestionDotClick(questionNum);
                         setShowProgressModal(false);
                       }
                     }}
@@ -1492,36 +1529,19 @@ if (userUniqueID != '')
                 );
               })
             ) : (
-              // Fallback to original sequential numbering if orderedQuestions not available
-              Array.from({ length: numberOfQuestions }, (_, i) => {
-                const questionNum = i + 1;
-                const currentDisplayQuestion = testProgress.currentQuestion + 1;
-                const isAnswered = testProgress.answers[i] && testProgress.answers[i] !== "";
-                const isCurrent = questionNum === currentDisplayQuestion;
-                const isClickable = i < testProgress.questionsLoaded;
-                return (
-                  <button
-                    key={i}
-                    onClick={() => {
-                      if (isClickable) {
-                        handleQuestionDotClick(questionNum);
-                        setShowProgressModal(false);
-                      }
-                    }}
-                    className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
-                    style={{
-                      width: 'var(--modal-dot-size)',
-                      height: 'var(--modal-dot-size)',
-                      fontSize: 'var(--modal-dot-font)',
-                    }}
-                    title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
-                    aria-label={`Question ${questionNum}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
-                    disabled={!isClickable}
-                  >
-                    {questionNum}
-                  </button>
-                );
-              })
+              // Show skeleton loaders when questions are loading
+              Array.from({ length: numberOfQuestions }, (_, i) => (
+                <div
+                  key={`modal-skeleton-${i}`}
+                  className="question-dot-skeleton skeleton-loader"
+                  style={{
+                    width: 'var(--modal-dot-size)',
+                    height: 'var(--modal-dot-size)',
+                    borderRadius: '50%',
+                  }}
+                  aria-hidden="true"
+                />
+              ))
             )}
           </nav>
           <div className="progress-modal-legend" aria-hidden="true">
@@ -1533,6 +1553,61 @@ if (userUniqueID != '')
               <span className="legend-dot" style={{ background: 'linear-gradient(135deg, #fd7e14 0%, #ffc107 100%)' }}></span>
               Not Answered
             </span>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Submit Confirmation Modal */}
+    {showSubmitConfirmModal && (
+      <div className="submit-confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="submit-confirm-title">
+        <div className="submit-confirm-modal">
+          <div className="submit-confirm-header">
+            <h3 id="submit-confirm-title">Confirm Test Submission</h3>
+          </div>
+          <div className="submit-confirm-content">
+            <div className="submit-confirm-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4"/>
+                <circle cx="12" cy="12" r="9"/>
+              </svg>
+            </div>
+            <p className="submit-confirm-message">
+              Are you sure you want to submit your test? Once submitted, you cannot make any changes to your answers.
+            </p>
+            <div className="submit-confirm-stats">
+              <div className="confirm-stat">
+                <span className="confirm-stat-number">{testProgress.answers ? testProgress.answers.filter(a => a && a !== '').length : 0}</span>
+                <span className="confirm-stat-label">Questions Answered</span>
+              </div>
+              <div className="confirm-stat">
+                <span className="confirm-stat-number">{numberOfQuestions - (testProgress.answers ? testProgress.answers.filter(a => a && a !== '').length : 0)}</span>
+                <span className="confirm-stat-label">Questions Remaining</span>
+              </div>
+            </div>
+          </div>
+          <div className="submit-confirm-actions">
+            <button 
+              className="submit-confirm-cancel"
+              onClick={() => setShowSubmitConfirmModal(false)}
+              aria-label="Cancel submission and continue test"
+            >
+              Cancel
+            </button>
+            <button 
+              className="submit-confirm-submit"
+              onClick={() => {
+                setShowSubmitConfirmModal(false);
+                if (submitTestRef.current) {
+                  submitTestRef.current();
+                } else {
+                  setIsSubmitted(true);
+                }
+              }}
+              aria-label="Confirm and submit test"
+            >
+              Yes, Submit Test
+            </button>
           </div>
         </div>
       </div>
