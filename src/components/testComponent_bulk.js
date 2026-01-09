@@ -234,11 +234,40 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     }
   };
 
-  // Save answer locally (no immediate API call)
-  const saveAnswer = (selectedAnswer) => {
+  // Track saving state to prevent duplicate API calls
+  const [isSavingAnswer, setIsSavingAnswer] = useState(false);
+
+  // Save answer locally and to backend
+  const saveAnswer = async (selectedAnswer) => {
+    // Update local state immediately for responsive UI
     const newAnswers = [...answers];
     newAnswers[currentQuestionIndex] = selectedAnswer;
     setAnswers(newAnswers);
+    
+    // Prevent duplicate API calls
+    if (isSavingAnswer) return;
+    
+    setIsSavingAnswer(true);
+    
+    // Save answer to backend via saveAnswerSubmitted API
+    try {
+      await fetch(
+        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveAnswerSubmitted",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            testID: testID,
+            questionID: currentQuestion.questionID,
+            answer: selectedAnswer
+          }),
+        }
+      );
+    } catch (error) {
+      console.error('Error saving answer:', error);
+    } finally {
+      setIsSavingAnswer(false);
+    }
   };
 
   // Capture screenshot of the page before final submission
@@ -281,25 +310,11 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const performActualSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // Prepare answers for submission
-      const answersToSubmit = [];
-      
-      for (let i = 0; i < questions.length; i++) {
-        if (answers[i]) {
-          const answerData = {
-            questionID: questions[i].questionID,
-            answer: answers[i],
-            testID: testID,
-            timestamp: new Date().toISOString()
-          };
-          answersToSubmit.push(answerData);
-        }
-      }
-      
       // Capture screenshot before submission
       await captureSubmissionScreenshot();
 
-      // Submit answers directly (no encryption)
+      // Submit test - answers are already saved by saveAnswerSubmitted
+      // Just trigger score calculation
       const response = await fetch(
         "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore__",
         {
@@ -307,7 +322,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             testID,
-            answers: answersToSubmit
+            answers: [] // Empty - answers already saved incrementally
           }),
         }
       );

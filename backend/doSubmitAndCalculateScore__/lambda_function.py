@@ -255,23 +255,26 @@ def handle_direct_submission(test_id, answers):
             }
         
         # Save answers directly (no decryption needed)
+        # Skip answers that were already saved by saveAnswerSubmitted
         saved_answers = []
+        existing_answers = getAllAnswers(test_id)
+        existing_question_ids = {a['questionID'] for a in existing_answers}
         
         for answer_data in answers:
             try:
-                # Save to database
-                answer_id = str(uuid.uuid4())
-                mcq_answers_table.put_item(
-                    Item={
-                        'answerID': answer_id,
-                        'testID': answer_data['testID'],
-                        'questionID': answer_data['questionID'],
-                        'answer': answer_data['answer'],
-                        'datetime': answer_data.get('timestamp', datetime.datetime.now().isoformat())
-                    }
-                )
-                
-                saved_answers.append(answer_data)
+                # Only save if not already saved by saveAnswerSubmitted
+                if answer_data['questionID'] not in existing_question_ids:
+                    answer_id = str(uuid.uuid4())
+                    mcq_answers_table.put_item(
+                        Item={
+                            'answerID': answer_id,
+                            'testID': answer_data['testID'],
+                            'questionID': answer_data['questionID'],
+                            'answer': answer_data['answer'],
+                            'datetime': answer_data.get('timestamp', datetime.datetime.now().isoformat())
+                        }
+                    )
+                    saved_answers.append(answer_data)
                 
             except Exception as e:
                 print(f"Failed to save answer: {str(e)}")

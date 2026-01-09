@@ -1484,3 +1484,326 @@ fieldset {
     font-size: 9px;
   }
 }
+
+
+/* Mobile-first responsive fixes for test component */
+@media (max-width: 768px) {
+  .MCQOuterWrap {
+    height: auto;
+    max-height: none;
+    min-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding: 12px;
+  }
+  
+  .MCQOuterWrap > div {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+  
+  #question-heading {
+    font-size: 16px;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  
+  #question-text {
+    font-size: 14px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  
+  .question-topic-tag {
+    display: block;
+    margin-left: 0;
+    margin-top: 8px;
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+  
+  .MCQUL {
+    flex: 1;
+    margin-bottom: 16px;
+  }
+  
+  .MCQUL li {
+    padding: 14px 12px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    border-radius: 8px;
+    min-height: 48px;
+    touch-action: manipulation;
+  }
+  
+  .MCQUL li input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 10px;
+    margin-top: 2px;
+  }
+  
+  .MCQUL li label {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .navigation-controls {
+    margin-top: 20px;
+    padding-top: 16px;
+    gap: 12px;
+    position: sticky;
+    bottom: 0;
+    background: var(--color-bg-secondary, #f8f9fa);
+    padding-bottom: 12px;
+  }
+  
+  .nav-button,
+  .submit-button {
+    padding: 14px 20px;
+    font-size: 14px;
+    min-height: 48px;
+  }
+  
+  .question-progress {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .MCQOuterWrap {
+    padding: 8px;
+    margin-top: 0;
+    border-radius: 0;
+  }
+  
+  #question-heading {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  #question-text {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+  
+  .MCQUL li {
+    padding: 12px 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  
+  .MCQUL li input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+  }
+  
+  .MCQUL li label {
+    font-size: 13px;
+  }
+  
+  .navigation-controls {
+    margin-top: 16px;
+    padding-top: 12px;
+    gap: 10px;
+  }
+  
+  .nav-button,
+  .submit-button {
+    padding: 12px 16px;
+    font-size: 13px;
+    min-height: 44px;
+  }
+  
+  .question-progress {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+}
+
+/* Ensure options are always visible and clickable */
+.MCQUL li {
+  -webkit-tap-highlight-color: rgba(0, 123, 255, 0.2);
+  cursor: pointer;
+}
+
+.MCQUL li:active {
+  transform: scale(0.98);
+  background: var(--color-primary-light, rgba(0, 123, 255, 0.15));
+}
+
+
+/* Mobile fixes for options-list (testComponent_bulk) */
+@media (max-width: 768px) {
+  .current-topic-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+  
+  .topic-section {
+    height: auto;
+    min-height: 100%;
+    padding: 10px;
+  }
+  
+  .topic-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+  }
+  
+  .topic-title {
+    font-size: 14px;
+  }
+  
+  .topic-stats {
+    flex-direction: row;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .topic-question-count,
+  .topic-progress {
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+  
+  .question-card {
+    padding: 10px;
+  }
+  
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .question-number {
+    font-size: 11px;
+    min-width: 28px;
+    height: 20px;
+    padding: 2px 6px;
+  }
+  
+  .question-title-container {
+    width: 100%;
+  }
+  
+  .question-text {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .question-status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+  
+  .question-content {
+    margin-top: 8px;
+  }
+  
+  .options-list {
+    gap: 10px;
+  }
+  
+  .option-item {
+    padding: 14px 12px;
+    border-radius: 8px;
+    min-height: 48px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(0, 123, 255, 0.2);
+  }
+  
+  .option-item:active {
+    transform: scale(0.98);
+    background: var(--color-primary-light, rgba(0, 123, 255, 0.15));
+  }
+  
+  .option-label {
+    gap: 10px;
+  }
+  
+  .option-letter {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+  
+  .option-text {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .option-item input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .topic-section {
+    padding: 8px;
+  }
+  
+  .topic-header {
+    gap: 6px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+  }
+  
+  .topic-title {
+    font-size: 13px;
+  }
+  
+  .topic-question-count,
+  .topic-progress {
+    font-size: 10px;
+    padding: 2px 5px;
+  }
+  
+  .question-card {
+    padding: 8px;
+  }
+  
+  .question-number {
+    font-size: 10px;
+    min-width: 24px;
+    height: 18px;
+  }
+  
+  .question-text {
+    font-size: 13px;
+  }
+  
+  .options-list {
+    gap: 8px;
+  }
+  
+  .option-item {
+    padding: 12px 10px;
+    min-height: 44px;
+  }
+  
+  .option-letter {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+  
+  .option-text {
+    font-size: 13px;
+  }
+  
+  .option-item input[type="radio"] {
+    width: 18px;
+    height: 18px;
+  }
+}
