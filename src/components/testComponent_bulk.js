@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../testComponent.css";
 import SubmittedMessage from "./submittedMessage.js";
 import DisplayMessage from "./displayMessage.js";
+import FeedbackForm from "./FeedbackForm.js";
 import html2canvas from 'html2canvas';
 
 const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, submitTestRef }) => {
@@ -24,6 +25,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [questionCount, setQuestionCount] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(numberOfQuestions);
   
@@ -330,7 +332,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       const data = await response.json();
       if (data.statusCode === 200) {
         setMessage("Test submitted successfully!");
-        setIsSubmitted(true);
+        setShowFeedback(true); // Show feedback form first
       } else {
         setMessage("Failed to submit test, please take screenshot and contact support.");
         //console.error("Failed to submit test", data);
@@ -415,13 +417,14 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
 
   // Handle redirect after submission or error
   useEffect(() => {
-    if (isSubmitted || message) {
+    // Only redirect after feedback is done (isSubmitted true) or on error message
+    if (isSubmitted || (message && !showFeedback)) {
       const timer = setTimeout(() => {
         window.location.href = "https://hrrobots.com";
       }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [isSubmitted, message]);
+  }, [isSubmitted, message, showFeedback]);
 
   return (
     <>
@@ -673,7 +676,21 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     )}
 
     {/* Message Display */}
-    {message && <DisplayMessage message={message} />}
+    {message && !showFeedback && !isSubmitted && <DisplayMessage message={message} />}
+    
+    {/* Feedback Form - shown after successful submission */}
+    {showFeedback && !isSubmitted && (
+      <FeedbackForm
+        testID={testID}
+        candidateName={candidateName}
+        onSubmit={() => {
+          window.location.href = "https://www.hrrobots.com";
+        }}
+        onSkip={() => {
+          window.location.href = "https://www.hrrobots.com";
+        }}
+      />
+    )}
     
     {/* Submitted State */}
     {isSubmitted && <SubmittedMessage />}
