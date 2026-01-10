@@ -452,20 +452,6 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
           </button>
         </div>
         
-        <div className="tour-content">
-          <h3>{step?.title}</h3>
-          <p>{step?.content}</p>
-        </div>
-        
-        <div className="tour-progress">
-          {TOUR_STEPS.map((_, index) => (
-            <div 
-              key={index} 
-              className={`tour-progress-dot ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
-            />
-          ))}
-        </div>
-        
         <div className="tour-actions">
           <button 
             className="tour-btn tour-btn-secondary" 
@@ -483,6 +469,20 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
               {currentStep === TOUR_STEPS.length - 1 ? 'Finish' : 'Next'}
             </button>
           </div>
+        </div>
+        
+        <div className="tour-content">
+          <h3>{step?.title}</h3>
+          <p>{step?.content}</p>
+        </div>
+        
+        <div className="tour-progress">
+          {TOUR_STEPS.map((_, index) => (
+            <div 
+              key={index} 
+              className={`tour-progress-dot ${index === currentStep ? 'active' : ''} ${index < currentStep ? 'completed' : ''}`}
+            />
+          ))}
         </div>
       </div>
     </div>
