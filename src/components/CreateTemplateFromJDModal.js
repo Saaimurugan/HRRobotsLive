@@ -172,6 +172,16 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
       return;
     }
 
+    const totalQuestions = getTotalQuestions();
+    if (totalQuestions < 5) {
+      showToast('warning', 'Too Few Questions', 'Minimum 5 questions required. Please increase question counts.');
+      return;
+    }
+    if (totalQuestions > 60) {
+      showToast('warning', 'Too Many Questions', 'Maximum 60 questions allowed. Please reduce question counts.');
+      return;
+    }
+
     setIsGenerating(true);
     setGeneratedQuestions([]);
     setCurrentStep(3);
@@ -387,9 +397,14 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
                   </svg>
                   Back
                 </button>
-                <button className="btn-primary" onClick={generateQuestions} disabled={getTotalQuestions() === 0}>
+                <button className="btn-primary" onClick={generateQuestions} disabled={getTotalQuestions() < 5 || getTotalQuestions() > 60}>
                   Generate Questions ({getTotalQuestions()})
                 </button>
+                {(getTotalQuestions() < 5 || getTotalQuestions() > 60) && getTotalQuestions() > 0 && (
+                  <span style={{ color: 'var(--color-warning)', fontSize: '12px', marginTop: '5px' }}>
+                    {getTotalQuestions() < 5 ? 'Minimum 5 questions required' : 'Maximum 60 questions allowed'}
+                  </span>
+                )}
               </div>
             </div>
           )}

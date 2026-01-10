@@ -384,8 +384,12 @@ const CreateTemplate = () => {
       showToast('warning', 'No Questions', 'No questions to save. Please add some questions first.');
       setLoading(false);
       return;
-    } else if (questionSet.length < 10) {
-      showToast('warning', 'Not Enough Questions', `Minimum 10 questions required. You have ${questionSet.length} questions.`);
+    } else if (questionSet.length < 5) {
+      showToast('warning', 'Not Enough Questions', `Minimum 5 questions required. You have ${questionSet.length} questions.`);
+      setLoading(false);
+      return;
+    } else if (questionSet.length > 60) {
+      showToast('warning', 'Too Many Questions', `Maximum 60 questions allowed. You have ${questionSet.length} questions.`);
       setLoading(false);
       return;
     }
