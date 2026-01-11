@@ -54,6 +54,7 @@ const [showAssignModal, setShowAssignModal] = useState(false);
 const [showConfigModal, setShowConfigModal] = useState(false);
 const [templateIDSelectedForDelete, setTemplateIDSelectedForDelete] = useState("");
 const [templateIDSelectedToAssign, setTemplateIDSelectedToAssign] = useState("");
+const [currentAssignedTo, setCurrentAssignedTo] = useState("");
 const [isOpenAPIModal, setIsOpenAPIModal] = useState(false);
 const [apiKey, setApiKey] = useState("");
 const [toasts, setToasts] = useState([]);
@@ -85,8 +86,9 @@ const deleteConfirm = (templateID) => {
   setTemplateIDSelectedForDelete(templateID);
 };
 
-const assignModal = (templateID) => {
+const assignModal = (templateID, assignedTo) => {
   setTemplateIDSelectedToAssign(templateID);
+  setCurrentAssignedTo(assignedTo || "");
   setShowAssignModal(true);
 };
 
@@ -160,6 +162,7 @@ const handleCancel = () => {
   //console.log('Cancelled!');
   setShowConfirmation(false);
   setShowAssignModal(false);
+  setCurrentAssignedTo("");
   setIsOpenAPIModal(false);
   setShowConfigModal(false);
 };
@@ -261,6 +264,24 @@ const handleCopyToClipboard = (templateID) => {
 const handleAssignTemplate = async (email) => {
   setLoading(true);
   try {
+    // If email is empty, this is a revoke operation
+    if (!email) {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/Assignedto", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ templateID: templateIDSelectedToAssign, assignedEmail: "REVOKE", token: JWTValue }),
+      });
+      const data = await response.json();
+      if (checkUnauthorized(data)) return;
+      if (data.statusCode === 200) {
+        fetchTemplates();
+        showToast('success', 'Assignment Revoked', 'The recruiter assignment has been successfully revoked.');
+      }
+      return;
+    }
+
     // Check if email is registered
     const checkEmailResponse = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/checkEmail", {
       method: "POST",
@@ -277,7 +298,7 @@ const handleAssignTemplate = async (email) => {
        headers: {
          "Content-Type": "application/json",
        },
-       body: JSON.stringify({ templateIDSelectedToAssign, email, token: JWTValue }),
+       body: JSON.stringify({ templateID: templateIDSelectedToAssign, assignedEmail: email, token: JWTValue }),
      });       
      const data = await response.json();
      if (checkUnauthorized(data)) return;
@@ -410,6 +431,7 @@ const fetchTemplates = async () => {
           text="Please enter the email address of the recruiter to whom you want to assign this template."
           onAssign={(d) => handleAssign(d)}
           onCancel={handleCancel}
+          currentAssignedTo={currentAssignedTo}
         />
       )}
       {showConfigModal && (
@@ -539,7 +561,7 @@ const fetchTemplates = async () => {
                       <path d="M6 7V18C6 19.1046 6.89543 20 8 20H16C17.1046 20 18 19.1046 18 18V7M6 7H5M6 7H8M18 7H19M18 7H16M10 11V16M14 11V16M8 7V5C8 4.44772 8.44772 4 9 4H15C15.5523 4 16 4.44772 16 5V7M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
-                  <button onClick={() => assignModal(card.templateID)} className="delete-button" title="Assign to Recruiter" data-tour={index === 0 ? "assign-template-btn" : undefined}>
+                  <button onClick={() => assignModal(card.templateID, card.AssignedTo)} className="delete-button" title="Assign to Recruiter" data-tour={index === 0 ? "assign-template-btn" : undefined}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M8.5 11C10.7091 11 12.5 9.20914 12.5 7C12.5 4.79086 10.7091 3 8.5 3C6.29086 3 4.5 4.79086 4.5 7C4.5 9.20914 6.29086 11 8.5 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
