@@ -561,6 +561,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
             return updatedItems;
         });
+
+        // Show success toast notification
+        showToast("success", "Deleted Successfully", "The test transaction was successfully deleted, and all associated assets are now removed from storage.");
     }
 
     const handleConfirmationRowIndex = (index) => {

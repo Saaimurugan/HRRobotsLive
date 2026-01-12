@@ -195,7 +195,7 @@ textarea:disabled,
   gap: 8px;
 }
 
-.loading-spinner {
+.loading-spinner:not(.loading-overlay .loading-spinner) {
   width: 20px;
   height: 20px;
   border: 2px solid var(--color-border);
