@@ -289,38 +289,32 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           </ul>
         </fieldset>
 
-        {/* Navigation Controls */}
-        <div className="navigation-controls">
+        {/* Fixed Navigation Buttons */}
+        <button
+          onClick={goToPreviousQuestion}
+          disabled={currentQuestionIndex === 0}
+          className="nav-button prev-button"
+        >
+          Previous
+        </button>
+        
+        {currentQuestionIndex < questions.length - 1 ? (
           <button
-            onClick={goToPreviousQuestion}
-            disabled={currentQuestionIndex === 0}
-            className="nav-button prev-button"
+            onClick={goToNextQuestion}
+            className="nav-button next-button"
           >
-            Previous
+            Next
           </button>
-          
-          <span className="question-progress">
-            {currentQuestionIndex + 1} of {totalQuestions}
-          </span>
-          
-          {currentQuestionIndex < questions.length - 1 ? (
-            <button
-              onClick={goToNextQuestion}
-              className="nav-button next-button"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
-              className="submit-button"
-              style={{ backgroundColor: "#007bff" }}
-            >
-              {isSubmitting ? "Submitting..." : "Submit Test"}
-            </button>
-          )}
-        </div>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+            className="nav-button next-button submit-nav-button"
+            style={{ backgroundColor: "#007bff" }}
+          >
+            {isSubmitting ? "Submitting..." : "Submit"}
+          </button>
+        )}
       </div>
     </div>
     )}

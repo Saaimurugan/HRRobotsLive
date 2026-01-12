@@ -630,39 +630,35 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         </div>
       )}
 
-      {/* Navigation Controls */}
+      {/* Navigation Controls - Hidden footer */}
       <div className="navigation-controls">
-        <button
-          onClick={goToPreviousQuestion}
-          disabled={isFirstQuestion()}
-          className="nav-button prev-button"
-        >
-          Previous
-        </button>
-        
-        <span className="question-progress">
-          Question {getDisplayQuestionNumber()} of {questions.length} - {topicOrder[currentTopicIndex]}
-        </span>
-        
-        {/* Check if we're at the last question */}
-        {isLastQuestion() ? (
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="submit-button"
-            style={{ backgroundColor: "#007bff" }}
-          >
-            {isSubmitting ? "Submitting..." : "Submit Test"}
-          </button>
-        ) : (
-          <button
-            onClick={goToNextQuestion}
-            className="nav-button next-button"
-          >
-            {isLastQuestion() ? 'Last Question' : 'Next Question'}
-          </button>
-        )}
       </div>
+      
+      {/* Fixed Navigation Buttons */}
+      <button
+        onClick={goToPreviousQuestion}
+        disabled={isFirstQuestion()}
+        className="nav-button prev-button"
+      >
+        Previous
+      </button>
+      
+      {isLastQuestion() ? (
+        <button
+          onClick={handleSubmit}
+          disabled={isSubmitting}
+          className="nav-button next-button"
+        >
+          {isSubmitting ? "Submitting..." : "Submit"}
+        </button>
+      ) : (
+        <button
+          onClick={goToNextQuestion}
+          className="nav-button next-button"
+        >
+          Next
+        </button>
+      )}
     </div>
     )}
 
