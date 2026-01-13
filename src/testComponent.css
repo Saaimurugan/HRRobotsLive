@@ -232,7 +232,7 @@ fieldset {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  opacity: 0.5;
+  opacity: 0.25;
 }
 
 .nav-button.prev-button {
