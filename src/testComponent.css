@@ -229,10 +229,16 @@ fieldset {
   transition: all var(--transition-normal);
   min-width: 50px;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15), 0 0 20px rgba(0, 123, 255, 0.3);
   writing-mode: vertical-rl;
   text-orientation: mixed;
-  opacity: 0.25;
+  opacity: 0.7;
+  animation: pulse-attention 2s ease-in-out 3;
+}
+
+@keyframes pulse-attention {
+  0%, 100% { opacity: 0.7; transform: translateY(-50%) scale(1); }
+  50% { opacity: 1; transform: translateY(-50%) scale(1.1); }
 }
 
 .nav-button.prev-button {
