@@ -259,9 +259,9 @@
     padding: 16px 24px;
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-semibold);
-    color: white;
-    background: var(--color-primary-gradient);
-    border: none;
+    color: var(--color-primary);
+    background: transparent;
+    border: 2px solid var(--color-primary);
     border-radius: var(--radius-lg);
     cursor: pointer;
     display: flex;
@@ -269,13 +269,15 @@
     justify-content: center;
     gap: var(--spacing-sm);
     transition: all var(--transition-normal);
-    box-shadow: var(--shadow-primary);
+    box-shadow: none;
     margin-top: var(--spacing-sm);
 }
 
 .login-btn:hover:not(:disabled) {
+    background: var(--color-primary);
+    color: white;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-primary-hover);
+    box-shadow: var(--shadow-primary);
 }
 
 .login-btn:active:not(:disabled) {

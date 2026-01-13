@@ -215,7 +215,7 @@ const TestSetupWizard = ({
     alignItems: 'center',
     fontWeight: 'bold',
     fontSize: '16px',
-    background: currentStep >= stepNum ? '#1CBBB4' : '#e0e0e0',
+    background: currentStep >= stepNum ? '#2563eb' : '#e0e0e0',
     color: currentStep >= stepNum ? 'white' : '#666',
     transition: 'all 0.3s ease'
   });
@@ -223,7 +223,7 @@ const TestSetupWizard = ({
   const stepLineStyle = (stepNum) => ({
     width: '60px',
     height: '4px',
-    background: currentStep > stepNum ? '#1CBBB4' : '#e0e0e0',
+    background: currentStep > stepNum ? '#2563eb' : '#e0e0e0',
     transition: 'all 0.3s ease'
   });
 
@@ -236,14 +236,14 @@ const TestSetupWizard = ({
   };
 
   const buttonStyle = (enabled) => ({
-    backgroundColor: enabled ? '#1CBBB4' : '#ccc',
-    color: 'white',
-    border: 'none',
+    backgroundColor: enabled ? 'transparent' : '#ccc',
+    color: enabled ? '#2563eb' : 'white',
+    border: enabled ? '2px solid #2563eb' : 'none',
     padding: '12px 24px',
-    borderRadius: '6px',
+    borderRadius: '12px',
     cursor: enabled ? 'pointer' : 'not-allowed',
     fontSize: '16px',
-    fontWeight: '500',
+    fontWeight: '600',
     transition: 'all 0.3s ease'
   });
 
@@ -650,8 +650,9 @@ const TestSetupWizard = ({
             <span style={{ 
               padding: '8px 16px', 
               borderRadius: '20px',
-              background: photoStage === 'photo' ? '#1CBBB4' : (photoImage ? '#e8f5e9' : '#e0e0e0'),
-              color: photoStage === 'photo' ? 'white' : (photoImage ? '#2e7d32' : '#666'),
+              background: photoStage === 'photo' ? 'transparent' : (photoImage ? '#e8f5e9' : '#fff'),
+              border: photoStage === 'photo' ? '2px solid #2563eb' : (photoImage ? '2px solid #2e7d32' : '2px solid #e0e0e0'),
+              color: photoStage === 'photo' ? '#2563eb' : (photoImage ? '#2e7d32' : '#666'),
               fontWeight: '500',
               display: 'flex',
               alignItems: 'center',
@@ -671,8 +672,9 @@ const TestSetupWizard = ({
             <span style={{ 
               padding: '8px 16px', 
               borderRadius: '20px',
-              background: photoStage === 'id' ? '#1CBBB4' : (idCardImage ? '#e8f5e9' : '#e0e0e0'),
-              color: photoStage === 'id' ? 'white' : (idCardImage ? '#2e7d32' : '#666'),
+              background: photoStage === 'id' ? 'transparent' : (idCardImage ? '#e8f5e9' : '#fff'),
+              border: photoStage === 'id' ? '2px solid #2563eb' : (idCardImage ? '2px solid #2e7d32' : '2px solid #e0e0e0'),
+              color: photoStage === 'id' ? '#2563eb' : (idCardImage ? '#2e7d32' : '#666'),
               fontWeight: '500',
               display: 'flex',
               alignItems: 'center',
@@ -745,9 +747,9 @@ const TestSetupWizard = ({
                 onClick={() => captureImage('photo')}
                 style={{
                   padding: '12px 30px',
-                  backgroundColor: '#007BFF',
-                  color: '#fff',
-                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: '#2563eb',
+                  border: '2px solid #2563eb',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '16px',
@@ -755,6 +757,14 @@ const TestSetupWizard = ({
                   alignItems: 'center',
                   gap: '8px',
                   transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2563eb';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#2563eb';
                 }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -770,9 +780,9 @@ const TestSetupWizard = ({
                 onClick={() => captureImage('id')}
                 style={{
                   padding: '12px 30px',
-                  backgroundColor: '#28A745',
-                  color: '#fff',
-                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: '#2563eb',
+                  border: '2px solid #2563eb',
                   borderRadius: '6px',
                   cursor: 'pointer',
                   fontSize: '16px',
@@ -780,6 +790,14 @@ const TestSetupWizard = ({
                   alignItems: 'center',
                   gap: '8px',
                   transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2563eb';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#2563eb';
                 }}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">

@@ -130,7 +130,7 @@ const ModelLoadingIndicator = ({ onLoadComplete }) => {
         <div style={{
           width: `${progress}%`,
           height: '100%',
-          background: 'linear-gradient(90deg, #1CBBB4, #17a2b8)',
+          background: 'linear-gradient(90deg, #2563eb, #3b82f6)',
           borderRadius: '3px',
           transition: 'width 0.3s ease'
         }} />

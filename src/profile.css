@@ -147,7 +147,7 @@
 .config-form-group select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 4px rgba(28, 187, 180, 0.1);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 .config-form-row {
@@ -165,26 +165,28 @@
   padding: 12px 24px;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
-  background: var(--color-primary-gradient);
-  color: var(--color-bg-primary);
-  border: none;
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-slow);
-  box-shadow: var(--shadow-primary);
   margin-top: 10px;
   align-self: flex-start;
 }
 
 .save-btn:hover:not(:disabled) {
+  background: var(--color-primary);
+  color: var(--color-bg-primary);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-primary-hover);
+  box-shadow: var(--shadow-primary);
 }
 
 .save-btn:disabled {
-  background: linear-gradient(135deg, var(--color-text-light) 0%, #8a9aab 100%);
+  background: transparent;
+  color: var(--color-text-light);
+  border-color: var(--color-text-light);
   cursor: not-allowed;
-  box-shadow: none;
 }
 
 /* Password Section */

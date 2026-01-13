@@ -315,7 +315,7 @@ const handleAssignTemplate = async (email) => {
              <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
              <p style="margin-top: 20px;">
                <a href="https://www.hrrobots.click/signup" 
-                  style="background: linear-gradient(135deg, #1cbbb4 0%, #0d9488 100%); 
+                  style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
                          color: white; 
                          padding: 12px 24px; 
                          text-decoration: none; 

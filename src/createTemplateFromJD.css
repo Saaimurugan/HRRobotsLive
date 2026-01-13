@@ -405,7 +405,7 @@
 
 .keyword-item.selected {
   border-color: var(--color-primary);
-  background: rgba(28, 187, 180, 0.05);
+  background: rgba(37, 99, 235, 0.05);
 }
 
 .keyword-checkbox {
@@ -691,8 +691,8 @@
 }
 
 .jd-modal-content .keyword-item.selected {
-  border-color: var(--color-primary, #1CBBB4);
-  background: rgba(28, 187, 180, 0.05);
+  border-color: var(--color-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.05);
 }
 
 .jd-modal-content .keyword-checkbox {
@@ -708,7 +708,7 @@
   width: 18px;
   height: 18px;
   min-width: 18px;
-  accent-color: var(--color-primary, #1CBBB4);
+  accent-color: var(--color-primary, #2563eb);
   cursor: pointer;
 }
 
@@ -760,9 +760,9 @@
 }
 
 .jd-modal-content .count-btn:hover:not(:disabled) {
-  border-color: var(--color-primary, #1CBBB4);
-  color: var(--color-primary, #1CBBB4);
-  background: rgba(28, 187, 180, 0.1);
+  border-color: var(--color-primary, #2563eb);
+  color: var(--color-primary, #2563eb);
+  background: rgba(37, 99, 235, 0.1);
 }
 
 .jd-modal-content .count-btn:disabled {
@@ -773,7 +773,7 @@
 /* Template Name Section in Modal */
 .template-name-section-modal {
   background: var(--color-bg-secondary, #f8f9fa);
-  border: 2px solid var(--color-primary, #1CBBB4);
+  border: 2px solid var(--color-primary, #2563eb);
   border-radius: 8px;
   padding: 16px 20px;
   margin-bottom: 20px;
@@ -803,8 +803,8 @@
 
 .template-name-section-modal input:focus {
   outline: none;
-  border-color: var(--color-primary, #1CBBB4);
-  box-shadow: 0 0 0 3px rgba(28, 187, 180, 0.15);
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .template-name-section-modal input.input-highlight {
@@ -830,7 +830,7 @@
 }
 
 .questions-list-modal::-webkit-scrollbar-thumb {
-  background: var(--color-primary, #1CBBB4);
+  background: var(--color-primary, #2563eb);
   border-radius: var(--radius-lg, 12px);
 }
 
