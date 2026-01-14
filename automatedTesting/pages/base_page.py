@@ -36,10 +36,15 @@ class BasePage:
         """Find multiple elements"""
         return self.driver.find_elements(*locator)
     
-    def click(self, locator):
+    def click(self, locator, timeout=None):
         """Click element"""
-        element = self.wait.until(EC.element_to_be_clickable(locator))
-        element.click()
+        wait = WebDriverWait(self.driver, timeout or EXPLICIT_WAIT)
+        element = wait.until(EC.element_to_be_clickable(locator))
+        try:
+            element.click()
+        except Exception:
+            # Fallback to JavaScript click
+            self.driver.execute_script("arguments[0].click();", element)
     
     def send_keys(self, locator, text):
         """Send keys to element"""

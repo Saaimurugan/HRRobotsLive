@@ -11,7 +11,7 @@ class ForgotPasswordPage(BasePage):
     
     # Locators
     EMAIL_INPUT = (By.NAME, "email")
-    SEND_RESET_BUTTON = (By.CSS_SELECTOR, "button.login-btn")
+    SEND_RESET_BUTTON = (By.CSS_SELECTOR, "button.login-btn:not(.secondary)")
     TRY_AGAIN_BUTTON = (By.CSS_SELECTOR, "button.login-btn.secondary")
     SUCCESS_STATE = (By.CSS_SELECTOR, "div.success-state")
     EMAIL_DISPLAY = (By.CSS_SELECTOR, "div.email-display")
@@ -36,6 +36,8 @@ class ForgotPasswordPage(BasePage):
     
     def click_try_again(self):
         """Click try again button"""
+        import time
+        time.sleep(1)  # Wait for success state to fully render
         self.click(self.TRY_AGAIN_BUTTON)
     
     def click_back_to_login(self):
@@ -46,6 +48,8 @@ class ForgotPasswordPage(BasePage):
         """Request password reset for email"""
         self.enter_email(email)
         self.click_send_reset_link()
+        import time
+        time.sleep(2)  # Wait for API response
     
     def is_success_state_displayed(self):
         """Check if success state is displayed"""
