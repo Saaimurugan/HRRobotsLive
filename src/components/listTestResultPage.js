@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useGlobalContext } from "../globalContext";
 import { useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
@@ -79,11 +79,14 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const [sortConfig, setSortConfig] = useState({ key: "datetime", direction: "desc" });
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
+    const [initialized, setInitialized] = useState(false); // Track if component is initialized
+    const fetchingRef = useRef(false); // Prevent concurrent API calls
     const { globalValue, setGlobalValue, JWTValue } = useGlobalContext();
     const location = useLocation();
     // Temporary test value for debugging
     const testGlobalValue = globalValue || "test-user-id";
     const [searchName, setSearchName] = useState("");
+    const [searchDebounceTimer, setSearchDebounceTimer] = useState(null);
     const [isConfirmationVisible, setIsConfirmationVisible] = useState(false); // State to manage confirmation dialog visibility
     const [isHovered, setIsHovered] = useState(false); // State to manage hover effect
     const [isDeleteClicked, setIsDeleteClicked] = useState(false); // State to manage delete button click
@@ -126,27 +129,45 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
     useEffect(() => {
         //console.log("ListTestResultPage: Initial load, testGlobalValue:", testGlobalValue);
-        fetchData(true); // Fetch data when page loads (first call)
-    }, []);
+        if (testGlobalValue && !initialized) {
+            setInitialized(true);
+            fetchData(true); // Fetch data when page loads (first call)
+        }
+    }, [testGlobalValue, initialized]); // Only depend on testGlobalValue and initialized
 
     useEffect(() => {
-        // Handle searchFilter prop changes directly
-        // Sync mobile search input with searchFilter prop
+        // Handle searchFilter prop changes with debouncing
         if (searchFilter !== searchName) {
             setSearchName(searchFilter || "");
         }
 
-        // When search filter changes, fetch from server with search term
-        if (searchFilter !== undefined) {
-            if (searchFilter && searchFilter.trim()) {
-                // Search with server-side filtering
-                fetchSearchDataWithTerm(searchFilter.trim());
-            } else {
-                // Clear search - reload all data
-                fetchData(true);
-            }
+        // Clear existing timer
+        if (searchDebounceTimer) {
+            clearTimeout(searchDebounceTimer);
         }
-    }, [searchFilter]);
+
+        // When search filter changes, debounce the API call
+        if (searchFilter !== undefined && testGlobalValue && initialized) {
+            const timer = setTimeout(() => {
+                if (searchFilter && searchFilter.trim()) {
+                    // Search with server-side filtering
+                    fetchSearchDataWithTerm(searchFilter.trim());
+                } else {
+                    // Clear search - reload all data
+                    fetchData(true);
+                }
+            }, 300); // 300ms debounce
+
+            setSearchDebounceTimer(timer);
+        }
+
+        // Cleanup timer on unmount
+        return () => {
+            if (searchDebounceTimer) {
+                clearTimeout(searchDebounceTimer);
+            }
+        };
+    }, [searchFilter, testGlobalValue, initialized]); // Added initialized dependency
 
     const handleDeleteTest = async (testID) => {
         setLoading(true);
@@ -244,9 +265,10 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
     const fetchData = async (isFirstLoad = false) => {
         // Allow fresh loads even when hasMore is false, but prevent loading when already loading
-        if (loading || (!isFirstLoad && !hasMore)) return false;
+        if (fetchingRef.current || (!isFirstLoad && !hasMore)) return false;
 
         //console.log("fetchData called, isFirstLoad:", isFirstLoad, "testGlobalValue:", testGlobalValue);
+        fetchingRef.current = true;
         setLoading(true); // Indicate fetching state
 
         try {
@@ -281,7 +303,6 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             const newItems = parsedBody.items || []; // Ensure items exist
 
             if (newItems.length === 0 && !isFirstLoad) {
-                setLoading(false);
                 return false; // Don't update if no new data
             }
 
@@ -295,7 +316,6 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 setCurrentPage(1);
             }
 
-            setLoading(false);
             return true;
         } catch (error) {
             //console.error("Error fetching data:", error);
@@ -324,12 +344,15 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 setCurrentPage(1);
                 setHasMore(false);
             }
-            setLoading(false);
             return false;
+        } finally {
+            fetchingRef.current = false;
+            setLoading(false);
         }
     };
 
     const fetchSearchData = async () => {
+        if (loading) return; // Prevent multiple simultaneous calls
         setLoading(true); // Indicate fetching state
 
         try {
@@ -370,8 +393,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         }
     };
 
-    // Fetch search results from server with a specific search term
     const fetchSearchDataWithTerm = async (searchTerm) => {
+        if (fetchingRef.current) return; // Prevent multiple simultaneous calls
+        fetchingRef.current = true;
         setLoading(true);
 
         try {
@@ -409,6 +433,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         } catch (error) {
             //console.error("Error fetching search data:", error);
         } finally {
+            fetchingRef.current = false;
             setLoading(false);
         }
     };
@@ -433,6 +458,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
     // Fetch data with sort configuration
     const fetchDataWithSort = async (sortCfg) => {
+        if (loading) return; // Prevent multiple simultaneous calls
         setLoading(true);
         
         try {
@@ -535,6 +561,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
             return updatedItems;
         });
+
+        // Show success toast notification
+        showToast("success", "Deleted Successfully", "The test transaction was successfully deleted, and all associated assets are now removed from storage.");
     }
 
     const handleConfirmationRowIndex = (index) => {

@@ -363,7 +363,7 @@ function SearchResult() {
           opacity: 0.95;
         }
         .report-header-section {
-          background: linear-gradient(135deg, #6ba3ae 0%, #5a929d 100%);
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
           color: #ffffff;
           padding: 18px 24px;
           text-align: center;
@@ -519,7 +519,7 @@ function SearchResult() {
           color: #4b5563;
           margin-bottom: 16px;
           padding-bottom: 8px;
-          border-bottom: 2px solid #1CBBB4;
+          border-bottom: 2px solid #2563eb;
           display: inline-block;
         }
         .photo-catalog-container {

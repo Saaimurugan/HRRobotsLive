@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 
 const DEFAULT_TIME = 3600; // 1 hour in seconds (default)
 
-const TimerComponent = ({ onTimerEnd, testDuration }) => {
+const TimerComponent = ({ onTimerEnd, testDuration, startTimer = true }) => {
    // testDuration is in minutes, convert to seconds. Default to 60 minutes if not provided
    const maxTime = testDuration ? testDuration * 60 : DEFAULT_TIME;
    const [time, setTime] = useState(maxTime);
    const [isBlinking, setIsBlinking] = useState(false);
    const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+   const [timerStarted, setTimerStarted] = useState(false);
 
    // Handle window resize
    useEffect(() => {
@@ -17,6 +18,14 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
    }, []);
+
+   // Start timer only when startTimer becomes true
+   useEffect(() => {
+      if (startTimer && !timerStarted) {
+         setTimerStarted(true);
+         //console.log('🕐 Test timer started - first question loaded');
+      }
+   }, [startTimer, timerStarted]);
 
    useEffect(() => {
       if (time <= 0) {
@@ -29,6 +38,11 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
    }, [time, onTimerEnd]);
 
    useEffect(() => {
+      // Only start the countdown if timer has been started
+      if (!timerStarted) {
+         return;
+      }
+
       const timer = setInterval(() => {
          setTime((prevTime) => {
             if (prevTime <= 0) {
@@ -40,7 +54,7 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
       }, 1000);
 
       return () => clearInterval(timer); // Cleanup on unmount
-   }, []); // Empty dependency array ensures this runs only once
+   }, [timerStarted]); // Depend on timerStarted instead of empty array
 
    useEffect(() => {
       if (time < 60) {
@@ -58,16 +72,9 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
       const minutes = Math.floor((seconds % 3600) / 60);
       const secs = seconds % 60;
 
-      return isMobile ? (
+      // Always use compact mobile-style format
+      return (
          <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
-            <span>{String(hours).padStart(2, '0')}</span>
-            <span>:</span>
-            <span>{String(minutes).padStart(2, '0')}</span>
-            <span>:</span>
-            <span>{String(secs).padStart(2, '0')}</span>
-         </div>
-      ) : (
-         <div>
             <span>{String(hours).padStart(2, '0')}</span>
             <span>:</span>
             <span>{String(minutes).padStart(2, '0')}</span>
@@ -78,14 +85,17 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
    };
 
    const getTimerStyle = () => {
+      if (!timerStarted) {
+         return { color: '#ccc' }; // Show timer as inactive when not started
+      }
       if (time < 60) {
          return isBlinking ? { color: 'red', visibility: 'hidden' } : { color: 'red' }; // Blink effect
       } else if (time < 300) {
-         return { color: 'red' }; // Less than 5 minutes
+         return { color: '#ff6b6b' }; // Less than 5 minutes - use mobile red color
       } else if (time < 600) {
          return { color: 'orange' }; // Less than 10 minutes
       } else {
-         return { color: 'black' }; // Default color
+         return { color: 'white' }; // Default white color for overlay
       }
    };
 
@@ -98,25 +108,23 @@ const TimerComponent = ({ onTimerEnd, testDuration }) => {
             justifyContent: 'center',
             marginLeft: isMobile ? '0' : '20px',
             flexShrink: 0,
-            minWidth: isMobile ? '40px' : 'auto',
-            ...(isMobile && {
-               background: 'rgba(0, 0, 0, 0.6)',
-               borderRadius: '4px',
-               padding: '2px 6px',
-            }),
+            minWidth: '40px',
+            // Always use compact mobile-style background and padding
+            background: 'rgba(0, 0, 0, 0.6)',
+            borderRadius: '4px',
+            padding: '2px 6px',
          }}
+         title={!timerStarted ? "Timer will start when first question loads" : undefined}
       >
          <div
             style={{
-               fontSize: isMobile ? '12px' : '75px',
+               fontSize: '12px', // Always use compact mobile font size
                fontFamily: 'revert',
                textAlign: 'center',
-               marginTop: isMobile ? '0' : '10px',
+               marginTop: '0',
                marginBottom: '0px',
-               fontWeight: isMobile ? '600' : 'normal',
-               color: isMobile ? 'white' : undefined,
-               ...(!isMobile && getTimerStyle()),
-               ...(isMobile && time < 300 && { color: '#ff6b6b' }),
+               fontWeight: '600', // Always use mobile font weight
+               ...getTimerStyle(), // Apply color styling
             }}
          >
             {formatTime(time)}

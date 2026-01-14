@@ -236,12 +236,22 @@ if (userUniqueID != '')
           <button
             onClick={startQuiz}
             style={{
-              backgroundColor: '#1CBBB4',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '5px',
+              backgroundColor: 'transparent',
+              color: '#2563eb',
+              border: '2px solid #2563eb',
+              padding: '12px 24px',
+              borderRadius: '12px',
               cursor: 'pointer',
+              fontWeight: '600',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.backgroundColor = '#2563eb';
+              e.target.style.color = 'white';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.backgroundColor = 'transparent';
+              e.target.style.color = '#2563eb';
             }}
           >
             I Accept and Start Test

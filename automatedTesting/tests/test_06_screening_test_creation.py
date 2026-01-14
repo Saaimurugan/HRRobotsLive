@@ -42,7 +42,7 @@ class TestScreeningTestCreation:
         
         self.template_page.enter_template_name(template_name)
         self.template_page.add_question(
-            question_text="Python::: What is the output of print(2 ** 3)?",
+            question_text="What is the output of print(2 ** 3)?",
             topic="Python",
             options=["8", "6", "9", "3"],
             correct_answer="8",
@@ -60,21 +60,21 @@ class TestScreeningTestCreation:
         
         questions = [
             {
-                "text": "Python::: What is the output of print(2 ** 3)?",
+                "text": "What is the output of print(2 ** 3)?",
                 "topic": "Python",
                 "options": ["8", "6", "9", "3"],
                 "correct": "8",
                 "level": "fresher"
             },
             {
-                "text": "Python::: Which keyword is used to define a function?",
+                "text": "Which keyword is used to define a function?",
                 "topic": "Python",
                 "options": ["def", "function", "func", "define"],
                 "correct": "def",
                 "level": "fresher"
             },
             {
-                "text": "JavaScript::: What is the result of typeof null?",
+                "text": "What is the result of typeof null?",
                 "topic": "JavaScript",
                 "options": ["object", "null", "undefined", "string"],
                 "correct": "object",
@@ -99,7 +99,7 @@ class TestScreeningTestCreation:
         
         self.template_page.enter_template_name(template_name)
         self.template_page.add_question(
-            question_text="Test::: Sample question?",
+            question_text="Sample question?",
             topic="Test",
             options=["A", "B", "C", "D"],
             correct_answer="A",
@@ -123,7 +123,7 @@ class TestScreeningTestCreation:
         
         for i, level in enumerate(levels):
             self.template_page.add_question(
-                question_text=f"Test::: Question {i+1} for {level} level?",
+                question_text=f"Question {i+1} for {level} level?",
                 topic="Test",
                 options=["A", "B", "C", "D"],
                 correct_answer="A",
@@ -142,7 +142,7 @@ class TestScreeningTestCreation:
         
         for topic in topics:
             self.template_page.add_question(
-                question_text=f"{topic}::: Sample question about {topic}?",
+                question_text=f"Sample question about {topic}?",
                 topic=topic,
                 options=["A", "B", "C", "D"],
                 correct_answer="A",
@@ -159,13 +159,13 @@ class TestScreeningTestCreation:
         
         # Add two questions
         self.template_page.add_question(
-            question_text="Test::: Question 1?",
+            question_text="Question 1?",
             topic="Test",
             options=["A", "B", "C", "D"],
             correct_answer="A"
         )
         self.template_page.add_question(
-            question_text="Test::: Question 2?",
+            question_text="Question 2?",
             topic="Test",
             options=["A", "B", "C", "D"],
             correct_answer="B"
@@ -187,7 +187,7 @@ class TestScreeningTestCreation:
         self.template_page.enter_template_name(template_name)
         
         self.template_page.add_question(
-            question_text="Test::: Original question?",
+            question_text="Original question?",
             topic="Test",
             options=["A", "B", "C", "D"],
             correct_answer="A"
@@ -223,13 +223,13 @@ class TestScreeningTestCreation:
         
         # Add questions with different topics
         self.template_page.add_question(
-            question_text="Python::: Python question?",
+            question_text="Python question?",
             topic="Python",
             options=["A", "B", "C", "D"],
             correct_answer="A"
         )
         self.template_page.add_question(
-            question_text="JavaScript::: JS question?",
+            question_text="JS question?",
             topic="JavaScript",
             options=["A", "B", "C", "D"],
             correct_answer="A"
@@ -258,7 +258,7 @@ class TestScreeningTestCreation:
     def test_create_template_empty_name(self):
         """Test creating template without name"""
         self.template_page.add_question(
-            question_text="Test::: Question without template name?",
+            question_text="Question without template name?",
             topic="Test",
             options=["A", "B", "C", "D"],
             correct_answer="A"
@@ -287,7 +287,7 @@ class TestScreeningTestCreation:
         template_name = f"Test Template {fake.uuid4()[:8]}"
         
         self.template_page.enter_template_name(template_name)
-        self.template_page.enter_question("Test::: Question with incomplete options?")
+        self.template_page.enter_question("Question with incomplete options?")
         self.template_page.select_topic("Test")
         self.template_page.enter_options(["A", "B"])  # Only 2 options
         self.template_page.click_add_question()
@@ -300,7 +300,7 @@ class TestScreeningTestCreation:
         
         self.template_page.enter_template_name(template_name)
         self.template_page.add_question(
-            question_text="Test::: What is 2 + 2? (hint: <4>)",
+            question_text="What is 2 + 2? (hint: <4>)",
             topic="Test",
             options=["3", "4", "5", "6"],
             correct_answer="4"

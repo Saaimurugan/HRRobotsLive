@@ -172,6 +172,16 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
       return;
     }
 
+    const totalQuestions = getTotalQuestions();
+    if (totalQuestions < 5) {
+      showToast('warning', 'Too Few Questions', 'Minimum 5 questions required. Please increase question counts.');
+      return;
+    }
+    if (totalQuestions > 60) {
+      showToast('warning', 'Too Many Questions', 'Maximum 60 questions allowed. Please reduce question counts.');
+      return;
+    }
+
     setIsGenerating(true);
     setGeneratedQuestions([]);
     setCurrentStep(3);
@@ -194,7 +204,7 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
           const batchSize = Math.min(20, remaining);
           const existingQuestions = [...allQuestions, ...questionsForKeyword].map(q => q.question).join(", ");
           
-          const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI", {
+          const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
@@ -218,7 +228,8 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
 
           const questionsWithTopic = generatedBatch.slice(0, batchSize).map(q => ({
             type: "mcq",
-            question: `${kw.keyword}::: ${q.question}`,
+            topic: kw.keyword,  // NEW: Use separate topic field
+            question: q.question,  // Clean question text without topic prefix
             options: q.options || [],
             correctAnswer: q.correctAnswer,
             correctAnswerIndex: q.options ? q.options.indexOf(q.correctAnswer) : -1
@@ -244,13 +255,8 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
     setGeneratedQuestions(prev => prev.filter((_, i) => i !== index));
   };
 
-  const parseQuestionTopic = (questionText) => {
-    if (questionText && questionText.includes(':::')) {
-      const [topic, ...rest] = questionText.split(':::');
-      return { topic: topic.trim(), question: rest.join(':::').trim() };
-    }
-    return { topic: '', question: questionText };
-  };
+  // REMOVED: Topic parsing functions are no longer needed
+  // Frontend now handles topics as separate entities throughout
 
   if (!isOpen) return null;
 
@@ -391,9 +397,14 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
                   </svg>
                   Back
                 </button>
-                <button className="btn-primary" onClick={generateQuestions} disabled={getTotalQuestions() === 0}>
+                <button className="btn-primary" onClick={generateQuestions} disabled={getTotalQuestions() < 5 || getTotalQuestions() > 60}>
                   Generate Questions ({getTotalQuestions()})
                 </button>
+                {(getTotalQuestions() < 5 || getTotalQuestions() > 60) && getTotalQuestions() > 0 && (
+                  <span style={{ color: 'var(--color-warning)', fontSize: '12px', marginTop: '5px' }}>
+                    {getTotalQuestions() < 5 ? 'Minimum 5 questions required' : 'Maximum 60 questions allowed'}
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -432,11 +443,12 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
 
                 <div className="questions-list-modal">
                   {generatedQuestions.map((q, index) => {
-                    const { topic, question } = parseQuestionTopic(q.question);
+                    // NEW: Use separate topic field directly
+                    const topic = q.topic || '__NO_TOPIC__';
                     return (
                       <div key={index} className="qcard">
-                        {topic && <span className="question-topic-tag">{topic}</span>}
-                        <h4>{index + 1}. {question}</h4>
+                        {topic && topic !== '__NO_TOPIC__' && <span className="question-topic-tag">{topic}</span>}
+                        <h4>{index + 1}. {q.question}</h4>
                         <ul>
                           {q.options.map((opt, optIndex) => (
                             <li key={optIndex} className={optIndex === q.correctAnswerIndex ? 'correct-answer' : ''}>{opt}</li>

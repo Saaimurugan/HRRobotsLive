@@ -78,7 +78,7 @@ const DataProtectionPolicy = () => {
   };
 
   const thStyle = {
-    background: '#1CBBB4',
+    background: '#2563eb',
     color: 'white',
     padding: '12px',
     textAlign: 'left',

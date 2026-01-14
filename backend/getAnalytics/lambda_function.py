@@ -92,7 +92,7 @@ def lambda_handler(event, context):
         {result_data}
 
         Provide insights such as:
-        - Group the analysis based on Topic of the questions (if Topic is mentioned before each question saperated by a ":" use the same)
+        - Group the analysis based on Topic of the questions
         - Don't give any numbers related to answered or correct questions
         - Areas of strength and weakness
         - Suggestions for improvement

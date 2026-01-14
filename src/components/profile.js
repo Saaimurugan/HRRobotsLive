@@ -48,6 +48,12 @@ const Profile = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteLoading, setInviteLoading] = useState(false);
 
+  // Delete Account
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   // LLM Config
   const [llmKey, setLlmKey] = useState('');
   const [selectedLLM, setSelectedLLM] = useState('');
@@ -267,7 +273,7 @@ const Profile = () => {
           <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
           <p style="margin-top: 20px;">
             <a href="${window.location.origin}/signup" 
-               style="background: linear-gradient(135deg, #1cbbb4 0%, #0d9488 100%); 
+               style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
                       color: white; 
                       padding: 12px 24px; 
                       text-decoration: none; 
@@ -308,6 +314,53 @@ const Profile = () => {
       showToast('error', 'Error', 'An error occurred while sending the invitation.');
     } finally {
       setInviteLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') {
+      showToast('error', 'Confirmation Required', 'Please type DELETE to confirm account deletion.');
+      return;
+    }
+
+    if (!deleteReason.trim()) {
+      showToast('error', 'Reason Required', 'Please provide a reason for deleting your account.');
+      return;
+    }
+
+    setDeleteLoading(true);
+
+    try {
+      const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: globalValue,
+          reason: deleteReason,
+          token: JWTValue
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.statusCode === 200) {
+        showToast('success', 'Account Deleted', 'Your account has been successfully deleted.');
+        setShowDeleteModal(false);
+        // Logout and redirect after short delay
+        setTimeout(() => {
+          logout();
+          navigate('/login');
+        }, 1500);
+      } else {
+        const errorMsg = data.body ? JSON.parse(data.body).error : 'Failed to delete account';
+        showToast('error', 'Deletion Failed', errorMsg);
+      }
+    } catch (error) {
+      showToast('error', 'Error', 'An error occurred while deleting your account.');
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -487,6 +540,31 @@ const Profile = () => {
             </div>
           </div> */}
 
+          {/* Delete Account Section */}
+          <div className="config-card delete-account-section">
+            <div className="config-card-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#e53e3e" strokeWidth="2">
+                <path d="M3 6h18" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+              <h3 style={{ color: '#e53e3e' }}>Delete Account</h3>
+            </div>
+            <div className="config-form">
+              <p style={{ color: '#666', marginBottom: '15px', fontSize: '14px' }}>
+                Once you delete your account, there is no going back. Please be certain.
+              </p>
+              <button 
+                type="button" 
+                className="delete-btn" 
+                onClick={() => setShowDeleteModal(true)}
+              >
+                Delete My Account
+              </button>
+            </div>
+          </div>
+
           {message && (
             <div className={`profile-message ${messageType}`}>
               {message}
@@ -494,6 +572,76 @@ const Profile = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="delete-modal-overlay">
+          <div className="delete-modal">
+            <div className="delete-modal-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="#e53e3e" strokeWidth="2" width="48" height="48">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <h2>Delete Account</h2>
+            </div>
+            <div className="delete-modal-body">
+              <p className="delete-warning">
+                This action cannot be undone. This will permanently delete your account and remove all your data from our servers.
+              </p>
+              
+              <div className="delete-form-group">
+                <label>Why are you leaving? (Required)</label>
+                <select
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  className="delete-reason-select"
+                >
+                  <option value="">Select a reason...</option>
+                  <option value="No longer need the service">No longer need the service</option>
+                  <option value="Found a better alternative">Found a better alternative</option>
+                  <option value="Too expensive">Too expensive</option>
+                  <option value="Missing features I need">Missing features I need</option>
+                  <option value="Technical issues">Technical issues</option>
+                  <option value="Privacy concerns">Privacy concerns</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="delete-form-group">
+                <label>Type <strong>DELETE</strong> to confirm</label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value.toUpperCase())}
+                  placeholder="Type DELETE"
+                  className="delete-confirm-input"
+                />
+              </div>
+            </div>
+            <div className="delete-modal-footer">
+              <button 
+                className="cancel-btn" 
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteReason('');
+                  setDeleteConfirmText('');
+                }}
+                disabled={deleteLoading}
+              >
+                Cancel
+              </button>
+              <button 
+                className="confirm-delete-btn" 
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading || deleteConfirmText !== 'DELETE' || !deleteReason}
+              >
+                {deleteLoading ? "Deleting..." : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

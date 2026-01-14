@@ -1,25 +1,22 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
 
-const GlobalContext = createContext();
+// Split contexts for better performance
+const AuthContext = createContext();
+const NavigationContext = createContext();
+
 const SESSION_KEY = "userSession";
 const JWT_SESSION_KEY = "jwtSession";
 const REDIRECT_PATH_KEY = "redirectPath";
 
-export const GlobalProvider = ({ children }) => {
+// Auth Provider - handles user authentication state
+export const AuthProvider = ({ children }) => {
   const [globalValue, setGlobalValue] = useState(() => {
-    // Initialize from sessionStorage if available (persists during session)
     const stored = sessionStorage.getItem(SESSION_KEY);
     return stored || "";
   });
 
   const [JWTValue, setJWTValue] = useState(() => {
-    // Initialize from sessionStorage if available (persists during session)
     const stored = sessionStorage.getItem(JWT_SESSION_KEY);
-    return stored || "";
-  });
-
-  const [redirectPath, setRedirectPath] = useState(() => {
-    const stored = sessionStorage.getItem(REDIRECT_PATH_KEY);
     return stored || "";
   });
 
@@ -41,6 +38,42 @@ export const GlobalProvider = ({ children }) => {
     }
   }, [JWTValue]);
 
+  // Memoize functions to prevent unnecessary re-renders
+  const isAuthenticated = useCallback(() => {
+    return !!globalValue || !!sessionStorage.getItem(SESSION_KEY);
+  }, [globalValue]);
+
+  const logout = useCallback(() => {
+    setGlobalValue("");
+    setJWTValue("");
+    sessionStorage.removeItem(SESSION_KEY);
+    sessionStorage.removeItem(JWT_SESSION_KEY);
+  }, []);
+
+  // Memoize context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    globalValue,
+    setGlobalValue,
+    JWTValue,
+    setJWTValue,
+    isAuthenticated,
+    logout
+  }), [globalValue, JWTValue, isAuthenticated, logout]);
+
+  return (
+    <AuthContext.Provider value={contextValue}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+// Navigation Provider - handles redirect paths
+export const NavigationProvider = ({ children }) => {
+  const [redirectPath, setRedirectPath] = useState(() => {
+    const stored = sessionStorage.getItem(REDIRECT_PATH_KEY);
+    return stored || "";
+  });
+
   // Sync redirectPath to sessionStorage whenever it changes
   useEffect(() => {
     if (redirectPath) {
@@ -50,37 +83,62 @@ export const GlobalProvider = ({ children }) => {
     }
   }, [redirectPath]);
 
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    return !!globalValue || !!sessionStorage.getItem(SESSION_KEY);
-  };
-
-  // Logout function - clears session
-  const logout = () => {
-    setGlobalValue("");
-    setJWTValue("");
-    sessionStorage.removeItem(SESSION_KEY);
-    sessionStorage.removeItem(JWT_SESSION_KEY);
-  };
-
-  // Get and clear redirect path (used after login)
-  const getAndClearRedirectPath = () => {
+  const getAndClearRedirectPath = useCallback(() => {
     const path = redirectPath || sessionStorage.getItem(REDIRECT_PATH_KEY) || "/list";
     setRedirectPath("");
     sessionStorage.removeItem(REDIRECT_PATH_KEY);
     return path;
-  };
+  }, [redirectPath]);
+
+  // Memoize context value
+  const contextValue = useMemo(() => ({
+    redirectPath,
+    setRedirectPath,
+    getAndClearRedirectPath
+  }), [redirectPath, getAndClearRedirectPath]);
 
   return (
-    <GlobalContext.Provider value={{ 
-      globalValue, setGlobalValue, 
-      JWTValue, setJWTValue, 
-      isAuthenticated, logout,
-      redirectPath, setRedirectPath, getAndClearRedirectPath
-    }}>
+    <NavigationContext.Provider value={contextValue}>
       {children}
-    </GlobalContext.Provider>
+    </NavigationContext.Provider>
   );
 };
 
-export const useGlobalContext = () => useContext(GlobalContext);
+// Combined Provider for backward compatibility
+export const GlobalProvider = ({ children }) => {
+  return (
+    <AuthProvider>
+      <NavigationProvider>
+        {children}
+      </NavigationProvider>
+    </AuthProvider>
+  );
+};
+
+// Hooks for accessing contexts
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+export const useNavigation = () => {
+  const context = useContext(NavigationContext);
+  if (!context) {
+    throw new Error('useNavigation must be used within a NavigationProvider');
+  }
+  return context;
+};
+
+// Legacy hook for backward compatibility
+export const useGlobalContext = () => {
+  const auth = useAuth();
+  const navigation = useNavigation();
+  
+  return {
+    ...auth,
+    ...navigation
+  };
+};

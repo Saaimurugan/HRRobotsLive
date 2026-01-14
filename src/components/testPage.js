@@ -6,19 +6,25 @@ import TestIDMissing from "./testIDMissing.js";
 import SubmittedMessage from "./submittedMessage.js";
 import FaceTracking from "./faceDetection.js";
 import "../App.css";
-import TestComponent from "./testComponent.js";
+import TestComponent from "./testComponent_bulk.js";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
 import TestSetupWizard from "./TestSetupWizard.js";
 import useAudioDetection from "./useAudioDetection.js";
 import ProctorWarningModal from "./ProctorWarningModal.js";
+import FaceDetectionPreloader from "./FaceDetectionPreloader.js";
 
 // Toast Component for notifications
 const Toast = ({ toasts, removeToast }) => {
   return (
-    <div className="toast-container">
+    <div className="toast-container" role="region" aria-label="Notifications" aria-live="polite">
       {toasts.map((toast) => (
-        <div key={toast.id} className={`toast ${toast.type} ${toast.exiting ? 'toast-exit' : ''}`}>
-          <svg className="toast-icon" viewBox="0 0 24 24">
+        <div 
+          key={toast.id} 
+          className={`toast ${toast.type} ${toast.exiting ? 'toast-exit' : ''}`}
+          role="alert"
+          aria-atomic="true"
+        >
+          <svg className="toast-icon" viewBox="0 0 24 24" aria-hidden="true">
             {toast.type === 'error' && <path fill="#e53e3e" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>}
             {toast.type === 'success' && <path fill="#38a169" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>}
             {toast.type === 'warning' && <path fill="#dd6b20" d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>}
@@ -28,8 +34,12 @@ const Toast = ({ toasts, removeToast }) => {
             <div className="toast-title">{toast.title}</div>
             <div className="toast-message">{toast.message}</div>
           </div>
-          <button className="toast-close" onClick={() => removeToast(toast.id)}>
-            <svg viewBox="0 0 24 24" fill="currentColor">
+          <button 
+            className="toast-close" 
+            onClick={() => removeToast(toast.id)}
+            aria-label={`Dismiss ${toast.type} notification: ${toast.title}`}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
             </svg>
           </button>
@@ -286,8 +296,11 @@ const TestPage = () => {
   const [ isTimeOut, setIsTimeOut ] = useState(true);
   const [testProgress, setTestProgress] = useState({ currentQuestion: 0, questionCount: 0, answers: [], totalQuestions: numberOfQuestions, questionsLoaded: 0 });
   const [showProgressModal, setShowProgressModal] = useState(false);
+  const [showSubmitConfirmModal, setShowSubmitConfirmModal] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isFaceDetectionLoaded, setIsFaceDetectionLoaded] = useState(false);
   const navigateToQuestionRef = useRef(null);
+  const submitTestRef = useRef(null);
   const lastClipboardCheckRef = useRef(null); // Track last clipboard state
 
   // Proctor warning modal states
@@ -370,7 +383,7 @@ const TestPage = () => {
         
         // Calculate and save the score for attempted questions
         try {
-          await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore", {
+          await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore__", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -494,13 +507,37 @@ const TestPage = () => {
   };
 
   const handleQuestionDotClick = (questionNum) => {
-    // Only allow navigation to questions that have been loaded
-    // questionCount is the number of previously answered questions
-    // So question (questionCount + 1) is at index 0
-    const targetIndex = questionNum - testProgress.questionCount - 1;
-    const questionsLoaded = testProgress.questionsLoaded || 0;
-    if (targetIndex >= 0 && targetIndex < questionsLoaded && navigateToQuestionRef.current) {
-      navigateToQuestionRef.current(questionNum);
+    //console.log('Navigating to question:', questionNum); // Debug log
+    
+    // For ordered questions, we need to find the actual question index
+    if (testProgress.orderedQuestions && testProgress.orderedQuestions.length > 0) {
+      // questionNum is 1-based display order, convert to 0-based
+      const displayIndex = questionNum - 1;
+      
+      if (displayIndex >= 0 && displayIndex < testProgress.orderedQuestions.length) {
+        const questionInfo = testProgress.orderedQuestions[displayIndex];
+        const targetIndex = questionInfo.originalIndex;
+        
+        //console.log('Display index:', displayIndex, 'Target index:', targetIndex, 'Question info:', questionInfo);
+        
+        if (navigateToQuestionRef.current) {
+          navigateToQuestionRef.current(targetIndex);
+        } else {
+          //console.log('Navigation ref not available');
+        }
+      } else {
+        //console.log('Display index out of range:', displayIndex, 'Max:', testProgress.orderedQuestions.length);
+      }
+    } else {
+      // Fallback to original logic if orderedQuestions not available
+      const targetIndex = questionNum - 1;
+      //console.log('Using fallback navigation to index:', targetIndex);
+      
+      if (targetIndex >= 0 && targetIndex < questions.length && navigateToQuestionRef.current) {
+        navigateToQuestionRef.current(targetIndex);
+      } else {
+        //console.log('Fallback navigation failed:', { targetIndex, questionsLength: questions.length, hasRef: !!navigateToQuestionRef.current });
+      }
     }
   };
 
@@ -567,7 +604,7 @@ useEffect(() => {
       
       // Then, calculate and save the score for attempted questions
       try {
-        await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore", {
+        await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore__", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -730,6 +767,30 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated && !isSubmitted) {
       document.removeEventListener("fullscreenchange", onFullScreenChange);
       document.removeEventListener("webkitfullscreenchange", onFullScreenChange);
       document.removeEventListener("msfullscreenchange", onFullScreenChange);
+    };
+  }, []);
+
+  // Scroll detection for floating navigation
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      const shouldFloat = scrollTop > 50;
+      setIsScrolled(shouldFloat);
+      
+      // Add/remove body class for content spacing
+      if (shouldFloat) {
+        document.body.classList.add('has-floating-nav');
+      } else {
+        document.body.classList.remove('has-floating-nav');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    
+    // Cleanup function
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      document.body.classList.remove('has-floating-nav');
     };
   }, []);
 
@@ -1149,8 +1210,9 @@ if (userUniqueID != '')
   //const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div style={{ background:"white", overflow: "hidden", minHeight: "100vh", fontFamily: "Roboto, Arial, sans-serif", padding: "0px" }}>
-      <Toast toasts={toasts} removeToast={removeToast} />
+    <FaceDetectionPreloader>
+      <div style={{ background:"white", overflow: "hidden", minHeight: "100vh", fontFamily: "Roboto, Arial, sans-serif", padding: "0px" }}>
+        <Toast toasts={toasts} removeToast={removeToast} />
       
       {/* Proctor Warning Modal for Fullscreen/Focus violations */}
       {showProctorWarning && (
@@ -1169,34 +1231,40 @@ if (userUniqueID != '')
       
       { userUniqueIDPresent?
       <>
-      <div className="test-nav-bar">
-        <div className="status-indicators">
+      <div className="test-nav-bar" role="toolbar" aria-label="Test status and navigation">
+        <div className="status-indicators" role="group" aria-label="Proctoring status indicators">
           {/* Fullscreen Mode */}
           <span
             className={`status-badge ${isFullScreen ? 'active' : 'inactive'}`}
             title="Full screen mode - candidate will be disqualified if exited"
+            role="status"
+            aria-label={`Fullscreen mode: ${isFullScreen ? 'Active' : 'Inactive'}${fullscreenAttempts > 0 ? `, ${fullscreenAttempts} violations` : ''}`}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
               <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
             </svg>
-            {fullscreenAttempts > 0 && <span className="status-counter">{fullscreenAttempts}</span>}
+            {fullscreenAttempts > 0 && <span className="status-counter" aria-hidden="true">{fullscreenAttempts}</span>}
           </span>
           {/* Window Focus */}
           <span
             className={`status-badge ${isFocused ? 'active' : 'inactive'}`}
             title="Window focus status"
+            role="status"
+            aria-label={`Window focus: ${isFocused ? 'Active' : 'Inactive'}${focusAttempts > 0 ? `, ${focusAttempts} violations` : ''}`}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
               <path d="M19 4H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H5V8h14v10z"/>
             </svg>
-            {focusAttempts > 0 && <span className="status-counter">{focusAttempts}</span>}
+            {focusAttempts > 0 && <span className="status-counter" aria-hidden="true">{focusAttempts}</span>}
           </span>
           {/* Camera */}
           <span
             className={`status-badge ${cameraPermission ? 'active' : 'inactive'}`}
             title="Camera permission status"
+            role="status"
+            aria-label={`Camera: ${cameraPermission ? 'Enabled' : 'Disabled'}`}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
               <path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/>
             </svg>
           </span>
@@ -1204,18 +1272,22 @@ if (userUniqueID != '')
           <span
             className={`status-badge ${micPermission ? 'active' : 'inactive'}`}
             title="Microphone permission status"
+            role="status"
+            aria-label={`Microphone: ${micPermission ? 'Enabled' : 'Disabled'}${speechCount > 0 ? `, speech detected ${speechCount} times` : ''}`}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/>
             </svg>
-            {speechCount > 0 && <span className="status-counter">{speechCount}</span>}
+            {speechCount > 0 && <span className="status-counter" aria-hidden="true">{speechCount}</span>}
           </span>
           {/* Screenshot Detection */}
           <span
             className={`status-badge ${clipboardPermission ? 'active' : 'inactive'}`}
             title="Screenshot detection - test will terminate if screenshot is taken"
+            role="status"
+            aria-label={`Screenshot detection: ${clipboardPermission ? 'Active' : 'Inactive'}`}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
               <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
             </svg>
           </span>
@@ -1223,11 +1295,13 @@ if (userUniqueID != '')
           <span
             className={`status-badge ${audioDetection.isListening ? 'active' : 'inactive'} ${isTalking ? 'talking' : ''}`}
             title={`Audio detection - Speech detected: ${speechCount} times`}
+            role="status"
+            aria-label={`Audio detection: ${audioDetection.isListening ? 'Listening' : 'Inactive'}, speech detected ${speechCount} times`}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" aria-hidden="true">
               <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
             </svg>
-            {speechCount > 0 && <span className="status-counter">{speechCount}</span>}
+            {speechCount > 0 && <span className="status-counter" aria-hidden="true">{speechCount}</span>}
           </span>
         </div>
         {isTimeOut && (isFullScreen || fullscreenAttempts < maxProctorAttempts) && (isFocused || focusAttempts < maxProctorAttempts) && cameraPermission && micPermission && !isTerminated && (!faceRecognition || (faceOffWarningCount < allowedDefaults && multipleFacesWarningCount < allowedDefaults))? 
@@ -1258,41 +1332,59 @@ if (userUniqueID != '')
         />
         {/* Progress dots for larger screens - auto-scaling based on question count */}
         {configLoaded ? (
-        <div className="progress-dots-desktop" style={{
+        <nav className={`progress-dots-desktop ${isScrolled ? 'floating transparent' : ''}`} role="navigation" aria-label="Question navigation" style={{
           // Auto-scale: fewer questions = larger dots, more questions = smaller dots
           '--dot-size': numberOfQuestions <= 20 ? '28px' : numberOfQuestions <= 35 ? '24px' : numberOfQuestions <= 50 ? '20px' : '16px',
           '--dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 35 ? '10px' : numberOfQuestions <= 50 ? '9px' : '8px',
         }}>
-          {Array.from({ length: numberOfQuestions }, (_, i) => {
-            const questionNum = i + 1;
-            const currentDisplayQuestion = testProgress.currentQuestion + testProgress.questionCount + 1;
-            const answersIndex = i - testProgress.questionCount;
-            const isAnswered = answersIndex >= 0 && testProgress.answers[answersIndex] && testProgress.answers[answersIndex] !== "";
-            const isCurrent = questionNum === currentDisplayQuestion;
-            const targetIndex = questionNum - testProgress.questionCount - 1;
-            const questionsLoaded = testProgress.questionsLoaded || 0;
-            const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
-            
-            return (
-              <span
-                key={i}
-                onClick={() => isClickable && handleQuestionDotClick(questionNum)}
-                className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+          {testProgress.orderedQuestions && testProgress.questionsLoaded > 0 ? (
+            // Use the ordered questions from TestComponent
+            testProgress.orderedQuestions.map((questionInfo, displayIndex) => {
+              const questionNum = displayIndex + 1; // Sequential numbering in display order
+              const originalIndex = questionInfo.originalIndex;
+              const currentDisplayQuestion = testProgress.currentQuestion + 1;
+              const isAnswered = testProgress.answers[originalIndex] && testProgress.answers[originalIndex] !== "";
+              const isCurrent = originalIndex === testProgress.currentQuestion;
+              const isClickable = displayIndex < testProgress.questionsLoaded;
+              
+              return (
+                <button
+                  key={`${questionInfo.questionID}-${displayIndex}`}
+                  onClick={() => isClickable && handleQuestionDotClick(questionNum)}
+                  className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+                  style={{
+                    width: 'var(--dot-size)',
+                    height: 'var(--dot-size)',
+                    fontSize: 'var(--dot-font)',
+                  }}
+                  title={isClickable ? `Go to Question ${questionNum} (${questionInfo.topic})` : `Question ${questionNum} (not loaded yet)`}
+                  aria-label={`Question ${questionNum} from ${questionInfo.topic}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
+                  aria-current={isCurrent ? 'step' : undefined}
+                  disabled={!isClickable}
+                  tabIndex={isClickable ? 0 : -1}
+                >
+                  {questionNum}
+                </button>
+              );
+            })
+          ) : (
+            // Show skeleton loaders when questions are loading
+            Array.from({ length: numberOfQuestions }, (_, i) => (
+              <div
+                key={`skeleton-${i}`}
+                className="question-dot-skeleton skeleton-loader"
                 style={{
                   width: 'var(--dot-size)',
                   height: 'var(--dot-size)',
-                  fontSize: 'var(--dot-font)',
-                  cursor: isClickable ? 'pointer' : 'not-allowed',
+                  borderRadius: '50%',
                 }}
-                title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
-              >
-                {questionNum}
-              </span>
-            );
-          })}
-        </div>
+                aria-hidden="true"
+              />
+            ))
+          )}
+        </nav>
         ) : (
-        <div className="progress-dots-desktop" style={{ justifyContent: 'center' }}>
+        <div className={`progress-dots-desktop ${isScrolled ? 'floating transparent' : ''}`} style={{ justifyContent: 'center' }} role="status" aria-live="polite">
           <span style={{ fontSize: '12px', color: '#666' }}>Loading...</span>
         </div>
         )}
@@ -1300,8 +1392,15 @@ if (userUniqueID != '')
         <button 
           className="progress-hamburger"
           onClick={() => setShowProgressModal(true)}
+          aria-label="Open question progress menu"
+          aria-haspopup="dialog"
+          title="View all questions"
         >
-          ⋮
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="12" cy="12" r="2"/>
+            <circle cx="12" cy="19" r="2"/>
+          </svg>
         </button>
         </>
         :
@@ -1332,7 +1431,7 @@ if (userUniqueID != '')
         <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
         {isFaceDetectionLoaded && configLoaded ? (
-          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} numberOfQuestions={numberOfQuestions} onSubmit={() => setIsSubmitted(true)}/>
+          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} submitTestRef={submitTestRef} numberOfQuestions={numberOfQuestions} onSubmit={() => setShowSubmitConfirmModal(true)}/>
         ) : (
           <div style={{
             display: 'flex',
@@ -1371,17 +1470,20 @@ if (userUniqueID != '')
     }
     {/* Progress Modal for mobile */}
     {showProgressModal && (
-      <div className="progress-modal-overlay">
+      <div className="progress-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="progress-modal-title">
         <div className="progress-modal">
           <div className="progress-modal-header">
-            <h3>Question Progress</h3>
+            <h3 id="progress-modal-title">Question Progress</h3>
             <button 
               className="progress-modal-close"
               onClick={() => setShowProgressModal(false)}
+              aria-label="Close question progress modal"
             >×</button>
           </div>
-          <div 
+          <nav 
             className="progress-modal-grid"
+            role="navigation"
+            aria-label="Question navigation grid"
             style={{
               // Auto-scale grid columns based on question count
               gridTemplateColumns: numberOfQuestions <= 20 
@@ -1393,40 +1495,56 @@ if (userUniqueID != '')
               '--modal-dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 50 ? '10px' : '9px',
             }}
           >
-            {Array.from({ length: numberOfQuestions }, (_, i) => {
-              const questionNum = i + 1;
-              const currentDisplayQuestion = testProgress.currentQuestion + testProgress.questionCount + 1;
-              const answersIndex = i - testProgress.questionCount;
-              const isAnswered = answersIndex >= 0 && testProgress.answers[answersIndex] && testProgress.answers[answersIndex] !== "";
-              const isCurrent = questionNum === currentDisplayQuestion;
-              const targetIndex = questionNum - testProgress.questionCount - 1;
-              const questionsLoaded = testProgress.questionsLoaded || 0;
-              const isClickable = targetIndex >= 0 && targetIndex < questionsLoaded;
-              return (
-                <span
-                  key={i}
-                  onClick={() => {
-                    if (isClickable) {
-                      handleQuestionDotClick(questionNum);
-                      setShowProgressModal(false);
-                    }
-                  }}
-                  className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+            {testProgress.orderedQuestions && testProgress.questionsLoaded > 0 ? (
+              // Use the ordered questions from TestComponent
+              testProgress.orderedQuestions.map((questionInfo, displayIndex) => {
+                const questionNum = displayIndex + 1; // Sequential numbering in display order
+                const originalIndex = questionInfo.originalIndex;
+                const currentDisplayQuestion = testProgress.currentQuestion + 1;
+                const isAnswered = testProgress.answers[originalIndex] && testProgress.answers[originalIndex] !== "";
+                const isCurrent = originalIndex === testProgress.currentQuestion;
+                const isClickable = displayIndex < testProgress.questionsLoaded;
+                
+                return (
+                  <button
+                    key={`${questionInfo.questionID}-${displayIndex}`}
+                    onClick={() => {
+                      if (isClickable) {
+                        handleQuestionDotClick(questionNum);
+                        setShowProgressModal(false);
+                      }
+                    }}
+                    className={`question-dot ${isAnswered ? 'answered' : 'unanswered'} ${isCurrent ? 'current' : ''} ${!isClickable ? 'disabled' : ''}`}
+                    style={{
+                      width: 'var(--modal-dot-size)',
+                      height: 'var(--modal-dot-size)',
+                      fontSize: 'var(--modal-dot-font)',
+                    }}
+                    title={isClickable ? `Go to Question ${questionNum} (${questionInfo.topic})` : `Question ${questionNum} (not loaded yet)`}
+                    aria-label={`Question ${questionNum} from ${questionInfo.topic}${isAnswered ? ', answered' : ', not answered'}${isCurrent ? ', current question' : ''}${!isClickable ? ', not available yet' : ''}`}
+                    disabled={!isClickable}
+                  >
+                    {questionNum}
+                  </button>
+                );
+              })
+            ) : (
+              // Show skeleton loaders when questions are loading
+              Array.from({ length: numberOfQuestions }, (_, i) => (
+                <div
+                  key={`modal-skeleton-${i}`}
+                  className="question-dot-skeleton skeleton-loader"
                   style={{
                     width: 'var(--modal-dot-size)',
                     height: 'var(--modal-dot-size)',
-                    fontSize: 'var(--modal-dot-font)',
-                    cursor: isClickable ? 'pointer' : 'not-allowed',
-                    margin: '0 auto',
+                    borderRadius: '50%',
                   }}
-                  title={isClickable ? `Go to Question ${questionNum}` : `Question ${questionNum} (not loaded yet)`}
-                >
-                  {questionNum}
-                </span>
-              );
-            })}
-          </div>
-          <div className="progress-modal-legend">
+                  aria-hidden="true"
+                />
+              ))
+            )}
+          </nav>
+          <div className="progress-modal-legend" aria-hidden="true">
             <span className="legend-item">
               <span className="legend-dot" style={{ background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)' }}></span>
               Answered
@@ -1439,7 +1557,63 @@ if (userUniqueID != '')
         </div>
       </div>
     )}
+
+    {/* Submit Confirmation Modal */}
+    {showSubmitConfirmModal && (
+      <div className="submit-confirm-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="submit-confirm-title">
+        <div className="submit-confirm-modal">
+          <div className="submit-confirm-header">
+            <h3 id="submit-confirm-title">Confirm Test Submission</h3>
+          </div>
+          <div className="submit-confirm-content">
+            <div className="submit-confirm-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12l2 2 4-4"/>
+                <circle cx="12" cy="12" r="9"/>
+              </svg>
+            </div>
+            <p className="submit-confirm-message">
+              Are you sure you want to submit your test? Once submitted, you cannot make any changes to your answers.
+            </p>
+            <div className="submit-confirm-stats">
+              <div className="confirm-stat">
+                <span className="confirm-stat-number">{testProgress.answers ? testProgress.answers.filter(a => a && a !== '').length : 0}</span>
+                <span className="confirm-stat-label">Questions Answered</span>
+              </div>
+              <div className="confirm-stat">
+                <span className="confirm-stat-number">{numberOfQuestions - (testProgress.answers ? testProgress.answers.filter(a => a && a !== '').length : 0)}</span>
+                <span className="confirm-stat-label">Questions Remaining</span>
+              </div>
+            </div>
+          </div>
+          <div className="submit-confirm-actions">
+            <button 
+              className="submit-confirm-cancel"
+              onClick={() => setShowSubmitConfirmModal(false)}
+              aria-label="Cancel submission and continue test"
+            >
+              Cancel
+            </button>
+            <button 
+              className="submit-confirm-submit"
+              onClick={() => {
+                setShowSubmitConfirmModal(false);
+                if (submitTestRef.current) {
+                  submitTestRef.current();
+                } else {
+                  setIsSubmitted(true);
+                }
+              }}
+              aria-label="Confirm and submit test"
+            >
+              Yes, Submit Test
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
+    </FaceDetectionPreloader>
   );
 };
 

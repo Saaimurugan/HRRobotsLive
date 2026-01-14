@@ -1,6 +1,5 @@
 import json
 import boto3
-import uuid
 import datetime
 from boto3.dynamodb.conditions import Key, Attr
 
@@ -32,40 +31,27 @@ def lambda_handler(event, context):
     question_id = event.get('questionID')
     answer = event.get('answer')
     
-    # Check if an answer already exists for this testID and questionID
-    existing_answers = fetch_all_items(
-        answers_table, 
-        Attr('questionID').eq(question_id) & Attr('testID').eq(test_id)
-    )
-
+    if not test_id or not question_id or not answer:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Missing required fields: testID, questionID, or answer')
+        }
+    
+    # Use testID_questionID as a deterministic answerID to prevent duplicates
+    # This ensures the same question for the same test always has the same key
+    answer_id = f"{test_id}_{question_id}"
+    
     try:
-        if existing_answers:
-            # Update existing answer instead of creating a new one
-            answer_ID = existing_answers[0]['answerID']
-            answers_table.update_item(
-                Key={
-                    'answerID': answer_ID,
-                    'questionID': question_id
-                },
-                UpdateExpression='SET answer = :answer, #ts = :timestamp',
-                ExpressionAttributeNames={'#ts': 'timestamp'},
-                ExpressionAttributeValues={
-                    ':answer': answer,
-                    ':timestamp': str(datetime.datetime.now())
-                }
-            )
-        else:
-            # Create new answer record
-            answer_ID = str(uuid.uuid4())
-            answers_table.put_item(
-                Item={
-                    'answerID': answer_ID,
-                    'questionID': question_id,
-                    'testID': test_id,
-                    'answer': answer,
-                    'timestamp': str(datetime.datetime.now())
-                }
-            )
+        # Use put_item with the deterministic key - this will update if exists
+        answers_table.put_item(
+            Item={
+                'answerID': answer_id,
+                'questionID': question_id,
+                'testID': test_id,
+                'answer': answer,
+                'timestamp': str(datetime.datetime.now())
+            }
+        )
         
         return {
             'statusCode': 200,

@@ -1,0 +1,215 @@
+HR ROBOTS - DEMO VIDEO VOICEOVER SCRIPT
+========================================
+
+================================================================================
+PAGE 1: LOGIN PAGE
+================================================================================
+
+Welcome to HR Robots, your AI-powered interview and candidate assessment platform.
+
+On the login page, you'll see a clean, modern interface with our key features highlighted on the left: AI-Powered Interviews, Smart Analytics, and Secure & Reliable infrastructure.
+
+To sign in, simply enter your email address and password. You can toggle password visibility using the eye icon. Before logging in, you'll need to accept the End User License Agreement by checking the box.
+
+If you've forgotten your password, click 'Forgot password?' to reset it. New users can click 'Create one' to sign up for an account.
+
+Once you've entered your credentials and accepted the EULA, click 'Sign In' to access your dashboard.
+
+
+================================================================================
+PAGE 2: DASHBOARD (MAIN PAGE)
+================================================================================
+
+This is your main dashboard — the command center for all your hiring activities.
+
+At the top, you'll find four main action cards:
+
+First, 'Create JD' — use AI to generate professional, role-specific job descriptions based on job title, skills, and experience level.
+
+Second, 'Candidate Profiler' — upload a resume and job description to generate a comprehensive suitability report highlighting skill matches and role fit.
+
+Third, 'Create Template' — build customized MCQ assessment templates using AI-driven question generation, organized by topics and difficulty levels.
+
+Fourth, 'Results' — view test outcomes by searching for a candidate's name or test ID, with detailed analytics and scoring breakdowns.
+
+Below these cards, you'll see your screening test templates. Each template shows action buttons for editing, deleting, assigning to recruiters, and configuring test settings. Click 'Generate Link' to create a unique test URL that you can share with candidates via email.
+
+
+================================================================================
+PAGE 3: CREATE JD (JOB DESCRIPTION GENERATOR)
+================================================================================
+
+The Create JD page helps you generate professional job descriptions in seconds.
+
+Fill in the required fields: Role Name, Years of Experience, Programming Languages, and Additional Skills. You can also add optional Project Details to provide more context.
+
+Click 'Generate Job Description' and our AI will create a comprehensive, well-formatted job description tailored to your requirements.
+
+Once generated, you can review the content and use the Print button to save or share the document.
+
+
+================================================================================
+PAGE 4: CANDIDATE PROFILER
+================================================================================
+
+The Candidate Profiler is your AI-powered resume screening tool.
+
+Upload two PDF files: the Job Description and the Candidate's Resume. Our system will extract the text and analyze the match.
+
+Click 'Generate Suitability Report' to receive a detailed analysis including:
+- Candidate name and summary
+- Suitability score
+- Key matching skills
+- Gaps in skills or experience
+- Additional strengths
+- Suggested improvements
+- Overall conclusion
+
+You can print this report to share with your hiring team.
+
+
+================================================================================
+PAGE 5: CREATE TEMPLATE
+================================================================================
+
+The Create Template page is where you build your screening assessments.
+
+On the left panel, you'll see your question list with topic counts at the top. Filter questions by clicking on any topic badge.
+
+On the right panel, you have two ways to add questions:
+
+First, manually — select the question type, enter a topic, write your question, add options, and mark the correct answer. Click 'Add Question' to include it in your template.
+
+Second, using AI — enter a topic like 'JavaScript' or 'React', select a difficulty level from Fresher to Super Advanced, and click 'Generate 20 Questions'. Our AI will create relevant MCQ questions instantly.
+
+Give your template a name and click 'Save Questions' when you're done. You need between 5 and 60 questions per template.
+
+
+================================================================================
+PAGE 6: EDIT TEMPLATE
+================================================================================
+
+The Edit Template page works similarly to Create Template, but loads your existing questions for modification.
+
+You can edit any question by clicking the Edit button, remove questions you no longer need, or add new ones manually or with AI.
+
+The topic filter helps you focus on specific areas when reviewing large question sets.
+
+Remember to save your changes before leaving the page.
+
+
+================================================================================
+PAGE 7: RESULTS PAGE
+================================================================================
+
+The Results page is your analytics hub for candidate assessments.
+
+Use the search bar to find results by candidate name or test ID. The table below shows all recent tests with status indicators — Completed, In Progress, or Terminated.
+
+Click on any test to view detailed results including:
+- Score breakdown with a visual gauge
+- Topic-wise performance table
+- Candidate photos captured during the test
+- Submission timestamp
+
+Click 'Generate Analytics' for deeper insights into the candidate's performance. Use the Print Report button to create a professional PDF for your records.
+
+
+================================================================================
+PAGE 8: PROFILE SETTINGS
+================================================================================
+
+The Profile page lets you manage your account settings.
+
+Here you can:
+- Change your password with our secure password requirements
+- Invite new users to the platform by entering their business email
+- Delete your account if needed, with a confirmation process for safety
+
+All changes are saved automatically with confirmation messages.
+
+
+================================================================================
+PAGE 9: NAVIGATION & LOGOUT
+================================================================================
+
+The navigation bar at the top provides quick access to key areas:
+- The Home icon takes you back to the dashboard
+- The Profile icon shows your logged-in email and links to settings
+- The Logout icon securely ends your session
+
+When you're done, simply click the logout button to sign out safely. You'll be redirected to the login page.
+
+
+================================================================================
+PAGE 10: TEST PAGE - CANDIDATE ASSESSMENT EXPERIENCE
+================================================================================
+
+Now let's look at the candidate's experience when they receive a test link.
+
+--- STEP 1: SYSTEM CHECK ---
+
+When candidates open their unique test link, they first see the System Check screen. The platform verifies four essential requirements:
+- Camera permission — required for identity verification and proctoring
+- Microphone permission — for audio monitoring during the test
+- Clipboard permission — to prevent unauthorized copying
+- Single screen detection — ensures no additional monitors are connected
+
+All four permissions must be granted before proceeding. If multiple screens are detected, candidates must disconnect them to continue.
+
+--- STEP 2: TEST GUIDELINES ---
+
+Next, candidates review the test guidelines. These include important rules:
+- Keep camera and microphone on at all times
+- Remain in fullscreen mode throughout the test
+- Don't switch to other windows or applications
+- Keep your face visible on camera
+- No screenshots allowed — this will terminate the test immediately
+
+Candidates enter their full name and check the box to confirm they've read and accept the instructions.
+
+--- STEP 3: DATA CONSENT ---
+
+The consent screen explains how personal data will be collected and used, in compliance with GDPR and India's Digital Personal Data Protection Act. Candidates must scroll through the entire consent document before they can check the agreement box. This ensures informed consent for photo and ID collection.
+
+--- STEP 4: IDENTITY VERIFICATION ---
+
+In the final setup step, candidates capture two images:
+- First, a clear photo of their face using the webcam
+- Then, a photo of their government-issued ID card
+
+Visual guides help candidates align their face and ID within the frame. Once both images are captured, they can start the test.
+
+--- DURING THE TEST ---
+
+The test interface shows:
+- A timer counting down the remaining time
+- Question navigation dots to track progress
+- The current question with multiple choice options
+- A progress indicator showing answered vs. total questions
+
+The proctoring system runs continuously in the background:
+- Face detection monitors if the candidate is present
+- Audio detection tracks any speech
+- Fullscreen and window focus are monitored
+- Random photos may be captured during the test
+
+If candidates exit fullscreen or lose window focus, they receive a warning modal with a chance to return. After three violations, the test is automatically terminated.
+
+--- TEST COMPLETION ---
+
+When candidates finish answering all questions or the timer expires, they can submit their test. A confirmation screen appears, and their results are immediately available to the recruiter in the Results dashboard.
+
+If a test is terminated due to violations, the reason is recorded and visible in the results — whether it was for exiting fullscreen, losing focus, face detection issues, or attempting screenshots.
+
+
+================================================================================
+CLOSING
+================================================================================
+
+Thank you for using HR Robots — streamlining your hiring process with AI-powered tools.
+
+
+================================================================================
+END OF SCRIPT
+================================================================================

@@ -29,19 +29,22 @@
 .analytics-print-btn {
   display: block;
   margin: 16px auto 0;
-  padding: 10px 24px;
-  background: var(--color-primary-gradient);
-  color: white;
-  border: none;
-  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
-  transition: opacity var(--transition-normal);
+  transition: all var(--transition-normal);
 }
 
 .analytics-print-btn:hover {
-  opacity: 0.9;
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary);
 }
 
 .analytics-loading {
@@ -142,25 +145,34 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
   transition: all var(--transition-normal);
-  border: none;
+  border: 2px solid var(--color-primary);
   white-space: nowrap;
 }
 
 .modern-button--primary {
-  background: var(--color-primary-gradient);
-  color: white;
+  background: transparent;
+  color: var(--color-primary);
+  border: 2px solid var(--color-primary);
 }
 
 .modern-button--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, var(--color-primary-dark) 0%, #148f8a 100%);
-  transform: translateY(-1px);
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-2px);
   box-shadow: var(--shadow-primary);
+}
+
+.modern-button--primary:hover:not(:disabled) svg,
+.modern-button--primary:hover:not(:disabled) svg path {
+  fill: white;
+  color: white;
+  stroke: white;
 }
 
 .modern-button--primary:disabled {
@@ -169,14 +181,16 @@
 }
 
 .modern-button--secondary {
-  background: var(--color-bg-secondary);
-  color: var(--color-text-primary);
-  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: 2px solid var(--color-border);
   flex-shrink: 0;
 }
 
 .modern-button--secondary:hover:not(:disabled) {
-  background: var(--color-border-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-light);
 }
 
 .modern-button--outline {
@@ -187,7 +201,17 @@
 }
 
 .modern-button--outline:hover:not(:disabled) {
-  background: rgba(28, 187, 180, 0.1);
+  background: var(--color-primary);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-primary);
+}
+
+.modern-button--outline:hover:not(:disabled) svg,
+.modern-button--outline:hover:not(:disabled) svg path {
+  fill: white;
+  color: white;
+  stroke: white;
 }
 
 /* Modern Input */
@@ -202,7 +226,7 @@
 
 .modern-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(28, 187, 180, 0.1);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .modern-input:disabled {
@@ -259,22 +283,25 @@
 }
 
 .report-header-section {
-  background: linear-gradient(135deg, #6ba3ae 0%, #5a929d 100%);
-  color: var(--color-bg-primary);
+  background: #ffffff;
+  color: var(--color-primary);
   padding: 18px 24px;
   text-align: center;
+  border-bottom: 2px solid var(--color-primary);
 }
 
 .report-header-section h2 {
   margin: 0 0 4px 0;
   font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 1px;
+  color: var(--color-primary);
 }
 
 .test-id {
   font-size: var(--font-size-xs);
-  opacity: 0.9;
+  opacity: 0.8;
+  color: var(--color-text-secondary);
 }
 
 .report-body {
@@ -820,9 +847,10 @@
 }
 
 .pagination-btn.active {
-  background: var(--color-primary);
+  background: transparent;
   border-color: var(--color-primary);
-  color: white;
+  color: var(--color-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .pagination-numbers {
@@ -952,6 +980,7 @@
   .report-header-section h2 {
     font-size: var(--font-size-base);
     letter-spacing: 0.5px;
+    color: var(--color-primary);
   }
 
   .test-id {

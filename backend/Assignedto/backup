@@ -1,0 +1,48 @@
+import json
+import boto3
+from botocore.exceptions import ClientError
+
+def lambda_handler(event, context):
+    # Initialize DynamoDB client
+    dynamodb = boto3.resource('dynamodb')
+
+    # Reference the 'template' table
+    table = dynamodb.Table('template')
+
+    try:
+        # Parse event to get necessary data
+        JSONData = str(event)
+        body = json.loads(JSONData.replace("'", '"'))
+
+        template_id = body.get("templateIDSelectedToAssign")
+        assigned_email = body.get("email")  # Assume the email comes in event
+
+        if not template_id or not assigned_email:
+            return {
+                "statusCode": 400,
+                "body": json.dumps({"error": "templateID and assignedEmail are required"})
+            }
+
+        # Update the item with the new AssignedTo value
+        response = table.update_item(
+            Key={
+                'templateID': template_id
+            },
+            UpdateExpression="SET AssignedTo = :email",
+            ExpressionAttributeValues={
+                ':email': assigned_email
+            },
+            ReturnValues="UPDATED_NEW"
+        )
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({"message": f"Template with ID {template_id} updated successfully.", "updatedAttributes": response.get('Attributes')})
+        }
+
+    except ClientError as e:
+        # Handle any errors from DynamoDB
+        return {
+            "statusCode": 500,
+            "body": json.dumps({"error": str(e)})
+        }

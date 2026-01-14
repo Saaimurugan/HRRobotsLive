@@ -181,12 +181,12 @@ const CreateJD = () => {
             margin: 0 auto;
           }
           h1 {
-            color: #1CBBB4;
+            color: #2563eb;
             font-size: 1.75rem;
             font-weight: 700;
             margin: 0 0 1.5rem 0;
             padding-bottom: 12px;
-            border-bottom: 3px solid #1CBBB4;
+            border-bottom: 3px solid #2563eb;
           }
           h2 {
             color: #2d3748;

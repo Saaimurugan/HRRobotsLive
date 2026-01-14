@@ -195,11 +195,11 @@ const SignUp = () => {
     const passwordStrength = getPasswordStrength();
 
     return (
-        <div className="login-page">
-            <div className="login-left">
+        <div className="login-page" role="main">
+            <div className="login-left" aria-hidden="true">
                 <div className="login-branding">
                     <div className="login-logo">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                             <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -209,21 +209,21 @@ const SignUp = () => {
                     <p>Create your account and start conducting smarter interviews with AI-powered insights.</p>
                     <div className="login-features">
                         <div className="feature-item">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                             <span>Free to get started</span>
                         </div>
                         <div className="feature-item">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
                             <span>No credit card required</span>
                         </div>
                         <div className="feature-item">
-                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 <polyline points="22,4 12,14.01 9,11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
@@ -236,15 +236,15 @@ const SignUp = () => {
             <div className="login-right">
                 <div className="login-card">
                     <div className="login-header">
-                        <h2>Create Account</h2>
-                        <p>Fill in your details to get started</p>
+                        <h2 id="signup-heading">Create Account</h2>
+                        <p id="signup-description">Fill in your details to get started</p>
                     </div>
 
-                    <form onSubmit={handleSignUp} className="login-form">
+                    <form onSubmit={handleSignUp} className="login-form" aria-labelledby="signup-heading" aria-describedby="signup-description">
                         <div className={`input-group ${focusedField === 'email' ? 'focused' : ''} ${email ? 'has-value' : ''} ${emailError ? 'has-error' : ''}`}>
-                            <label htmlFor="email">Work Email</label>
+                            <label htmlFor="email">Work Email <span className="sr-only">(required)</span></label>
                             <div className="input-wrapper">
-                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
@@ -258,15 +258,19 @@ const SignUp = () => {
                                     onFocus={() => setFocusedField('email')}
                                     onBlur={() => setFocusedField(null)}
                                     required
+                                    aria-required="true"
+                                    aria-invalid={emailError ? "true" : "false"}
+                                    aria-describedby={emailError ? "email-error" : undefined}
+                                    autoComplete="email"
                                 />
                             </div>
-                            {emailError && <span className="field-error">{emailError}</span>}
+                            {emailError && <span className="field-error" id="email-error" role="alert">{emailError}</span>}
                         </div>
 
                         <div className={`input-group ${focusedField === 'password' ? 'focused' : ''} ${password ? 'has-value' : ''}`}>
-                            <label htmlFor="password">Password</label>
+                            <label htmlFor="password">Password <span className="sr-only">(required)</span></label>
                             <div className="input-wrapper">
-                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
@@ -280,20 +284,24 @@ const SignUp = () => {
                                     onFocus={() => setFocusedField('password')}
                                     onBlur={() => setFocusedField(null)}
                                     required
+                                    aria-required="true"
+                                    aria-describedby="password-strength-info"
+                                    autoComplete="new-password"
                                 />
                                 <button
                                     type="button"
                                     className="password-toggle"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    aria-label="Toggle password visibility"
+                                    aria-label={showPassword ? "Hide password" : "Show password"}
+                                    aria-pressed={showPassword}
                                 >
                                     {showPassword ? (
-                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                             <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                             <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
                                     ) : (
-                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                             <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
@@ -301,8 +309,8 @@ const SignUp = () => {
                                 </button>
                             </div>
                             {password && (
-                                <div className="password-strength">
-                                    <div className="strength-bars">
+                                <div className="password-strength" id="password-strength-info" aria-live="polite">
+                                    <div className="strength-bars" role="progressbar" aria-valuenow={passwordStrength.strength} aria-valuemin="0" aria-valuemax="5" aria-label={`Password strength: ${passwordStrength.label}`}>
                                         {[1, 2, 3, 4, 5].map((level) => (
                                             <div
                                                 key={level}
@@ -317,9 +325,9 @@ const SignUp = () => {
                         </div>
 
                         <div className={`input-group ${focusedField === 'confirmPassword' ? 'focused' : ''} ${confirmPassword ? 'has-value' : ''}`}>
-                            <label htmlFor="confirmPassword">Confirm Password</label>
+                            <label htmlFor="confirmPassword">Confirm Password <span className="sr-only">(required)</span></label>
                             <div className="input-wrapper">
-                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <svg className="input-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
@@ -333,20 +341,23 @@ const SignUp = () => {
                                     onFocus={() => setFocusedField('confirmPassword')}
                                     onBlur={() => setFocusedField(null)}
                                     required
+                                    aria-required="true"
+                                    autoComplete="new-password"
                                 />
                                 <button
                                     type="button"
                                     className="password-toggle"
                                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                    aria-label="Toggle confirm password visibility"
+                                    aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                                    aria-pressed={showConfirmPassword}
                                 >
                                     {showConfirmPassword ? (
-                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                             <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                             <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
                                     ) : (
-                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                             <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         </svg>
@@ -356,26 +367,26 @@ const SignUp = () => {
                         </div>
 
                         {passwordError && (
-                            <div className="message-box error">
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <div className="message-box error" role="alert">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                 </svg>
                                 <span>{passwordError}</span>
                             </div>
                         )}
 
-                        <button type="submit" className="login-btn" disabled={loading || emailError !== "" || passwordError !== ""}>
+                        <button type="submit" className="login-btn" disabled={loading || emailError !== "" || passwordError !== ""} aria-busy={loading}>
                             {loading ? (
                                 <>
-                                    <svg className="spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <svg className="spinner" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeDasharray="31.4 31.4" strokeDashoffset="0"/>
                                     </svg>
-                                    Creating account...
+                                    <span>Creating account...</span>
                                 </>
                             ) : (
                                 <>
                                     Create Account
-                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                         <polyline points="12,5 19,12 12,19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     </svg>
@@ -384,8 +395,8 @@ const SignUp = () => {
                         </button>
 
                         {message && (
-                            <div className={`message-box ${messageType}`}>
-                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <div className={`message-box ${messageType}`} role="alert" aria-live="polite">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     {messageType === 'success' ? (
                                         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                                     ) : (

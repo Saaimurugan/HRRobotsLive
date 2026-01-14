@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DeviceWarning from './deviceWarning.js';
 import html2canvas from 'html2canvas';
+import FaceDetectionPreloader from './FaceDetectionPreloader.js';
 
 const TestSetupWizard = ({ 
   userUniqueID, 
@@ -214,7 +215,7 @@ const TestSetupWizard = ({
     alignItems: 'center',
     fontWeight: 'bold',
     fontSize: '16px',
-    background: currentStep >= stepNum ? '#1CBBB4' : '#e0e0e0',
+    background: currentStep >= stepNum ? '#2563eb' : '#e0e0e0',
     color: currentStep >= stepNum ? 'white' : '#666',
     transition: 'all 0.3s ease'
   });
@@ -222,7 +223,7 @@ const TestSetupWizard = ({
   const stepLineStyle = (stepNum) => ({
     width: '60px',
     height: '4px',
-    background: currentStep > stepNum ? '#1CBBB4' : '#e0e0e0',
+    background: currentStep > stepNum ? '#2563eb' : '#e0e0e0',
     transition: 'all 0.3s ease'
   });
 
@@ -235,14 +236,14 @@ const TestSetupWizard = ({
   };
 
   const buttonStyle = (enabled) => ({
-    backgroundColor: enabled ? '#1CBBB4' : '#ccc',
-    color: 'white',
-    border: 'none',
+    backgroundColor: enabled ? 'transparent' : '#ccc',
+    color: enabled ? '#2563eb' : 'white',
+    border: enabled ? '2px solid #2563eb' : 'none',
     padding: '12px 24px',
-    borderRadius: '6px',
+    borderRadius: '12px',
     cursor: enabled ? 'pointer' : 'not-allowed',
     fontSize: '16px',
-    fontWeight: '500',
+    fontWeight: '600',
     transition: 'all 0.3s ease'
   });
 
@@ -269,7 +270,20 @@ const TestSetupWizard = ({
   });
 
   return (
-    <div style={wizardContainerStyle}>
+    <FaceDetectionPreloader showLoadingIndicator={currentStep === 4}>
+      <style>
+        {`
+          @keyframes shimmer {
+            0% {
+              background-position: -200% 0;
+            }
+            100% {
+              background-position: 200% 0;
+            }
+          }
+        `}
+      </style>
+      <div style={wizardContainerStyle}>
       {/* Step Indicator */}
       <div style={stepIndicatorStyle}>
         <div style={stepCircleStyle(1)}>1</div>
@@ -324,14 +338,19 @@ const TestSetupWizard = ({
           </div>
 
           {!canProceedToStep2 && (
-            <p style={{ color: '#c62828', marginTop: '20px', fontSize: '14px' }}>
-              ⚠️ Camera, microphone, clipboard access, and single screen are required to continue.
-              {singleScreenOnly === false && (
-                <span style={{ display: 'block', marginTop: '5px' }}>
-                  Please disconnect additional monitors/screens to proceed.
-                </span>
-              )}
-            </p>
+            <div className="system-check-alert" style={{ marginTop: '20px' }}>
+              <div className="alert-title">System Requirements Not Met</div>
+              <div className="alert-content">
+                <div style={{ marginBottom: '12px' }}>
+                  <span className="alert-highlight">Camera, microphone, clipboard access, and single screen are required to continue.</span>
+                </div>
+                {singleScreenOnly === false && (
+                  <div style={{ marginTop: '8px', fontSize: '16px' }}>
+                    <span className="alert-highlight">Please disconnect additional monitors/screens to proceed.</span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           <div style={{ marginTop: '25px', textAlign: 'right' }}>
@@ -631,20 +650,48 @@ const TestSetupWizard = ({
             <span style={{ 
               padding: '8px 16px', 
               borderRadius: '20px',
-              background: photoStage === 'photo' ? '#1CBBB4' : (photoImage ? '#e8f5e9' : '#e0e0e0'),
-              color: photoStage === 'photo' ? 'white' : (photoImage ? '#2e7d32' : '#666'),
-              fontWeight: '500'
+              background: photoStage === 'photo' ? 'transparent' : (photoImage ? '#e8f5e9' : '#fff'),
+              border: photoStage === 'photo' ? '2px solid #2563eb' : (photoImage ? '2px solid #2e7d32' : '2px solid #e0e0e0'),
+              color: photoStage === 'photo' ? '#2563eb' : (photoImage ? '#2e7d32' : '#666'),
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}>
-              {photoImage ? '✓' : '4a.'} Capture Photo
+              {photoImage ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              )}
+              {photoImage ? '' : '4a.'} Capture Photo
             </span>
             <span style={{ 
               padding: '8px 16px', 
               borderRadius: '20px',
-              background: photoStage === 'id' ? '#1CBBB4' : (idCardImage ? '#e8f5e9' : '#e0e0e0'),
-              color: photoStage === 'id' ? 'white' : (idCardImage ? '#2e7d32' : '#666'),
-              fontWeight: '500'
+              background: photoStage === 'id' ? 'transparent' : (idCardImage ? '#e8f5e9' : '#fff'),
+              border: photoStage === 'id' ? '2px solid #2563eb' : (idCardImage ? '2px solid #2e7d32' : '2px solid #e0e0e0'),
+              color: photoStage === 'id' ? '#2563eb' : (idCardImage ? '#2e7d32' : '#666'),
+              fontWeight: '500',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
             }}>
-              {idCardImage ? '✓' : '4b.'} Capture ID Card
+              {idCardImage ? (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/>
+                  <circle cx="7" cy="14" r="1"/>
+                  <path d="M10 13h6v1h-6zm0 2h4v1h-4z"/>
+                </svg>
+              )}
+              {idCardImage ? '' : '4b.'} Capture ID Card
             </span>
           </div>
 
@@ -700,15 +747,31 @@ const TestSetupWizard = ({
                 onClick={() => captureImage('photo')}
                 style={{
                   padding: '12px 30px',
-                  backgroundColor: '#007BFF',
-                  color: '#fff',
-                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: '#2563eb',
+                  border: '2px solid #2563eb',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2563eb';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#2563eb';
                 }}
               >
-                📸 Capture Photo
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 15.2l-3.14-3.14a.996.996 0 00-1.41 0c-.39.39-.39 1.02 0 1.41L12 17.99l4.55-4.52c.39-.39.39-1.02 0-1.41a.996.996 0 00-1.41 0L12 15.2z"/>
+                  <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+                </svg>
+                Capture Photo
               </button>
             )}
 
@@ -717,41 +780,123 @@ const TestSetupWizard = ({
                 onClick={() => captureImage('id')}
                 style={{
                   padding: '12px 30px',
-                  backgroundColor: '#28A745',
-                  color: '#fff',
-                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: '#2563eb',
+                  border: '2px solid #2563eb',
                   borderRadius: '6px',
                   cursor: 'pointer',
-                  fontSize: '16px'
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#2563eb';
+                  e.currentTarget.style.color = '#fff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = '#2563eb';
                 }}
               >
-                🪪 Capture ID Card
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/>
+                  <path d="M6 12h2v2H6zm0 3h8v1H6z"/>
+                </svg>
+                Capture ID Card
               </button>
             )}
           </div>
 
-          {/* Captured Images Preview - Fixed height container */}
+          {/* Captured Images Preview with Skeleton Placeholders */}
           <div style={{ minHeight: '180px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {(photoImage || idCardImage) && (
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                gap: '20px',
-                flexWrap: 'wrap'
-              }}>
-              {photoImage && (
-                <div style={{ textAlign: 'center', position: 'relative' }}>
-                  <img src={photoImage} alt="Your Photo" style={{ 
-                    width: '150px', 
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'center', 
+              gap: '20px',
+              flexWrap: 'wrap'
+            }}>
+              {/* Photo Section */}
+              <div style={{ textAlign: 'center', position: 'relative' }}>
+                {photoImage ? (
+                  <>
+                    <img src={photoImage} alt="Your Photo" style={{ 
+                      width: '150px', 
+                      borderRadius: '8px',
+                      border: '2px solid #1CBBB4'
+                    }} />
+                    <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>Your Photo</p>
+                    {photoStage === 'done' && (
+                      <button
+                        onClick={() => {
+                          setPhotoStage('photo');
+                          setPhotoImage(null);
+                          setIdCardImage(null);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top: '-10px',
+                          right: '-10px',
+                          width: '28px',
+                          height: '28px',
+                          borderRadius: '50%',
+                          background: '#ff4444',
+                          color: 'white',
+                          border: 'none',
+                          cursor: 'pointer',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          lineHeight: '1',
+                          padding: '0'
+                        }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  /* Photo Skeleton Placeholder */
+                  <div style={{
+                    width: '150px',
+                    height: '150px',
                     borderRadius: '8px',
-                    border: '2px solid #1CBBB4'
-                  }} />
-                  <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>Your Photo</p>
-                  {photoStage === 'done' && (
+                    border: '2px dashed #ccc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: photoStage === 'photo' ? 'shimmer 1.5s infinite' : 'none',
+                    position: 'relative'
+                  }}>
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="#ccc" style={{ marginBottom: '8px' }}>
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    <span style={{ fontSize: '12px', color: '#999', textAlign: 'center' }}>
+                      {photoStage === 'photo' ? 'Capturing...' : 'Photo Placeholder'}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* ID Card Section */}
+              <div style={{ textAlign: 'center', position: 'relative' }}>
+                {idCardImage ? (
+                  <>
+                    <img src={idCardImage} alt="ID Card" style={{ 
+                      width: '150px', 
+                      borderRadius: '8px',
+                      border: '2px solid #1CBBB4'
+                    }} />
+                    <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>ID Card</p>
                     <button
                       onClick={() => {
-                        setPhotoStage('photo');
-                        setPhotoImage(null);
+                        setPhotoStage('id');
                         setIdCardImage(null);
                       }}
                       style={{
@@ -776,49 +921,35 @@ const TestSetupWizard = ({
                     >
                       ×
                     </button>
-                  )}
-                </div>
-              )}
-              
-              {idCardImage && (
-                <div style={{ textAlign: 'center', position: 'relative' }}>
-                  <img src={idCardImage} alt="ID Card" style={{ 
-                    width: '150px', 
+                  </>
+                ) : (
+                  /* ID Card Skeleton Placeholder */
+                  <div style={{
+                    width: '150px',
+                    height: '95px',
                     borderRadius: '8px',
-                    border: '2px solid #1CBBB4'
-                  }} />
-                  <p style={{ marginTop: '5px', fontSize: '14px', color: '#666' }}>ID Card</p>
-                  <button
-                    onClick={() => {
-                      setPhotoStage('id');
-                      setIdCardImage(null);
-                    }}
-                    style={{
-                      position: 'absolute',
-                      top: '-10px',
-                      right: '-10px',
-                      width: '28px',
-                      height: '28px',
-                      borderRadius: '50%',
-                      background: '#ff4444',
-                      color: 'white',
-                      border: 'none',
-                      cursor: 'pointer',
-                      fontSize: '16px',
-                      fontWeight: 'bold',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      lineHeight: '1',
-                      padding: '0'
-                    }}
-                  >
-                    ×
-                  </button>
-                </div>
-              )}
+                    border: '2px dashed #ccc',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)',
+                    backgroundSize: '200% 100%',
+                    animation: photoStage === 'id' ? 'shimmer 1.5s infinite' : 'none',
+                    position: 'relative'
+                  }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="#ccc" style={{ marginBottom: '4px' }}>
+                      <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/>
+                      <circle cx="7" cy="14" r="1.5"/>
+                      <path d="M10 13h6v1h-6zm0 2h4v1h-4z"/>
+                    </svg>
+                    <span style={{ fontSize: '10px', color: '#999', textAlign: 'center' }}>
+                      {photoStage === 'id' ? 'Capturing...' : 'ID Placeholder'}
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
           </div>
 
           {photoStage === 'done' && (
@@ -850,6 +981,7 @@ const TestSetupWizard = ({
         </div>
       )}
     </div>
+    </FaceDetectionPreloader>
   );
 };
 
