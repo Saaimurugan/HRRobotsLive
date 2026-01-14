@@ -312,6 +312,18 @@
   border-top: 1px solid var(--color-border);
 }
 
+.step-actions button svg {
+  fill: none !important;
+}
+
+.step-actions button svg circle,
+.step-actions button svg path,
+.step-actions button svg line,
+.step-actions button svg polyline,
+.step-actions button svg rect {
+  fill: none !important;
+}
+
 /* Template Name Section */
 .template-name-section {
   margin-bottom: 25px;
@@ -587,6 +599,12 @@
   fill: none;
 }
 
+.questions-header .btn-primary svg circle,
+.questions-header .btn-primary svg path {
+  fill: none;
+  stroke: white;
+}
+
 .questions-header .btn-primary:hover:not(:disabled) {
   background: #2f855a;
   border-color: #2f855a;
@@ -596,6 +614,12 @@
 .questions-header .btn-primary:hover:not(:disabled) svg {
   stroke: white;
   fill: none;
+}
+
+.questions-header .btn-primary:hover:not(:disabled) svg circle,
+.questions-header .btn-primary:hover:not(:disabled) svg path {
+  fill: none;
+  stroke: white;
 }
 
 /* Spinner Animation */

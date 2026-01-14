@@ -472,6 +472,7 @@ const filteredTemplates = templates.filter(template => {
           onClose={handleCancel}
           showToast={showToast}
           template={selectedTemplateForCandidate}
+          onTemplateCreated={fetchTemplates}
         />
       )}
       {isOpenAPIModal && (

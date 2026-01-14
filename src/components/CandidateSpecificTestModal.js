@@ -7,7 +7,7 @@ import "../createTemplateFromJD.css";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) => {
+const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTemplateCreated }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [resumeFile, setResumeFile] = useState(null);
   const [resumeText, setResumeText] = useState("");
@@ -22,6 +22,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
   const [customizedQuestions, setCustomizedQuestions] = useState([]);
   const [testLink, setTestLink] = useState("");
   const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0, currentKeyword: "" });
+  const [templateName, setTemplateName] = useState("");
   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -65,6 +66,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
     setNonMatchingKeywords([]);
     setCustomizedQuestions([]);
     setTestLink("");
+    setTemplateName("");
     setIsExtracting(false);
     setIsGenerating(false);
     setIsCreatingTest(false);
@@ -321,6 +323,12 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
   const generateCustomizedQuestions = async () => {
     const selectedKeywords = extractedKeywords.filter(kw => kw.selected && kw.action === 'add' && kw.questionCount > 0);
     
+    // Initialize template name
+    const initialTemplateName = candidateName 
+      ? `${template.templateName} - ${candidateName}`
+      : `${template.templateName} - Candidate Specific`;
+    setTemplateName(initialTemplateName);
+    
     if (selectedKeywords.length === 0) {
       showToast('info', 'No New Questions', 'No new keywords selected for question generation. Proceeding to review.');
       setCurrentStep(3);
@@ -411,46 +419,118 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
     setIsCreatingTest(true);
     try {
       // Get all questions from the original template
-      const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getAllQuestionsForTest", {
+      const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateID: template.templateID, token: JWTValue })
+        body: JSON.stringify({ passedTemplateID: template.templateID, token: JWTValue })
       });
       
       const questionsData = await questionsResponse.json();
+      console.log('Questions API response:', questionsData);
+      
       if (checkUnauthorized(questionsData)) {
         setIsCreatingTest(false);
         return;
       }
 
       const parsedQuestionsBody = JSON.parse(questionsData.body);
+      console.log('Parsed questions body:', parsedQuestionsBody);
       const allTemplateQuestions = parsedQuestionsBody.questions || [];
+      console.log('All template questions count:', allTemplateQuestions.length);
       
-      // Filter questions based on keyword selections
-      const keywordsToKeep = extractedKeywords.filter(kw => kw.selected && kw.action === 'keep').map(kw => kw.keyword.toLowerCase());
-      const keywordsToRemove = extractedKeywords.filter(kw => !kw.selected && kw.action === 'remove').map(kw => kw.keyword.toLowerCase());
+      console.log('extractedKeywords:', extractedKeywords);
+      console.log('extractedKeywords with action keep:', extractedKeywords.filter(kw => kw.action === 'keep'));
+      console.log('extractedKeywords selected:', extractedKeywords.filter(kw => kw.selected));
       
-      // Keep only questions for selected keywords
+      // Get selected keywords to keep (matching keywords that are checked)
+      const keywordsToKeep = extractedKeywords
+        .filter(kw => kw.selected && kw.action === 'keep')
+        .map(kw => kw.keyword.toLowerCase());
+      
+      // Get keywords to remove (topics marked for removal that are NOT selected to keep anyway)
+      const keywordsToRemove = extractedKeywords
+        .filter(kw => !kw.selected && kw.action === 'remove')
+        .map(kw => kw.keyword.toLowerCase());
+      
+      // Get unselected matching keywords (should also be removed)
+      const unselectedMatchingKeywords = extractedKeywords
+        .filter(kw => !kw.selected && kw.action === 'keep')
+        .map(kw => kw.keyword.toLowerCase());
+      
+      // Get all non-matching keywords that are not selected (should also be removed)
+      const unselectedNewKeywords = extractedKeywords
+        .filter(kw => !kw.selected && kw.action === 'add')
+        .map(kw => kw.keyword.toLowerCase());
+      
+      // Combine all keywords to remove
+      const allKeywordsToRemove = [...keywordsToRemove, ...unselectedMatchingKeywords, ...unselectedNewKeywords];
+      
+      console.log('Keywords to keep:', keywordsToKeep);
+      console.log('Keywords to remove:', allKeywordsToRemove);
+      console.log('Total template questions:', allTemplateQuestions.length);
+      console.log('Sample question topics:', allTemplateQuestions.slice(0, 5).map(q => q.topic));
+      
+      // Filter questions: keep only those matching selected keywords
       const filteredQuestions = allTemplateQuestions.filter(q => {
-        const questionTopic = (q.topic || '').toLowerCase();
-        if (!questionTopic || questionTopic === '__no_topic__') return false;
+        const questionTopic = (q.topic || '').toLowerCase().trim();
         
-        // Remove if in remove list
-        if (keywordsToRemove.some(topic => questionTopic.includes(topic) || topic.includes(questionTopic))) {
+        // Skip questions without topics
+        if (!questionTopic || questionTopic === '__no_topic__') {
           return false;
         }
         
-        // Keep if in keep list
-        return keywordsToKeep.some(topic => questionTopic.includes(topic) || topic.includes(questionTopic));
+        // Remove if in remove list (more flexible matching)
+        const shouldRemove = allKeywordsToRemove.some(keyword => {
+          const keywordLower = keyword.toLowerCase().trim();
+          // Check if keyword is part of topic or topic is part of keyword
+          return questionTopic.includes(keywordLower) || 
+                 keywordLower.includes(questionTopic) ||
+                 // Also check word boundaries
+                 questionTopic.split(/[\s\-_]+/).some(word => word === keywordLower) ||
+                 keywordLower.split(/[\s\-_]+/).some(word => word === questionTopic);
+        });
+        
+        if (shouldRemove) {
+          return false;
+        }
+        
+        // Keep if in keep list (or if keep list is empty, keep all not in remove list)
+        if (keywordsToKeep.length > 0) {
+          const shouldKeep = keywordsToKeep.some(keyword => {
+            const keywordLower = keyword.toLowerCase().trim();
+            // Check if keyword is part of topic or topic is part of keyword
+            return questionTopic.includes(keywordLower) || 
+                   keywordLower.includes(questionTopic) ||
+                   // Also check word boundaries
+                   questionTopic.split(/[\s\-_]+/).some(word => word === keywordLower) ||
+                   keywordLower.split(/[\s\-_]+/).some(word => word === questionTopic);
+          });
+          return shouldKeep;
+        }
+        
+        // If no keywords selected to keep, keep questions not in remove list
+        return true;
       });
+      
+      console.log('Filtered questions:', filteredQuestions.length);
+      console.log('Customized questions:', customizedQuestions.length);
       
       // Combine filtered existing questions with new generated questions
       const allQuestions = [...filteredQuestions, ...customizedQuestions];
       
-      // Create a new template with the customized questions using saveQuestions_
-      const newTemplateName = candidateName 
+      console.log('Total questions for test:', allQuestions.length);
+      
+      // Validate that we have questions
+      if (allQuestions.length === 0) {
+        showToast('warning', 'No Questions', 'No questions available for the test. Please select at least one matching keyword to keep existing questions, or generate new questions from resume keywords.');
+        setIsCreatingTest(false);
+        return;
+      }
+      
+      // Use the templateName state (which can be edited by user in Step 4)
+      const finalTemplateName = templateName || (candidateName 
         ? `${template.templateName} - ${candidateName}`
-        : `${template.templateName} - Candidate Specific`;
+        : `${template.templateName} - Candidate Specific`);
       
       // Save questions (this will create a new template)
       const saveResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
@@ -458,7 +538,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
           templateID: "",  // Empty templateID creates a new template
-          templateName: newTemplateName,
+          templateName: finalTemplateName,
           globalValue: globalValue,
           questions: allQuestions,
           token: JWTValue 
@@ -524,6 +604,11 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
         setTestLink(link);
         setCurrentStep(4);
         showToast('success', 'Test Created', 'Candidate-specific test link generated successfully!');
+        
+        // Refresh the templates list
+        if (onTemplateCreated) {
+          onTemplateCreated();
+        }
       } else {
         showToast('error', 'Error', 'Failed to create test link.');
       }
@@ -688,17 +773,18 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
                       <tbody>
                         {matchingKeywords.filter(kw => kw.action === 'keep').map((kw, index) => {
                           const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
+                          const currentKeyword = extractedKeywords[globalIndex];
                           return (
-                            <tr key={index} className={kw.selected ? 'selected' : ''}>
+                            <tr key={index} className={currentKeyword?.selected ? 'selected' : ''}>
                               <td className="col-select">
-                                <input type="checkbox" checked={kw.selected} onChange={() => toggleKeyword(globalIndex)} />
+                                <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
                               </td>
                               <td className="col-keyword">{kw.keyword}</td>
                               <td className="col-action">
                                 <span className="action-badge keep">Keep Existing</span>
                               </td>
                               <td className="col-complexity">
-                                <select value={kw.complexity} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!kw.selected}>
+                                <select value={currentKeyword?.complexity || 'beginner'} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!currentKeyword?.selected}>
                                   <option value="beginner">Beginner</option>
                                   <option value="intermediate">Intermediate</option>
                                   <option value="advanced">Advanced</option>
@@ -734,17 +820,18 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
                       <tbody>
                         {nonMatchingKeywords.map((kw, index) => {
                           const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
+                          const currentKeyword = extractedKeywords[globalIndex];
                           return (
-                            <tr key={index} className={kw.selected ? 'selected' : ''}>
+                            <tr key={index} className={currentKeyword?.selected ? 'selected' : ''}>
                               <td className="col-select">
-                                <input type="checkbox" checked={kw.selected} onChange={() => toggleKeyword(globalIndex)} />
+                                <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
                               </td>
                               <td className="col-keyword">{kw.keyword}</td>
                               <td className="col-action">
                                 <span className="action-badge add">Generate New</span>
                               </td>
                               <td className="col-complexity">
-                                <select value={kw.complexity} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!kw.selected}>
+                                <select value={currentKeyword?.complexity || 'beginner'} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!currentKeyword?.selected}>
                                   <option value="beginner">Beginner</option>
                                   <option value="intermediate">Intermediate</option>
                                   <option value="advanced">Advanced</option>
@@ -753,8 +840,8 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
                               </td>
                               <td className="col-count">
                                 <div className="question-count-input">
-                                  <button className="count-btn" onClick={() => updateQuestionCount(globalIndex, kw.questionCount - 1)} disabled={!kw.selected}>-</button>
-                                  <input type="number" value={kw.questionCount} onChange={(e) => updateQuestionCount(globalIndex, e.target.value)} min="0" max="20" disabled={!kw.selected} />
+                                  <button className="count-btn" onClick={() => updateQuestionCount(globalIndex, currentKeyword?.questionCount - 1)} disabled={!currentKeyword?.selected}>-</button>
+                                  <input type="number" value={currentKeyword?.questionCount || 0} onChange={(e) => updateQuestionCount(globalIndex, e.target.value)} min="0" max="20" disabled={!currentKeyword?.selected} />
                                   <button className="count-btn" onClick={() => updateQuestionCount(globalIndex, kw.questionCount + 1)} disabled={!kw.selected}>+</button>
                                 </div>
                               </td>
@@ -787,15 +874,16 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
                       <tbody>
                         {extractedKeywords.filter(kw => kw.action === 'remove').map((kw, index) => {
                           const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
+                          const currentKeyword = extractedKeywords[globalIndex];
                           return (
-                            <tr key={index} className={kw.selected ? 'selected' : 'unselected'}>
+                            <tr key={index} className={currentKeyword?.selected ? 'selected' : 'unselected'}>
                               <td className="col-select">
-                                <input type="checkbox" checked={kw.selected} onChange={() => toggleKeyword(globalIndex)} />
+                                <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
                               </td>
                               <td className="col-keyword">{kw.keyword}</td>
                               <td className="col-action">
                                 <span className="action-badge remove">
-                                  {kw.selected ? 'Keep Anyway' : 'Will Remove'}
+                                  {currentKeyword?.selected ? 'Keep Anyway' : 'Will Remove'}
                                 </span>
                               </td>
                               <td className="col-complexity">
@@ -927,6 +1015,16 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template }) =>
                 <p style={{ textAlign: 'center', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
                   Your candidate-specific test is ready. Copy the link below and share it with the candidate.
                 </p>
+                
+                <div className="template-name-section">
+                  <label>Template Name</label>
+                  <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="Enter template name"
+                  />
+                </div>
                 
                 <div className="test-link-box">
                   <input type="text" value={testLink} readOnly className="test-link-input" />
