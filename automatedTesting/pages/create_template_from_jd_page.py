@@ -72,7 +72,10 @@ class CreateTemplateFromJDPage(BasePage):
     
     def wait_for_modal(self, timeout=10):
         """Wait for modal to be visible"""
-        self.wait_for_element(self.MODAL_CONTENT, timeout)
+        from selenium.webdriver.support.ui import WebDriverWait
+        from selenium.webdriver.support import expected_conditions as EC
+        wait = WebDriverWait(self.driver, timeout)
+        wait.until(EC.visibility_of_element_located(self.MODAL_CONTENT))
     
     def close_modal(self):
         """Close the modal"""

@@ -13,7 +13,7 @@ class LoginPage(BasePage):
     EMAIL_INPUT = (By.NAME, "email")
     PASSWORD_INPUT = (By.NAME, "password")
     LOGIN_BUTTON = (By.CSS_SELECTOR, "button.login-btn")
-    FORGOT_PASSWORD_LINK = (By.CSS_SELECTOR, "span.forgot-link")
+    FORGOT_PASSWORD_LINK = (By.CSS_SELECTOR, ".forgot-link")
     SIGNUP_LINK = (By.CSS_SELECTOR, "a[href='/signup']")
     ERROR_MESSAGE = (By.CSS_SELECTOR, "div.message-box.error")
     SUCCESS_MESSAGE = (By.CSS_SELECTOR, "div.message-box.success")
@@ -33,6 +33,8 @@ class LoginPage(BasePage):
     def navigate(self):
         """Navigate to login page"""
         self.navigate_to(self.url)
+        # Wait for page to fully load
+        self.wait_for_loading()
     
     def enter_email(self, email):
         """Enter email address"""
@@ -48,7 +50,17 @@ class LoginPage(BasePage):
     
     def click_forgot_password(self):
         """Click forgot password link"""
-        self.click(self.FORGOT_PASSWORD_LINK)
+        import time
+        time.sleep(1)  # Wait for page to stabilize
+        try:
+            element = self.find_element(self.FORGOT_PASSWORD_LINK)
+            self.scroll_to_element(element)
+            self.driver.execute_script("arguments[0].click();", element)
+        except Exception:
+            # Try alternative selector
+            from selenium.webdriver.common.by import By
+            element = self.driver.find_element(By.XPATH, "//*[contains(text(), 'Forgot password')]")
+            self.driver.execute_script("arguments[0].click();", element)
     
     def click_signup(self):
         """Click signup link"""
