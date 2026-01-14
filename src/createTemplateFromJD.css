@@ -698,6 +698,10 @@
   align-items: center;
   padding: 20px 25px;
   border-bottom: 1px solid var(--color-border, #e0e0e0);
+  position: sticky;
+  top: 0;
+  background: var(--color-bg-primary, #fff);
+  z-index: 10;
 }
 
 .jd-modal-header h2 {
@@ -734,6 +738,15 @@
 .jd-modal-content .step-indicator {
   margin-bottom: 20px;
   padding: 15px 0;
+  position: sticky;
+  top: 81px;
+  background: var(--color-bg-primary, #fff);
+  z-index: 9;
+  border-bottom: 1px solid var(--color-border, #e0e0e0);
+  margin-left: 50px;
+  margin-right: 50px;
+  padding-left: 25px;
+  padding-right: 25px;
 }
 
 .jd-modal-content .jd-text-section textarea {

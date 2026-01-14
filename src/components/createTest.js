@@ -8,6 +8,7 @@ import ConfirmationBox from './confirmationBox';
 import GetAPIKey from './getAPIKey';
 import AssignTemplate from "./assignTemplate";
 import ConfigTemplate from "./configTemplate";
+import CandidateSpecificTestModal from "./CandidateSpecificTestModal";
 
 // Toast Component
 const Toast = ({ toasts, removeToast }) => {
@@ -58,6 +59,9 @@ const [currentAssignedTo, setCurrentAssignedTo] = useState("");
 const [isOpenAPIModal, setIsOpenAPIModal] = useState(false);
 const [apiKey, setApiKey] = useState("");
 const [toasts, setToasts] = useState([]);
+const [showCandidateTestModal, setShowCandidateTestModal] = useState(false);
+const [selectedTemplateForCandidate, setSelectedTemplateForCandidate] = useState(null);
+const [searchQuery, setSearchQuery] = useState("");
 
 // Toast functions
 const showToast = (type, title, message) => {
@@ -96,6 +100,11 @@ const configModal = (templateID) => {
   //console.log("configModal", templateID);
   setTemplateIDSelectedToAssign(templateID);
   setShowConfigModal(true);
+};
+
+const openCandidateTestModal = (template) => {
+  setSelectedTemplateForCandidate(template);
+  setShowCandidateTestModal(true);
 };
 
 const handleSave = () => {
@@ -165,6 +174,8 @@ const handleCancel = () => {
   setCurrentAssignedTo("");
   setIsOpenAPIModal(false);
   setShowConfigModal(false);
+  setShowCandidateTestModal(false);
+  setSelectedTemplateForCandidate(null);
 };
 
 useEffect(() => {
@@ -415,6 +426,20 @@ const fetchTemplates = async () => {
   }
 };
 
+// Filter templates based on search query
+const filteredTemplates = templates.filter(template => {
+  if (!searchQuery.trim()) return true;
+  
+  const query = searchQuery.toLowerCase();
+  const templateName = (template.templateName || "").toLowerCase();
+  const assignedTo = (template.AssignedTo || "").toLowerCase();
+  const email = (template.email || "").toLowerCase();
+  
+  return templateName.includes(query) || 
+         assignedTo.includes(query) || 
+         email.includes(query);
+});
+
   return (
     <div className="app">
       <Toast toasts={toasts} removeToast={removeToast} />
@@ -439,6 +464,14 @@ const fetchTemplates = async () => {
           onConfig={(d) => handleConfig(d)}
           onCancel={handleCancel}
           templateID={templateIDSelectedToAssign}
+        />
+      )}
+      {showCandidateTestModal && selectedTemplateForCandidate && (
+        <CandidateSpecificTestModal
+          isOpen={showCandidateTestModal}
+          onClose={handleCancel}
+          showToast={showToast}
+          template={selectedTemplateForCandidate}
         />
       )}
       {isOpenAPIModal && (
@@ -500,7 +533,7 @@ const fetchTemplates = async () => {
             </svg>
           </div>
           <h2>Results</h2>
-          <p>View test outcomes by pasting the candidate's link. Get detailed summaries while maintaining data privacy.<br/><br/></p>
+          <p>View test outcomes by pasting the candidate's link.<br/>Get detailed summaries while maintaining data privacy.</p>
           <div className="form-group">
             <button onClick={() => navigate("/result")}>Check Results</button>
           </div>
@@ -509,10 +542,18 @@ const fetchTemplates = async () => {
         {loadingTemplate ? (
           <>
             <div className="section-header">
-              <h2>Your Screening Test Templates</h2>
-              <p>
-                Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
-              </p>
+              <div className="section-header-icon">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="section-header-content">
+                <h2>Your Screening Test Templates</h2>
+                <p>
+                  Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
+                </p>
+              </div>
             </div>
             {[1, 2, 3].map((i) => (
               <div key={i} className="card template-card skeleton-card">
@@ -538,14 +579,51 @@ const fetchTemplates = async () => {
             <p>No templates found. Create your first screening test template above!</p>
           </div>
         ) : (
+        <>
         <div className="section-header">
-          <h2>Your Screening Test Templates</h2>
-          <p>
-            Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
-          </p>
+          <div className="section-header-icon">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 11L12 14L22 4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div className="section-header-content">
+            <h2>Your Screening Test Templates</h2>
+            <p>
+              Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
+            </p>
+          </div>
         </div>
+        <div className="search-container">
+          <svg className="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search templates by name or assigned user..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="search-clear" onClick={() => setSearchQuery("")}>
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          )}
+        </div>
+        {filteredTemplates.length === 0 && searchQuery ? (
+          <div className="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <p>No templates found matching "{searchQuery}"</p>
+          </div>
+        ) : null}
+        </>
         )}
-        {templates.map((card, index) => {
+        {filteredTemplates.map((card, index) => {
           const templateState = templateStates[card.templateID] || {};
           return (
               <div key={index} className="card template-card" data-tour-template={index === 0 ? "first" : undefined}>
@@ -604,26 +682,40 @@ const fetchTemplates = async () => {
                     </button>
                   </div>
                 ) : (
-                  <div className="form-group">
-                    <button onClick={() => handleCreateTest(card.templateID)} data-tour={index === 0 ? "generate-link-btn" : undefined}>
-                      {clicked === card.templateID && loading ? (
-                        <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="spin-animation">
-                            <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          Generating...
-                        </span>
-                      ) : (
+                  <>
+                    <div className="form-group">
+                      <button onClick={() => handleCreateTest(card.templateID)} data-tour={index === 0 ? "generate-link-btn" : undefined}>
+                        {clicked === card.templateID && loading ? (
+                          <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="spin-animation">
+                              <path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Generating...
+                          </span>
+                        ) : (
+                          <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.479 3.53087C19.552 2.60383 18.2979 2.07799 16.987 2.0666C15.676 2.0552 14.413 2.55918 13.47 3.46997L11.75 5.17997" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                              <path d="M14 11C13.5705 10.4259 13.0226 9.95083 12.3934 9.60706C11.7642 9.26329 11.0684 9.05886 10.3533 9.00765C9.63816 8.95643 8.92037 9.05966 8.24861 9.3102C7.57685 9.56074 6.96684 9.95296 6.45996 10.46L3.45996 13.46C2.54917 14.403 2.04519 15.666 2.05659 16.977C2.06798 18.288 2.59382 19.5421 3.52086 20.4691C4.4479 21.3961 5.70197 21.922 7.01295 21.9334C8.32393 21.9448 9.58694 21.4408 10.53 20.53L12.24 18.82" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                            Generate Test Link
+                          </span>
+                        )}
+                      </button>
+                    </div>
+                    <div className="form-group" style={{marginTop: '-8px'}}>
+                      <button onClick={() => openCandidateTestModal(card)}>
                         <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
                           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M10 13C10.4295 13.5741 10.9774 14.0491 11.6066 14.3929C12.2357 14.7367 12.9315 14.9411 13.6467 14.9923C14.3618 15.0435 15.0796 14.9403 15.7513 14.6897C16.4231 14.4392 17.0331 14.047 17.54 13.54L20.54 10.54C21.4508 9.59695 21.9548 8.33394 21.9434 7.02296C21.932 5.71198 21.4061 4.45791 20.479 3.53087C19.552 2.60383 18.2979 2.07799 16.987 2.0666C15.676 2.0552 14.413 2.55918 13.47 3.46997L11.75 5.17997" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M14 11C13.5705 10.4259 13.0226 9.95083 12.3934 9.60706C11.7642 9.26329 11.0684 9.05886 10.3533 9.00765C9.63816 8.95643 8.92037 9.05966 8.24861 9.3102C7.57685 9.56074 6.96684 9.95296 6.45996 10.46L3.45996 13.46C2.54917 14.403 2.04519 15.666 2.05659 16.977C2.06798 18.288 2.59382 19.5421 3.52086 20.4691C4.4479 21.3961 5.70197 21.922 7.01295 21.9334C8.32393 21.9448 9.58694 21.4408 10.53 20.53L12.24 18.82" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M8.5 11C10.7091 11 12.5 9.20914 12.5 7C12.5 4.79086 10.7091 3 8.5 3C6.29086 3 4.5 4.79086 4.5 7C4.5 9.20914 6.29086 11 8.5 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M17 11L19 13L23 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
-                          Generate Test Link
+                          Candidate-Specific
                         </span>
-                      )}
-                    </button>
-                  </div>
+                      </button>
+                    </div>
+                  </>
                 )}
                 <h5 style={{marginTop: "-10px"}}>{card.templateName}</h5>
                 {templateState.message && (
