@@ -4,6 +4,24 @@ import boto3
 import json
 from datetime import datetime
 
+
+def determine_complexity(years_of_experience):
+    """
+    Determine question complexity based on years of experience.
+    Returns: 'beginner', 'intermediate', 'advanced', or 'expert'
+    """
+    if years_of_experience is None or years_of_experience < 0:
+        return 'intermediate'  # Default fallback
+    elif years_of_experience <= 1:
+        return 'beginner'
+    elif years_of_experience <= 3:
+        return 'intermediate'
+    elif years_of_experience <= 7:
+        return 'advanced'
+    else:
+        return 'expert'
+
+
 def lambda_handler(event, context):
     try:
         # Initialize Bedrock Runtime client
@@ -19,26 +37,28 @@ def lambda_handler(event, context):
                 'body': json.dumps({'message': 'Missing Job Description in the request.'})
             }
 
-        # Construct the prompt for keyword extraction
-        prompt = f"""Analyze the following Job Description and extract the most important technical skills, technologies, and competencies that should be tested.
+        # Construct the prompt for keyword extraction AND years of experience
+        prompt = f"""Analyze the following Job Description and extract:
+1. The most important technical skills, technologies, and competencies that should be tested
+2. The required years of experience mentioned in the job description
 
 Job Description:
 {jd_text}
 
-Return a JSON array of keywords with suggested question counts. Focus on:
-1. Programming languages and frameworks
-2. Technical tools and platforms
-3. Domain-specific knowledge
-4. Soft skills that can be tested via MCQ
+Return ONLY a valid JSON object in this exact format, no other text:
+{{
+  "yearsOfExperience": 3,
+  "keywords": [
+    {{"keyword": "Python", "suggestedCount": 5}},
+    {{"keyword": "AWS", "suggestedCount": 5}},
+    {{"keyword": "SQL", "suggestedCount": 3}}
+  ]
+}}
 
-Return ONLY a valid JSON array in this exact format, no other text:
-[
-  {{"keyword": "Python", "suggestedCount": 5}},
-  {{"keyword": "AWS", "suggestedCount": 5}},
-  {{"keyword": "SQL", "suggestedCount": 3}}
-]
-
-Extract 5-15 most relevant keywords. Suggest 3-5 questions per keyword based on importance."""
+Instructions:
+- For yearsOfExperience: Extract the minimum years of experience required. If a range is given (e.g., "3-5 years"), use the minimum value. If no experience is mentioned, use 0. If it says "fresher" or "entry-level", use 0.
+- For keywords: Focus on programming languages, frameworks, technical tools, platforms, domain-specific knowledge, and testable soft skills.
+- Extract 5-15 most relevant keywords. Suggest 3-5 questions per keyword based on importance."""
 
         message_list = [
             {"role": "user", "content": [{"text": prompt}]}
@@ -85,20 +105,29 @@ Extract 5-15 most relevant keywords. Suggest 3-5 questions per keyword based on 
 
         # Parse the JSON response
         # Clean up the response in case there's extra text
-        json_start = response_data.find('[')
-        json_end = response_data.rfind(']') + 1
+        json_start = response_data.find('{')
+        json_end = response_data.rfind('}') + 1
         
         if json_start != -1 and json_end > json_start:
             json_str = response_data[json_start:json_end]
-            keywords = json.loads(json_str)
+            parsed_response = json.loads(json_str)
         else:
             # Fallback: try to parse the whole response
-            keywords = json.loads(response_data)
+            parsed_response = json.loads(response_data)
+
+        # Extract years of experience and keywords from the response
+        years_of_experience = parsed_response.get('yearsOfExperience', 0)
+        keywords = parsed_response.get('keywords', [])
+        
+        # Determine complexity based on years of experience
+        complexity = determine_complexity(years_of_experience)
 
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'keywords': keywords,
+                'yearsOfExperience': years_of_experience,
+                'complexity': complexity,
                 'message': 'Keywords extracted successfully',
                 'request_id': request_id
             })

@@ -159,11 +159,13 @@ const CreateTemplateFromJD = () => {
 
       const parsedBody = JSON.parse(data.body);
       const extractedKeywords = parsedBody.keywords || [];
+      const extractedComplexity = parsedBody.complexity || "intermediate";
       
-      // Initialize keywords with default question count
+      // Initialize keywords with default question count and complexity from JD
       const keywordsWithCount = extractedKeywords.map(kw => ({
         keyword: kw.keyword || kw,
         questionCount: kw.suggestedCount || 5,
+        complexity: extractedComplexity,
         selected: true
       }));
       
@@ -189,6 +191,13 @@ const CreateTemplateFromJD = () => {
     const newCount = Math.max(1, Math.min(20, parseInt(count) || 1));
     setKeywords(prev => prev.map((kw, i) => 
       i === index ? { ...kw, questionCount: newCount } : kw
+    ));
+  };
+
+  // Update complexity for a keyword
+  const updateComplexity = (index, newComplexity) => {
+    setKeywords(prev => prev.map((kw, i) => 
+      i === index ? { ...kw, complexity: newComplexity } : kw
     ));
   };
 
@@ -239,7 +248,7 @@ const CreateTemplateFromJD = () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
               topic: kw.keyword, 
-              level: "fresher", 
+              level: kw.complexity, 
               formattedQuestions: existingQuestions,
               questionCount: batchSize,
               token: JWTValue 
@@ -441,44 +450,68 @@ const CreateTemplateFromJD = () => {
         <div className="keywords-header">
           <h3>Select Keywords & Question Count</h3>
           <div className="total-questions">
-            Total Questions: <span>{getTotalQuestions()}</span>
+            Total: <span>{getTotalQuestions()}</span> questions
           </div>
         </div>
         
-        <div className="keywords-list">
-          {keywords.map((kw, index) => (
-            <div key={index} className={`keyword-item ${kw.selected ? 'selected' : ''}`}>
-              <label className="keyword-checkbox">
-                <input
-                  type="checkbox"
-                  checked={kw.selected}
-                  onChange={() => toggleKeyword(index)}
-                />
-                <span className="keyword-name">{kw.keyword}</span>
-              </label>
-              <div className="question-count-input">
-                <button 
-                  className="count-btn"
-                  onClick={() => updateQuestionCount(index, kw.questionCount - 1)}
-                  disabled={!kw.selected}
-                >-</button>
-                <input
-                  type="number"
-                  value={kw.questionCount}
-                  onChange={(e) => updateQuestionCount(index, e.target.value)}
-                  min="1"
-                  max="20"
-                  disabled={!kw.selected}
-                />
-                <button 
-                  className="count-btn"
-                  onClick={() => updateQuestionCount(index, kw.questionCount + 1)}
-                  disabled={!kw.selected}
-                >+</button>
-              </div>
-            </div>
-          ))}
-        </div>
+        <table className="keywords-table">
+          <thead>
+            <tr>
+              <th className="col-select"></th>
+              <th className="col-keyword">Keyword</th>
+              <th className="col-complexity">Complexity</th>
+              <th className="col-count">Questions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {keywords.map((kw, index) => (
+              <tr key={index} className={kw.selected ? 'selected' : ''}>
+                <td className="col-select">
+                  <input 
+                    type="checkbox" 
+                    checked={kw.selected} 
+                    onChange={() => toggleKeyword(index)} 
+                  />
+                </td>
+                <td className="col-keyword">{kw.keyword}</td>
+                <td className="col-complexity">
+                  <select
+                    value={kw.complexity}
+                    onChange={(e) => updateComplexity(index, e.target.value)}
+                    disabled={!kw.selected}
+                  >
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                    <option value="expert">Expert</option>
+                  </select>
+                </td>
+                <td className="col-count">
+                  <div className="question-count-input">
+                    <button 
+                      className="count-btn"
+                      onClick={() => updateQuestionCount(index, kw.questionCount - 1)}
+                      disabled={!kw.selected}
+                    >-</button>
+                    <input
+                      type="number"
+                      value={kw.questionCount}
+                      onChange={(e) => updateQuestionCount(index, e.target.value)}
+                      min="1"
+                      max="20"
+                      disabled={!kw.selected}
+                    />
+                    <button 
+                      className="count-btn"
+                      onClick={() => updateQuestionCount(index, kw.questionCount + 1)}
+                      disabled={!kw.selected}
+                    >+</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       <div className="step-actions">
