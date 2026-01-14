@@ -575,6 +575,29 @@
   font-size: var(--font-size-lg);
 }
 
+/* Use These Questions button - green success style */
+.questions-header .btn-primary {
+  background: var(--color-success, #38a169);
+  border-color: var(--color-success, #38a169);
+  color: white;
+}
+
+.questions-header .btn-primary svg {
+  stroke: white;
+  fill: none;
+}
+
+.questions-header .btn-primary:hover:not(:disabled) {
+  background: #2f855a;
+  border-color: #2f855a;
+  color: white;
+}
+
+.questions-header .btn-primary:hover:not(:disabled) svg {
+  stroke: white;
+  fill: none;
+}
+
 /* Spinner Animation */
 .spinner {
   animation: spin 1s linear infinite;

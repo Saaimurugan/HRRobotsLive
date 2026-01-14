@@ -241,10 +241,15 @@ button:hover:not(:disabled) {
   box-shadow: var(--shadow-primary);
 }
 
-button:hover:not(:disabled):not(.nav-btn) svg,
-button:hover:not(:disabled):not(.nav-btn) svg path {
-  fill: white;
+button:hover:not(:disabled):not(.nav-btn) svg {
   color: white;
+}
+
+button:hover:not(:disabled):not(.nav-btn) svg path[fill]:not([fill="none"]) {
+  fill: white;
+}
+
+button:hover:not(:disabled):not(.nav-btn) svg path[stroke] {
   stroke: white;
 }
 
@@ -265,10 +270,16 @@ button:disabled {
   transform: translateY(-2px);
 }
 
-.card button:hover svg,
-.card button:hover svg path {
-  fill: white;
+.card button:hover svg {
   color: white;
+}
+
+.card button:hover svg path[fill]:not([fill="none"]) {
+  fill: white;
+}
+
+.card button:hover svg path[stroke] {
+  stroke: white;
 }
 
 .card button:active {
