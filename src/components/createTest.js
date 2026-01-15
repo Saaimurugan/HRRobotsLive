@@ -65,6 +65,11 @@ const [selectedTemplateForCandidate, setSelectedTemplateForCandidate] = useState
 const [searchQuery, setSearchQuery] = useState("");
 const [currentPage, setCurrentPage] = useState(1);
 const templatesPerPage = 8;
+const [sortBy, setSortBy] = useState("date"); // date, name
+const [sortOrder, setSortOrder] = useState("desc"); // asc, desc
+const [filterBy, setFilterBy] = useState("all"); // all, own, assigned, recruiter, reviewer
+const [showSortDropdown, setShowSortDropdown] = useState(false);
+const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
 // Toast functions
 const showToast = (type, title, message) => {
@@ -80,6 +85,21 @@ const showToast = (type, title, message) => {
 
 // Session handler for unauthorized responses
 const { checkUnauthorized } = useSessionHandler(showToast);
+
+// Close dropdowns when clicking outside
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    if (showSortDropdown || showFilterDropdown) {
+      const target = event.target;
+      if (!target.closest('[data-dropdown]')) {
+        setShowSortDropdown(false);
+        setShowFilterDropdown(false);
+      }
+    }
+  };
+  document.addEventListener('click', handleClickOutside);
+  return () => document.removeEventListener('click', handleClickOutside);
+}, [showSortDropdown, showFilterDropdown]);
 
 const removeToast = (id) => {
   setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));
@@ -540,19 +560,48 @@ const fetchTemplates = async () => {
   }
 };
 
-// Filter templates based on search query
-const filteredTemplates = templates.filter(template => {
-  if (!searchQuery.trim()) return true;
-  
-  const query = searchQuery.toLowerCase();
-  const templateName = (template.templateName || "").toLowerCase();
-  const assignedTo = (template.AssignedTo || "").toLowerCase();
-  const email = (template.email || "").toLowerCase();
-  
-  return templateName.includes(query) || 
-         assignedTo.includes(query) || 
-         email.includes(query);
-});
+// Filter templates based on search query and filter type
+const filteredTemplates = templates
+  .filter(template => {
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const templateName = (template.templateName || "").toLowerCase();
+      const assignedTo = (template.AssignedTo || "").toLowerCase();
+      const email = (template.email || "").toLowerCase();
+      
+      if (!templateName.includes(query) && !assignedTo.includes(query) && !email.includes(query)) {
+        return false;
+      }
+    }
+    
+    // Apply category filter
+    switch (filterBy) {
+      case "own":
+        return template.email === globalValue && template.AssignedTo !== globalValue;
+      case "assigned":
+        return template.AssignedTo === globalValue;
+      case "recruiter":
+        return template.AssignedTo && template.AssignedRole === "recruiter";
+      case "reviewer":
+        return template.AssignedTo && template.AssignedRole === "hiring_manager";
+      default:
+        return true;
+    }
+  })
+  .sort((a, b) => {
+    // Apply sorting
+    if (sortBy === "date") {
+      const dateA = new Date(a.datetime || 0);
+      const dateB = new Date(b.datetime || 0);
+      return sortOrder === "desc" ? dateB - dateA : dateA - dateB;
+    } else if (sortBy === "name") {
+      const nameA = (a.templateName || "").toLowerCase();
+      const nameB = (b.templateName || "").toLowerCase();
+      return sortOrder === "desc" ? nameB.localeCompare(nameA) : nameA.localeCompare(nameB);
+    }
+    return 0;
+  });
 
 // Pagination calculations
 const totalPages = Math.ceil(filteredTemplates.length / templatesPerPage);
@@ -560,10 +609,10 @@ const indexOfLastTemplate = currentPage * templatesPerPage;
 const indexOfFirstTemplate = indexOfLastTemplate - templatesPerPage;
 const currentTemplates = filteredTemplates.slice(indexOfFirstTemplate, indexOfLastTemplate);
 
-// Reset to page 1 when search query changes
+// Reset to page 1 when search query or filters change
 useEffect(() => {
   setCurrentPage(1);
-}, [searchQuery]);
+}, [searchQuery, filterBy, sortBy, sortOrder]);
 
 // Adjust current page if it becomes invalid after deletion
 useEffect(() => {
@@ -774,7 +823,7 @@ const getPageNumbers = () => {
             </p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '25px', gridColumn: '1 / -1' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '25px', gridColumn: '1 / -1', flexWrap: 'wrap' }}>
           <div className="search-container" style={{ margin: 0 }}>
             <svg className="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -782,7 +831,7 @@ const getPageNumbers = () => {
             <input
               type="text"
               className="search-input"
-              placeholder="Search templates by name or assigned user..."
+              placeholder="Search templates..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -794,15 +843,294 @@ const getPageNumbers = () => {
               </button>
             )}
           </div>
-          {filteredTemplates.length > templatesPerPage && (
-            <span style={{
-              fontSize: 'var(--font-size-sm)',
-              color: 'var(--color-text-muted)',
-              whiteSpace: 'nowrap'
-            }}>
-              Showing {indexOfFirstTemplate + 1}-{Math.min(indexOfLastTemplate, filteredTemplates.length)} of {filteredTemplates.length}
-            </span>
+          
+          {/* Sort Dropdown */}
+          <div style={{ position: 'relative' }} data-dropdown="sort">
+            <button
+              onClick={() => { setShowSortDropdown(!showSortDropdown); setShowFilterDropdown(false); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 14px',
+                border: '2px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                background: 'var(--color-bg-primary)',
+                color: 'var(--color-text-primary)',
+                cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)',
+                fontWeight: '500',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6H21M6 12H18M9 18H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Sort: {sortBy === "date" ? "Date" : "Name"} ({sortOrder === "desc" ? "↓" : "↑"})
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginLeft: '2px' }}>
+                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showSortDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                marginTop: '4px',
+                background: 'var(--color-bg-primary)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-lg)',
+                zIndex: 100,
+                minWidth: '160px',
+                overflow: 'hidden'
+              }}>
+                <div style={{ padding: '4px' }}>
+                  <button
+                    onClick={() => { setSortBy("date"); setSortOrder("desc"); setShowSortDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: sortBy === "date" && sortOrder === "desc" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    Date (Newest first)
+                  </button>
+                  <button
+                    onClick={() => { setSortBy("date"); setSortOrder("asc"); setShowSortDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: sortBy === "date" && sortOrder === "asc" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    Date (Oldest first)
+                  </button>
+                  <button
+                    onClick={() => { setSortBy("name"); setSortOrder("asc"); setShowSortDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: sortBy === "name" && sortOrder === "asc" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    Name (A-Z)
+                  </button>
+                  <button
+                    onClick={() => { setSortBy("name"); setSortOrder("desc"); setShowSortDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: sortBy === "name" && sortOrder === "desc" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    Name (Z-A)
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Filter Dropdown */}
+          <div style={{ position: 'relative' }} data-dropdown="filter">
+            <button
+              onClick={() => { setShowFilterDropdown(!showFilterDropdown); setShowSortDropdown(false); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '10px 14px',
+                border: filterBy !== "all" ? '2px solid var(--color-primary)' : '2px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                background: filterBy !== "all" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'var(--color-bg-primary)',
+                color: filterBy !== "all" ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)',
+                fontWeight: '500',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 3H2L10 12.46V19L14 21V12.46L22 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              {filterBy === "all" ? "All Templates" : 
+               filterBy === "own" ? "My Templates" : 
+               filterBy === "assigned" ? "Assigned to Me" :
+               filterBy === "recruiter" ? "Recruiter" : "Reviewer"}
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ marginLeft: '2px' }}>
+                <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            {showFilterDropdown && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                left: 0,
+                marginTop: '4px',
+                background: 'var(--color-bg-primary)',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                boxShadow: 'var(--shadow-lg)',
+                zIndex: 100,
+                minWidth: '180px',
+                overflow: 'hidden'
+              }}>
+                <div style={{ padding: '4px' }}>
+                  <button
+                    onClick={() => { setFilterBy("all"); setShowFilterDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: filterBy === "all" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    All Templates
+                  </button>
+                  <button
+                    onClick={() => { setFilterBy("own"); setShowFilterDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: filterBy === "own" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    My Templates
+                  </button>
+                  <button
+                    onClick={() => { setFilterBy("assigned"); setShowFilterDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: filterBy === "assigned" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    Assigned to Me
+                  </button>
+                  <div style={{ height: '1px', background: 'var(--color-border)', margin: '4px 0' }}></div>
+                  <button
+                    onClick={() => { setFilterBy("recruiter"); setShowFilterDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: filterBy === "recruiter" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    Assigned to Recruiter
+                  </button>
+                  <button
+                    onClick={() => { setFilterBy("reviewer"); setShowFilterDropdown(false); }}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '8px 12px',
+                      border: 'none',
+                      background: filterBy === "reviewer" ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'transparent',
+                      color: 'var(--color-text-primary)',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      borderRadius: 'var(--radius-sm)',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    Assigned for Review
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
+          {/* Clear filters button */}
+          {(filterBy !== "all" || searchQuery) && (
+            <button
+              onClick={() => { setFilterBy("all"); setSearchQuery(""); setSortBy("date"); setSortOrder("desc"); }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '8px 12px',
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--color-text-muted)',
+                cursor: 'pointer',
+                fontSize: 'var(--font-size-sm)',
+                transition: 'color 0.2s ease'
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Clear
+            </button>
           )}
+          
+          {/* Template count */}
+          <span style={{
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--color-text-muted)',
+            whiteSpace: 'nowrap',
+            marginLeft: 'auto'
+          }}>
+            {filteredTemplates.length > templatesPerPage 
+              ? `Showing ${indexOfFirstTemplate + 1}-${Math.min(indexOfLastTemplate, filteredTemplates.length)} of ${filteredTemplates.length}`
+              : `${filteredTemplates.length} template${filteredTemplates.length !== 1 ? 's' : ''}`
+            }
+          </span>
         </div>
         {filteredTemplates.length === 0 && searchQuery ? (
           <div className="empty-state">
