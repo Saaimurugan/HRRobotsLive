@@ -63,6 +63,8 @@ const [toasts, setToasts] = useState([]);
 const [showCandidateTestModal, setShowCandidateTestModal] = useState(false);
 const [selectedTemplateForCandidate, setSelectedTemplateForCandidate] = useState(null);
 const [searchQuery, setSearchQuery] = useState("");
+const [currentPage, setCurrentPage] = useState(1);
+const templatesPerPage = 6;
 
 // Toast functions
 const showToast = (type, title, message) => {
@@ -552,6 +554,62 @@ const filteredTemplates = templates.filter(template => {
          email.includes(query);
 });
 
+// Pagination calculations
+const totalPages = Math.ceil(filteredTemplates.length / templatesPerPage);
+const indexOfLastTemplate = currentPage * templatesPerPage;
+const indexOfFirstTemplate = indexOfLastTemplate - templatesPerPage;
+const currentTemplates = filteredTemplates.slice(indexOfFirstTemplate, indexOfLastTemplate);
+
+// Reset to page 1 when search query changes
+useEffect(() => {
+  setCurrentPage(1);
+}, [searchQuery]);
+
+// Pagination handlers
+const goToPage = (pageNumber) => {
+  setCurrentPage(pageNumber);
+  // Scroll to templates section
+  const sectionHeader = document.querySelector('.section-header');
+  if (sectionHeader) {
+    sectionHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+};
+
+const goToPreviousPage = () => {
+  if (currentPage > 1) goToPage(currentPage - 1);
+};
+
+const goToNextPage = () => {
+  if (currentPage < totalPages) goToPage(currentPage + 1);
+};
+
+// Generate page numbers to display
+const getPageNumbers = () => {
+  const pages = [];
+  const maxVisiblePages = 5;
+  
+  if (totalPages <= maxVisiblePages) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i);
+  } else {
+    if (currentPage <= 3) {
+      for (let i = 1; i <= 4; i++) pages.push(i);
+      pages.push('...');
+      pages.push(totalPages);
+    } else if (currentPage >= totalPages - 2) {
+      pages.push(1);
+      pages.push('...');
+      for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      pages.push('...');
+      for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+      pages.push('...');
+      pages.push(totalPages);
+    }
+  }
+  return pages;
+};
+
   return (
     <div className="app">
       <Toast toasts={toasts} removeToast={removeToast} />
@@ -734,10 +792,26 @@ const filteredTemplates = templates.filter(template => {
             </svg>
             <p>No templates found matching "{searchQuery}"</p>
           </div>
-        ) : null}
+        ) : (
+          <>
+            {filteredTemplates.length > templatesPerPage && (
+              <div className="pagination-info" style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+                padding: '0 4px',
+                color: 'var(--color-text-muted)',
+                fontSize: 'var(--font-size-sm)'
+              }}>
+                <span>Showing {indexOfFirstTemplate + 1}-{Math.min(indexOfLastTemplate, filteredTemplates.length)} of {filteredTemplates.length} templates</span>
+              </div>
+            )}
+          </>
+        )}
         </>
         )}
-        {filteredTemplates.map((card, index) => {
+        {currentTemplates.map((card, index) => {
           const templateState = templateStates[card.templateID] || {};
           return (
               <div key={index} className="card template-card" data-tour-template={index === 0 ? "first" : undefined}>
@@ -948,6 +1022,98 @@ const filteredTemplates = templates.filter(template => {
               </div>
           );
         })}
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="pagination-container" style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '8px',
+            marginTop: '24px',
+            marginBottom: '16px',
+            gridColumn: '1 / -1',
+            width: '100%'
+          }}>
+            <button
+              onClick={goToPreviousPage}
+              disabled={currentPage === 1}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '8px 12px',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                background: currentPage === 1 ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)',
+                color: currentPage === 1 ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                fontSize: 'var(--font-size-sm)'
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Previous
+            </button>
+            
+            <div style={{ display: 'flex', gap: '4px' }}>
+              {getPageNumbers().map((page, index) => (
+                page === '...' ? (
+                  <span key={`ellipsis-${index}`} style={{
+                    padding: '8px 4px',
+                    color: 'var(--color-text-muted)'
+                  }}>...</span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => goToPage(page)}
+                    style={{
+                      minWidth: '36px',
+                      height: '36px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: currentPage === page ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                      borderRadius: 'var(--radius-md)',
+                      background: currentPage === page ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'var(--color-bg-primary)',
+                      color: currentPage === page ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                      cursor: 'pointer',
+                      fontWeight: currentPage === page ? '600' : '400',
+                      transition: 'all 0.2s ease',
+                      fontSize: 'var(--font-size-sm)'
+                    }}
+                  >
+                    {page}
+                  </button>
+                )
+              ))}
+            </div>
+            
+            <button
+              onClick={goToNextPage}
+              disabled={currentPage === totalPages}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '8px 12px',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                background: currentPage === totalPages ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)',
+                color: currentPage === totalPages ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                transition: 'all 0.2s ease',
+                fontSize: 'var(--font-size-sm)'
+              }}
+            >
+              Next
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+        )}
         </>
         )}
         </div>
