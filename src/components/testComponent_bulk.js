@@ -4,6 +4,7 @@ import SubmittedMessage from "./submittedMessage.js";
 import DisplayMessage from "./displayMessage.js";
 import FeedbackForm from "./FeedbackForm.js";
 import html2canvas from 'html2canvas';
+import answerQueue from '../services/answerQueue.js';
 
 const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, onSubmitComplete, submitTestRef }) => {
   // State for questions and answers
@@ -236,40 +237,19 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     }
   };
 
-  // Track saving state to prevent duplicate API calls
-  const [isSavingAnswer, setIsSavingAnswer] = useState(false);
-
-  // Save answer locally and to backend
-  const saveAnswer = async (selectedAnswer) => {
+  // Save answer locally and queue for backend save
+  const saveAnswer = (selectedAnswer) => {
     // Update local state immediately for responsive UI
     const newAnswers = [...answers];
     newAnswers[currentQuestionIndex] = selectedAnswer;
     setAnswers(newAnswers);
     
-    // Prevent duplicate API calls
-    if (isSavingAnswer) return;
-    
-    setIsSavingAnswer(true);
-    
-    // Save answer to backend via saveAnswerSubmitted API
-    try {
-      await fetch(
-        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveAnswerSubmitted",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            testID: testID,
-            questionID: currentQuestion.questionID,
-            answer: selectedAnswer
-          }),
-        }
-      );
-    } catch (error) {
-      console.error('Error saving answer:', error);
-    } finally {
-      setIsSavingAnswer(false);
-    }
+    // Queue answer for background saving - handles rapid clicks properly
+    answerQueue.queueAnswer(
+      testID,
+      currentQuestion.questionID,
+      selectedAnswer
+    );
   };
 
   // Capture screenshot of the page before final submission
@@ -312,6 +292,17 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const performActualSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Flush all queued answers before submission
+      await answerQueue.flushQueue(testID);
+      
+      // Validate all answers were saved
+      const unsavedCount = answerQueue.getUnsavedCount(testID);
+      if (unsavedCount > 0) {
+        setMessage(`Unable to save ${unsavedCount} answer(s). Please check your connection and try again.`);
+        setIsSubmitting(false);
+        return;
+      }
+      
       // Capture screenshot before submission
       await captureSubmissionScreenshot();
 
@@ -332,6 +323,8 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       const data = await response.json();
       if (data.statusCode === 200) {
         setMessage("Test submitted successfully!");
+        // Clean up queue data
+        answerQueue.clearTestData(testID);
         // Notify parent that submission is complete to stop proctoring
         if (onSubmitComplete) {
           onSubmitComplete();
