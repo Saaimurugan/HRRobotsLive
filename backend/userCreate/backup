@@ -176,7 +176,7 @@ def lambda_handler(event, context):
     try:
         JSONData = str(event)
         body = json.loads(JSONData.replace("'",'"'))
-        email = body["email"].lower().strip()
+        email = body["email"]
         password = body["password"]
 
         # Encrypt password before storing

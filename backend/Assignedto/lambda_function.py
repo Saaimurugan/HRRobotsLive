@@ -22,6 +22,12 @@ def lambda_handler(event, context):
         action = body.get("action", "assign")  # "assign" or "approve"
         actor_email = body.get("actorEmail", "")  # Who is performing the action
         actor_name = body.get("actorName", "")  # Name of the person performing the action
+        
+        # Normalize emails to lowercase for case-insensitive comparison
+        if assigned_email and assigned_email != "REVOKE":
+            assigned_email = assigned_email.lower().strip()
+        if actor_email:
+            actor_email = actor_email.lower().strip()
 
         current_time = datetime.utcnow().isoformat() + "Z"
 

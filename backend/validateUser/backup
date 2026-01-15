@@ -33,9 +33,6 @@ def lambda_handler(event, context):
                 "statusCode": 400,
                 "body": json.dumps({"message": "Email and token are required"})
             }
-        
-        # Normalize email to lowercase for case-insensitive comparison
-        email = email.lower().strip()
 
         # Get user from DynamoDB
         response = table.get_item(Key={"userId": email})

@@ -42,7 +42,7 @@ def lambda_handler(event, context):
         # Parse the event body to extract the email
         JSONData = str(event)
         body = json.loads(JSONData.replace("'", '"'))
-        email = body["recipient_email"].lower().strip()
+        email = body["recipient_email"]
 
         checkUser = checkUserRegistered(email)
         print(checkUser)
