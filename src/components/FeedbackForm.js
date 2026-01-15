@@ -171,11 +171,14 @@ const FeedbackForm = ({ testID, candidateName, onSubmit, onSkip }) => {
           ))}
         </div>
 
-        {(hoveredRating || rating) > 0 && (
-          <div style={{ color: "#666", fontSize: "14px", marginBottom: "15px" }}>
-            {ratingLabels[(hoveredRating || rating) - 1]}
-          </div>
-        )}
+        <div style={{ 
+          color: (hoveredRating || rating) > 0 ? "#666" : "transparent", 
+          fontSize: "14px", 
+          marginBottom: "15px", 
+          minHeight: "21px" 
+        }}>
+          {(hoveredRating || rating) > 0 ? ratingLabels[(hoveredRating || rating) - 1] : "\u00A0"}
+        </div>
 
         <textarea
           style={textareaStyle}

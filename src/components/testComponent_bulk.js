@@ -5,7 +5,7 @@ import DisplayMessage from "./displayMessage.js";
 import FeedbackForm from "./FeedbackForm.js";
 import html2canvas from 'html2canvas';
 
-const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, submitTestRef }) => {
+const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, onSubmitComplete, submitTestRef }) => {
   // State for questions and answers
   const [questions, setQuestions] = useState([]);
   const [groupedQuestions, setGroupedQuestions] = useState({}); // Group questions by topic
@@ -332,6 +332,10 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       const data = await response.json();
       if (data.statusCode === 200) {
         setMessage("Test submitted successfully!");
+        // Notify parent that submission is complete to stop proctoring
+        if (onSubmitComplete) {
+          onSubmitComplete();
+        }
         setShowFeedback(true); // Show feedback form first
       } else {
         setMessage("Failed to submit test, please take screenshot and contact support.");

@@ -1304,7 +1304,7 @@ if (userUniqueID != '')
             {speechCount > 0 && <span className="status-counter" aria-hidden="true">{speechCount}</span>}
           </span>
         </div>
-        {isTimeOut && (isFullScreen || fullscreenAttempts < maxProctorAttempts) && (isFocused || focusAttempts < maxProctorAttempts) && cameraPermission && micPermission && !isTerminated && (!faceRecognition || (faceOffWarningCount < allowedDefaults && multipleFacesWarningCount < allowedDefaults))? 
+        {isTimeOut && (isFullScreen || fullscreenAttempts < maxProctorAttempts) && (isFocused || focusAttempts < maxProctorAttempts) && cameraPermission && micPermission && !isTerminated && !isSubmitted && (!faceRecognition || (faceOffWarningCount < allowedDefaults && multipleFacesWarningCount < allowedDefaults))? 
         // {isTimeOut? 
           <>
           <FaceTracking 
@@ -1404,6 +1404,7 @@ if (userUniqueID != '')
         </button>
         </>
         :
+        !isSubmitted && (
         <div style={{
           fontSize: '75px',
           fontFamily: 'fantasy',
@@ -1413,6 +1414,7 @@ if (userUniqueID != '')
        }}>
         {!isTimeOut ? 'Time Out' : 'Terminated'} 
         </div>
+        )
         }
       </div>
       </>
@@ -1431,7 +1433,7 @@ if (userUniqueID != '')
         <FaceWarningMessage userUniqueID={userUniqueID} count={multipleFacesWarningCount} offFocus={0} warningType="multiplefaces"/>
         }
         {isFaceDetectionLoaded && configLoaded ? (
-          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} submitTestRef={submitTestRef} numberOfQuestions={numberOfQuestions} onSubmit={() => setShowSubmitConfirmModal(true)}/>
+          <TestComponent testID={userUniqueID} userID={globalValue} candidateName={candidateName} onProgressUpdate={setTestProgress} navigateToQuestionRef={navigateToQuestionRef} submitTestRef={submitTestRef} numberOfQuestions={numberOfQuestions} onSubmit={() => setShowSubmitConfirmModal(true)} onSubmitComplete={() => setIsSubmitted(true)}/>
         ) : (
           <div style={{
             display: 'flex',
