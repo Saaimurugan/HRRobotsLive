@@ -235,22 +235,22 @@ button svg {
 }
 
 button:hover:not(:disabled) {
-  background: var(--color-primary);
-  color: white;
+  background: var(--color-primary) !important;
+  color: white !important;
   transform: translateY(-2px);
   box-shadow: var(--shadow-primary);
 }
 
 button:hover:not(:disabled):not(.nav-btn) svg {
-  color: white;
+  color: white !important;
 }
 
 button:hover:not(:disabled):not(.nav-btn) svg path[fill]:not([fill="none"]) {
-  fill: white;
+  fill: white !important;
 }
 
 button:hover:not(:disabled):not(.nav-btn) svg path[stroke] {
-  stroke: white;
+  stroke: white !important;
 }
 
 button:active:not(:disabled) {
