@@ -56,6 +56,7 @@ const [showConfigModal, setShowConfigModal] = useState(false);
 const [templateIDSelectedForDelete, setTemplateIDSelectedForDelete] = useState("");
 const [templateIDSelectedToAssign, setTemplateIDSelectedToAssign] = useState("");
 const [currentAssignedTo, setCurrentAssignedTo] = useState("");
+const [currentAssignedRole, setCurrentAssignedRole] = useState("");
 const [isOpenAPIModal, setIsOpenAPIModal] = useState(false);
 const [apiKey, setApiKey] = useState("");
 const [toasts, setToasts] = useState([]);
@@ -90,9 +91,10 @@ const deleteConfirm = (templateID) => {
   setTemplateIDSelectedForDelete(templateID);
 };
 
-const assignModal = (templateID, assignedTo) => {
+const assignModal = (templateID, assignedTo, assignedRole) => {
   setTemplateIDSelectedToAssign(templateID);
   setCurrentAssignedTo(assignedTo || "");
+  setCurrentAssignedRole(assignedRole || "");
   setShowAssignModal(true);
 };
 
@@ -162,8 +164,8 @@ const handleConfig = (d) => {
   setShowConfigModal(false);
 };
 
-const handleAssign = (email) => {
-  handleAssignTemplate(email);
+const handleAssign = (data) => {
+  handleAssignTemplate(data.email, data.role);
   setShowAssignModal(false);
 }
 
@@ -172,6 +174,7 @@ const handleCancel = () => {
   setShowConfirmation(false);
   setShowAssignModal(false);
   setCurrentAssignedTo("");
+  setCurrentAssignedRole("");
   setIsOpenAPIModal(false);
   setShowConfigModal(false);
   setShowCandidateTestModal(false);
@@ -272,7 +275,7 @@ const handleCopyToClipboard = (templateID) => {
   }
 };
 
-const handleAssignTemplate = async (email) => {
+const handleAssignTemplate = async (email, role = 'recruiter') => {
   setLoading(true);
   try {
     // If email is empty, this is a revoke operation
@@ -282,13 +285,19 @@ const handleAssignTemplate = async (email) => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ templateID: templateIDSelectedToAssign, assignedEmail: "REVOKE", token: JWTValue }),
+        body: JSON.stringify({ 
+          templateID: templateIDSelectedToAssign, 
+          assignedEmail: "REVOKE", 
+          assignedRole: "", 
+          actorEmail: globalValue,
+          token: JWTValue 
+        }),
       });
       const data = await response.json();
       if (checkUnauthorized(data)) return;
       if (data.statusCode === 200) {
         fetchTemplates();
-        showToast('success', 'Assignment Revoked', 'The recruiter assignment has been successfully revoked.');
+        showToast('success', 'Assignment Revoked', 'The assignment has been successfully revoked.');
       }
       return;
     }
@@ -303,13 +312,22 @@ const handleAssignTemplate = async (email) => {
     const checkData = await checkEmailResponse.json();
     const isUserRegistered = checkData.statusCode !== 200;
 
+    const roleLabel = role === 'hiring_manager' ? 'Reviewer' : 'Recruiter';
+
     // Assign the template regardless of registration status
     const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/Assignedto", {
        method: "POST",
        headers: {
          "Content-Type": "application/json",
        },
-       body: JSON.stringify({ templateID: templateIDSelectedToAssign, assignedEmail: email, token: JWTValue }),
+       body: JSON.stringify({ 
+         templateID: templateIDSelectedToAssign, 
+         assignedEmail: email, 
+         assignedRole: role, 
+         actorEmail: globalValue,
+         action: "assign",
+         token: JWTValue 
+       }),
      });       
      const data = await response.json();
      if (checkUnauthorized(data)) return;
@@ -318,11 +336,16 @@ const handleAssignTemplate = async (email) => {
        
        // If user is not registered, send an invite email
        if (!isUserRegistered) {
+         const roleDescription = role === 'hiring_manager' 
+           ? 'As a Reviewer, you can review and edit the template questions, approve the template, and create test links for candidates.'
+           : 'As a Recruiter, you can create test links for candidates using this template.';
+         
          const inviteBody = `
            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
              <h2 style="color: #1cbbb4;">You're Invited to HR Robots!</h2>
              <p>Hello,</p>
-             <p><strong>${globalValue}</strong> has assigned you a screening test template and invited you to join HR Robots platform.</p>
+             <p><strong>${globalValue}</strong> has assigned you a screening test template as a <strong>${roleLabel}</strong> and invited you to join HR Robots platform.</p>
+             <p>${roleDescription}</p>
              <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
              <p style="margin-top: 20px;">
                <a href="https://www.hrrobots.click/signup" 
@@ -353,9 +376,9 @@ const handleAssignTemplate = async (email) => {
            }),
          });
          
-         showToast('success', 'Template Assigned', `Template assigned to ${email}. An invitation email has been sent since they are not registered.`);
+         showToast('success', 'Template Assigned', `Template assigned to ${email} as ${roleLabel}. An invitation email has been sent since they are not registered.`);
        } else {
-         showToast('success', 'Template Assigned', `Template assigned successfully to ${email}.`);
+         showToast('success', 'Template Assigned', `Template assigned successfully to ${email} as ${roleLabel}.`);
        }
      }
   } catch (error) {
@@ -364,6 +387,78 @@ const handleAssignTemplate = async (email) => {
   }
   finally
   {
+    setLoading(false);
+  }
+};
+
+const handleApproveTemplate = async (templateID, ownerEmail) => {
+  setLoading(true);
+  try {
+    // Call the API to approve the template
+    const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/Assignedto", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        templateID: templateID, 
+        action: "approve",
+        actorEmail: globalValue,
+        actorName: globalValue.split('@')[0], // Use email prefix as name
+        token: JWTValue 
+      }),
+    });
+    
+    const data = await response.json();
+    if (checkUnauthorized(data)) return;
+    
+    if (data.statusCode === 200) {
+      // Refresh templates to show updated status
+      fetchTemplates();
+      
+      // Send notification email to the template owner
+      const approvalEmailBody = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h2 style="color: #16a34a;">Template Approved! ✓</h2>
+          <p>Hello,</p>
+          <p>Great news! Your screening test template has been reviewed and <strong>approved</strong> by <strong>${globalValue}</strong>.</p>
+          <p>The template is now ready for use. You can start generating test links for candidates.</p>
+          <p style="margin-top: 20px;">
+            <a href="https://www.hrrobots.click/list" 
+               style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); 
+                      color: white; 
+                      padding: 12px 24px; 
+                      text-decoration: none; 
+                      border-radius: 6px; 
+                      display: inline-block;">
+              View Templates
+            </a>
+          </p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">
+            Thank you for using HR Robots!
+          </p>
+        </div>
+      `;
+
+      await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          recipient_email: ownerEmail,
+          subject: `Your template has been approved by ${globalValue}`,
+          body: approvalEmailBody
+        }),
+      });
+      
+      showToast('success', 'Template Approved', 'The template has been approved and the owner has been notified.');
+    } else {
+      showToast('error', 'Error', 'Failed to approve the template.');
+    }
+  } catch (error) {
+    showToast('error', 'Error', 'An error occurred while approving the template.');
+  } finally {
     setLoading(false);
   }
 };
@@ -469,11 +564,12 @@ const filteredTemplates = templates.filter(template => {
       )}
       {showAssignModal && (
         <AssignTemplate
-          title="Assign to Recruiter"
-          text="Please enter the email address of the recruiter to whom you want to assign this template."
+          title="Assign to Recruiter or Reviewer"
+          text="Please enter the email address of the person to whom you want to assign this template."
           onAssign={(d) => handleAssign(d)}
           onCancel={handleCancel}
           currentAssignedTo={currentAssignedTo}
+          currentRole={currentAssignedRole}
         />
       )}
       {showConfigModal && (
@@ -657,7 +753,7 @@ const filteredTemplates = templates.filter(template => {
                       <path d="M6 7V18C6 19.1046 6.89543 20 8 20H16C17.1046 20 18 19.1046 18 18V7M6 7H5M6 7H8M18 7H19M18 7H16M10 11V16M14 11V16M8 7V5C8 4.44772 8.44772 4 9 4H15C15.5523 4 16 4.44772 16 5V7M8 7H16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
-                  <button onClick={() => assignModal(card.templateID, card.AssignedTo)} className="delete-button" title="Assign to Recruiter" data-tour={index === 0 ? "assign-template-btn" : undefined}>
+                  <button onClick={() => assignModal(card.templateID, card.AssignedTo, card.AssignedRole)} className="delete-button" title="Assign to Recruiter or Reviewer" data-tour={index === 0 ? "assign-template-btn" : undefined}>
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M16 21V19C16 17.9391 15.5786 16.9217 14.8284 16.1716C14.0783 15.4214 13.0609 15 12 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M8.5 11C10.7091 11 12.5 9.20914 12.5 7C12.5 4.79086 10.7091 3 8.5 3C6.29086 3 4.5 4.79086 4.5 7C4.5 9.20914 6.29086 11 8.5 11Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -676,13 +772,89 @@ const filteredTemplates = templates.filter(template => {
                   </button>
                 </div>
                 ) : (
-                  <div className="assigned-badge">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12Z" fill="currentColor"/>
-                      <path d="M12 14C7.59 14 4 17.59 4 22H20C20 17.59 16.41 14 12 14Z" fill="currentColor"/>
-                    </svg>
-                    Assigned by {card.email}
-                  </div>
+                  <>
+                    {card.ApprovalStatus === 'approved' ? (
+                      <div className="approved-badge" style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '6px 12px',
+                        background: 'var(--color-success-light, #dcfce7)',
+                        color: 'var(--color-success, #16a34a)',
+                        borderRadius: '20px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        marginBottom: '8px'
+                      }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Approved on {card.ApprovedDate ? new Date(card.ApprovedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                      </div>
+                    ) : (
+                      <div className="assigned-badge">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 12C14.21 12 16 10.21 16 8C16 5.79 14.21 4 12 4C9.79 4 8 5.79 8 8C8 10.21 9.79 12 12 12Z" fill="currentColor"/>
+                          <path d="M12 14C7.59 14 4 17.59 4 22H20C20 17.59 16.41 14 12 14Z" fill="currentColor"/>
+                        </svg>
+                        Assigned by {card.email} {card.AssignedRole === 'hiring_manager' ? '(Reviewer)' : '(Recruiter)'}
+                      </div>
+                    )}
+                    {card.AssignedRole === 'hiring_manager' && card.ApprovalStatus !== 'approved' && (
+                      <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                        <button 
+                          onClick={() => navigate(`/edit/${card.templateID}`)} 
+                          className="edit-template-btn"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            padding: '8px 16px',
+                            background: 'var(--color-primary-gradient, linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%))',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            flex: 1
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fillRule="evenodd" clipRule="evenodd" d="m3.99 16.854-1.314 3.504a.75.75 0 0 0 .966.965l3.503-1.314a3 3 0 0 0 1.068-.687L18.36 9.175s-.354-1.061-1.414-2.122c-1.06-1.06-2.122-1.414-2.122-1.414L4.677 15.786a3 3 0 0 0-.687 1.068zm12.249-12.63 1.383-1.383c.248-.248.579-.406.925-.348.487.08 1.232.322 1.934 1.025.703.703.945 1.447 1.025 1.934.058.346-.1.677-.348.925L19.774 7.76s-.353-1.06-1.414-2.12c-1.06-1.062-2.121-1.415-2.121-1.415z" fill="currentColor"/>
+                          </svg>
+                          Edit
+                        </button>
+                        <button 
+                          onClick={() => handleApproveTemplate(card.templateID, card.email)}
+                          className="approve-template-btn"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            padding: '8px 16px',
+                            background: 'var(--color-success, #16a34a)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            flex: 1
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M22 4L12 14.01l-3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Approve
+                        </button>
+                      </div>
+                    )}
+                  </>
                 )}
                 
                 
@@ -747,7 +919,23 @@ const filteredTemplates = templates.filter(template => {
                   }}>{templateState.message}</p>
                 )}
                 
-                {card.AssignedTo && card.AssignedTo !== globalValue && (
+                {card.ApprovalStatus === 'approved' && card.ApprovedBy && card.ApprovedBy !== globalValue ? (
+                  <p style={{
+                    fontSize: 'var(--font-size-xs)',
+                    color: 'var(--color-success, #16a34a)',
+                    marginTop: '12px',
+                    marginBottom: '0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <path d="M22 4L12 14.01l-3-3" />
+                    </svg>
+                    Approved by {card.ApprovedByName || card.ApprovedBy} on {card.ApprovedDate ? new Date(card.ApprovedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : ''}
+                  </p>
+                ) : card.AssignedTo && card.AssignedTo !== globalValue ? (
                   <p style={{
                     fontSize: 'var(--font-size-xs)',
                     color: 'var(--color-text-muted)',
@@ -756,7 +944,7 @@ const filteredTemplates = templates.filter(template => {
                   }}>
                     Assigned to: {card.AssignedTo}
                   </p>
-                )}
+                ) : null}
               </div>
           );
         })}
