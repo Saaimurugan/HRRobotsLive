@@ -9,7 +9,11 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 30px;
-  padding: 20px 0;
+  padding: 20px 10px;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
 }
 
 .step {
@@ -17,6 +21,7 @@
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
 
 .step-number {
@@ -49,6 +54,8 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-light);
   font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  text-align: center;
 }
 
 .step.active .step-label {
@@ -60,10 +67,12 @@
 }
 
 .step-connector {
-  width: 80px;
+  width: 60px;
+  min-width: 30px;
+  flex-shrink: 1;
   height: 2px;
   background: var(--color-border);
-  margin: 0 15px;
+  margin: 0 10px;
   margin-bottom: 24px;
 }
 
@@ -635,12 +644,27 @@
 /* Responsive */
 @media (max-width: 768px) {
   .step-indicator {
-    flex-wrap: wrap;
-    gap: 10px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding: 15px 10px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .step-connector {
-    display: none;
+    width: 40px;
+    min-width: 20px;
+    margin: 0 5px;
+  }
+
+  .step-number {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .step-label {
+    font-size: 11px;
   }
 
   .keywords-list {
@@ -761,16 +785,17 @@
 
 .jd-modal-content .step-indicator {
   margin-bottom: 20px;
-  padding: 15px 0;
+  padding: 15px 10px;
   position: sticky;
   top: 81px;
   background: var(--color-bg-primary, #fff);
   z-index: 9;
   border-bottom: 1px solid var(--color-border, #e0e0e0);
-  margin-left: 50px;
-  margin-right: 50px;
-  padding-left: 25px;
-  padding-right: 25px;
+  margin-left: 0;
+  margin-right: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  box-sizing: border-box;
 }
 
 .jd-modal-content .jd-text-section textarea {
@@ -1135,11 +1160,26 @@
   }
 
   .jd-modal-content .step-indicator {
-    flex-wrap: wrap;
-    gap: 8px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px 5px;
   }
 
   .jd-modal-content .step-connector {
-    display: none;
+    width: 30px;
+    min-width: 15px;
+    margin: 0 3px;
+  }
+
+  .jd-modal-content .step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .jd-modal-content .step-label {
+    font-size: 10px;
   }
 }
