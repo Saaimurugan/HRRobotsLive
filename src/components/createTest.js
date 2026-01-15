@@ -114,8 +114,8 @@ const handleSave = () => {
 
 const handleConfirm = () => {
   //console.log('Confirmed!');
-  handleDeleteTemplate();
-  setShowConfirmation(false);
+  setShowConfirmation(false); // Close dialog immediately
+  handleDeleteTemplate(); // Delete in background
 };
 
 const handleConfigTemplate = (d) => {
@@ -369,8 +369,14 @@ const handleAssignTemplate = async (email) => {
 };
 
 const handleDeleteTemplate = async () => {
+  // Store the template to restore if deletion fails
+  const templateToDelete = templates.find(t => t.templateID === templateIDSelectedForDelete);
+  
+  // Optimistically remove from UI immediately
+  setTemplates(prev => prev.filter(t => t.templateID !== templateIDSelectedForDelete));
+  
+  // Delete in background without blocking UI
   try {
-    setLoadingTemplate(true);
     const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/deleteTemplate", {
       method: "POST",
       headers: {
@@ -379,17 +385,28 @@ const handleDeleteTemplate = async () => {
       body: JSON.stringify({ templateIDSelectedForDelete, token: JWTValue }),
     });       
     const data = await response.json();
-    if (checkUnauthorized(data)) return;
-    if (data.statusCode === 200) 
-      {
-        fetchTemplates();
+    if (checkUnauthorized(data)) {
+      // Restore template if unauthorized
+      if (templateToDelete) {
+        setTemplates(prev => [...prev, templateToDelete]);
       }
+      return;
+    }
+    if (data.statusCode === 200) {
+      showToast('success', 'Template Deleted', 'The template has been successfully removed.');
+    } else {
+      // Restore template on failure
+      if (templateToDelete) {
+        setTemplates(prev => [...prev, templateToDelete]);
+      }
+      showToast('error', 'Deletion Failed', 'Failed to delete the template. Please try again.');
+    }
   } catch (error) {
-    //console.error("Error fetching templates:", error);
-  }
-  finally
-  {
-    setLoadingTemplate(false);
+    // Restore template on error
+    if (templateToDelete) {
+      setTemplates(prev => [...prev, templateToDelete]);
+    }
+    showToast('error', 'Error', 'An error occurred while deleting the template.');
   }
 };
 

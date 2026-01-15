@@ -23,6 +23,8 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
   const [testLink, setTestLink] = useState("");
   const [generationProgress, setGenerationProgress] = useState({ current: 0, total: 0, currentKeyword: "" });
   const [templateName, setTemplateName] = useState("");
+  const [newTemplateID, setNewTemplateID] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -67,9 +69,11 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
     setCustomizedQuestions([]);
     setTestLink("");
     setTemplateName("");
+    setNewTemplateID("");
     setIsExtracting(false);
     setIsGenerating(false);
     setIsCreatingTest(false);
+    setIsSavingName(false);
   };
 
   const handleClose = () => {
@@ -552,6 +556,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       }
 
       const newTemplateID = saveData.templateID;
+      setNewTemplateID(newTemplateID); // Store the new template ID for later updates
 
       // Copy test configuration from original template
       const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
@@ -628,6 +633,65 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         .catch(() => {
           showToast('error', 'Copy Failed', 'Failed to copy link to clipboard.');
         });
+    }
+  };
+
+  const saveTemplateName = async () => {
+    if (!newTemplateID || !templateName.trim()) {
+      showToast('warning', 'Invalid Name', 'Please enter a valid template name.');
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      // Fetch existing questions first
+      const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ passedTemplateID: newTemplateID, token: JWTValue })
+      });
+      
+      const questionsData = await questionsResponse.json();
+      if (checkUnauthorized(questionsData)) {
+        setIsSavingName(false);
+        return;
+      }
+
+      const parsedQuestionsBody = JSON.parse(questionsData.body);
+      const existingQuestions = parsedQuestionsBody.questions || [];
+
+      // Update template with new name
+      const updateResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          templateID: newTemplateID,
+          templateName: templateName.trim(),
+          globalValue: globalValue,
+          questions: existingQuestions,
+          token: JWTValue 
+        })
+      });
+      
+      const updateData = await updateResponse.json();
+      if (checkUnauthorized(updateData)) {
+        setIsSavingName(false);
+        return;
+      }
+
+      if (updateData.statusCode === 200) {
+        showToast('success', 'Saved', 'Template name updated successfully!');
+        // Refresh the templates list
+        if (onTemplateCreated) {
+          onTemplateCreated();
+        }
+      } else {
+        showToast('error', 'Error', 'Failed to update template name.');
+      }
+    } catch (error) {
+      showToast('error', 'Error', 'An error occurred while updating the template name.');
+    } finally {
+      setIsSavingName(false);
     }
   };
 
@@ -1018,12 +1082,39 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                 
                 <div className="template-name-section">
                   <label>Template Name</label>
-                  <input
-                    type="text"
-                    value={templateName}
-                    onChange={(e) => setTemplateName(e.target.value)}
-                    placeholder="Enter template name"
-                  />
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      value={templateName}
+                      onChange={(e) => setTemplateName(e.target.value)}
+                      placeholder="Enter template name"
+                      style={{ flex: 1 }}
+                    />
+                    <button 
+                      className="btn-secondary" 
+                      onClick={saveTemplateName}
+                      disabled={isSavingName}
+                      style={{ minWidth: '100px' }}
+                    >
+                      {isSavingName ? (
+                        <>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="spinner">
+                            <path d="M21 12a9 9 0 11-6.219-8.56" />
+                          </svg>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                          </svg>
+                          Save
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 
                 <div className="test-link-box">
