@@ -169,8 +169,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         };
     }, [searchFilter, testGlobalValue, initialized]); // Added initialized dependency
 
-    const handleDeleteTest = async (testID) => {
-        setLoading(true);
+    const handleDeleteTest = async (testID, testToDelete) => {
+        // Delete in background without blocking UI
         try {
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/deleteTestTransaction", {
                 method: "POST",
@@ -182,20 +182,43 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
 
             if (response.status === 200) {
                 const data = await response.json();
-                if (checkUnauthorized(data)) return;
-
+                if (checkUnauthorized(data)) {
+                    // Restore test if unauthorized
+                    if (testToDelete) {
+                        setItems(prev => [...prev, testToDelete]);
+                    }
+                    return;
+                }
+                showToast("success", "Deleted Successfully", "The test transaction was successfully deleted, and all associated assets are now removed from storage.");
             } else if (response.status === 404) {
                 //console.warn("Error 404: Resource not found.");
+                showToast("error", "Deletion Failed", "Test not found. It may have already been deleted.");
+                // Restore test on failure
+                if (testToDelete) {
+                    setItems(prev => [...prev, testToDelete]);
+                }
             } else if (response.status === 500) {
                 //console.error("Error 500: Server error.");
+                showToast("error", "Deletion Failed", "Server error occurred. Please try again.");
+                // Restore test on failure
+                if (testToDelete) {
+                    setItems(prev => [...prev, testToDelete]);
+                }
             } else {
                 //console.warn(`Unexpected status code: ${response.status}`);
+                showToast("error", "Deletion Failed", "Failed to delete the test. Please try again.");
+                // Restore test on failure
+                if (testToDelete) {
+                    setItems(prev => [...prev, testToDelete]);
+                }
             }
         } catch (error) {
             //console.error("Error fetching data:", error);
-            // Network or parsing error
-        } finally {
-            setLoading(false); // Reset loading state
+            showToast("error", "Error", "An error occurred while deleting the test.");
+            // Restore test on error
+            if (testToDelete) {
+                setItems(prev => [...prev, testToDelete]);
+            }
         }
     };
 
@@ -539,9 +562,11 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const handleOKRowIndex = (index) => {
         setIsDeleteClicked(false);
         setConfirmationRowIndex(null);
-        handleDeleteTest(index);
-
-        // Remove the item from the list
+        
+        // Store the test to restore if deletion fails
+        const testToDelete = items.find(item => item.testID === index);
+        
+        // Optimistically remove from UI immediately
         setItems((prevItems) => {
             const updatedItems = prevItems.filter((item) => item.testID !== index);
 
@@ -562,8 +587,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             return updatedItems;
         });
 
-        // Show success toast notification
-        showToast("success", "Deleted Successfully", "The test transaction was successfully deleted, and all associated assets are now removed from storage.");
+        // Delete in background
+        handleDeleteTest(index, testToDelete);
     }
 
     const handleConfirmationRowIndex = (index) => {
