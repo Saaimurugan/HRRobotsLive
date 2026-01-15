@@ -25,6 +25,8 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
   const [templateName, setTemplateName] = useState("");
   const [newTemplateID, setNewTemplateID] = useState("");
   const [isSavingName, setIsSavingName] = useState(false);
+  const [showCustomize, setShowCustomize] = useState(false);
+  const [selectedOption, setSelectedOption] = useState(null);
   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -74,6 +76,8 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
     setIsGenerating(false);
     setIsCreatingTest(false);
     setIsSavingName(false);
+    setShowCustomize(false);
+    setSelectedOption(null);
   };
 
   const handleClose = () => {
@@ -695,6 +699,49 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
     }
   };
 
+  // Apply quick option selection
+  const applyQuickOption = (option) => {
+    setSelectedOption(option);
+    
+    // Update extractedKeywords based on selected option
+    setExtractedKeywords(prev => {
+      return prev.map(kw => {
+        if (option === 'common-only') {
+          // Option 1: Only common keywords - keep matching, deselect non-matching and remove
+          if (kw.action === 'keep') {
+            return { ...kw, selected: true };
+          } else {
+            return { ...kw, selected: false, questionCount: 0 };
+          }
+        } else if (option === 'add-resume') {
+          // Option 2: Keep matching + add new from resume
+          if (kw.action === 'keep' || kw.action === 'add') {
+            return { ...kw, selected: true, questionCount: kw.action === 'add' ? (kw.questionCount || 5) : kw.questionCount };
+          } else {
+            return { ...kw, selected: true }; // Keep topics not in resume too
+          }
+        } else if (option === 'add-resume-remove-others') {
+          // Option 3: Keep matching + add new from resume + remove topics not in resume
+          if (kw.action === 'keep' || kw.action === 'add') {
+            return { ...kw, selected: true, questionCount: kw.action === 'add' ? (kw.questionCount || 5) : kw.questionCount };
+          } else {
+            return { ...kw, selected: false }; // Remove topics not in resume
+          }
+        }
+        return kw;
+      });
+    });
+  };
+
+  // Proceed with selected option
+  const proceedWithOption = () => {
+    if (!selectedOption) {
+      showToast('warning', 'Select Option', 'Please select an option to proceed.');
+      return;
+    }
+    generateCustomizedQuestions();
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -709,30 +756,65 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
           </button>
         </div>
 
-        {/* Step Indicator */}
-        <div className="step-indicator">
-          <div className={`step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
-            <div className="step-number">1</div>
-            <div className="step-label">Upload Resume</div>
-          </div>
-          <div className="step-connector" />
-          <div className={`step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
-            <div className="step-number">2</div>
-            <div className="step-label">Match Keywords</div>
-          </div>
-          <div className="step-connector" />
-          <div className={`step ${currentStep >= 3 ? 'active' : ''} ${currentStep > 3 ? 'completed' : ''}`}>
-            <div className="step-number">3</div>
-            <div className="step-label">Review & Customize</div>
-          </div>
-          <div className="step-connector" />
-          <div className={`step ${currentStep >= 4 ? 'active' : ''}`}>
-            <div className="step-number">4</div>
-            <div className="step-label">Get Test Link</div>
-          </div>
-        </div>
-
         <div className="jd-modal-body">
+          {/* Step Indicator */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '15px',
+            paddingBottom: '12px',
+            borderBottom: '1px solid var(--color-border, #e0e0e0)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{
+                width: '24px', height: '24px', borderRadius: '50%',
+                background: currentStep >= 1 ? 'var(--color-primary, #2563eb)' : 'var(--color-bg-secondary, #f5f5f5)',
+                border: '2px solid ' + (currentStep >= 1 ? 'var(--color-primary, #2563eb)' : 'var(--color-border, #e0e0e0)'),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: currentStep >= 1 ? 'white' : 'var(--color-text-muted)',
+                fontSize: '11px', fontWeight: '600'
+              }}>1</div>
+              <span style={{ fontSize: '11px', color: currentStep >= 1 ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>Upload</span>
+            </div>
+            <div style={{ width: '30px', height: '2px', background: currentStep > 1 ? 'var(--color-primary)' : 'var(--color-border, #e0e0e0)', margin: '0 6px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{
+                width: '24px', height: '24px', borderRadius: '50%',
+                background: currentStep >= 2 ? 'var(--color-primary, #2563eb)' : 'var(--color-bg-secondary, #f5f5f5)',
+                border: '2px solid ' + (currentStep >= 2 ? 'var(--color-primary, #2563eb)' : 'var(--color-border, #e0e0e0)'),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: currentStep >= 2 ? 'white' : 'var(--color-text-muted)',
+                fontSize: '11px', fontWeight: '600'
+              }}>2</div>
+              <span style={{ fontSize: '11px', color: currentStep >= 2 ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>Keywords</span>
+            </div>
+            <div style={{ width: '30px', height: '2px', background: currentStep > 2 ? 'var(--color-primary)' : 'var(--color-border, #e0e0e0)', margin: '0 6px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{
+                width: '24px', height: '24px', borderRadius: '50%',
+                background: currentStep >= 3 ? 'var(--color-primary, #2563eb)' : 'var(--color-bg-secondary, #f5f5f5)',
+                border: '2px solid ' + (currentStep >= 3 ? 'var(--color-primary, #2563eb)' : 'var(--color-border, #e0e0e0)'),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: currentStep >= 3 ? 'white' : 'var(--color-text-muted)',
+                fontSize: '11px', fontWeight: '600'
+              }}>3</div>
+              <span style={{ fontSize: '11px', color: currentStep >= 3 ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>Review</span>
+            </div>
+            <div style={{ width: '30px', height: '2px', background: currentStep > 3 ? 'var(--color-primary)' : 'var(--color-border, #e0e0e0)', margin: '0 6px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{
+                width: '24px', height: '24px', borderRadius: '50%',
+                background: currentStep >= 4 ? 'var(--color-primary, #2563eb)' : 'var(--color-bg-secondary, #f5f5f5)',
+                border: '2px solid ' + (currentStep >= 4 ? 'var(--color-primary, #2563eb)' : 'var(--color-border, #e0e0e0)'),
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: currentStep >= 4 ? 'white' : 'var(--color-text-muted)',
+                fontSize: '11px', fontWeight: '600'
+              }}>4</div>
+              <span style={{ fontSize: '11px', color: currentStep >= 4 ? 'var(--color-primary)' : 'var(--color-text-muted)' }}>Done</span>
+            </div>
+          </div>
+
           {/* Step 1: Upload Resume */}
           {currentStep === 1 && (
             <div className="jd-step-content">
@@ -806,148 +888,269 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
           {/* Step 2: Match Keywords */}
           {currentStep === 2 && (
             <div className="jd-step-content">
-              <div className="keywords-section">
-                <div className="keywords-header">
-                  <h3>Keyword Matching & Question Management</h3>
-                  {candidateName && (
-                    <p style={{ fontSize: '14px', color: 'var(--color-primary)', marginTop: '8px', fontWeight: '500' }}>
-                      Candidate: {candidateName}
-                    </p>
-                  )}
-                  <p style={{ fontSize: '14px', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-                    Review keywords from the resume and decide which topics to include in the test.
-                  </p>
+              {!showCustomize ? (
+                /* Quick Options View */
+                <div className="keywords-section" style={{ padding: '0' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px', padding: '0 5px' }}>
+                    <h3 style={{ margin: 0, fontSize: '15px' }}>Choose Test Configuration</h3>
+                    <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
+                      {candidateName && <strong style={{ color: 'var(--color-primary)' }}>{candidateName}</strong>}
+                      {candidateName && ' • '}
+                      {matchingKeywords.length} matching, {nonMatchingKeywords.length} new keywords
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: '5px' }}>
+                    {/* Option 1 */}
+                    <div 
+                      onClick={() => applyQuickOption('common-only')}
+                      style={{
+                        padding: '10px 12px',
+                        border: selectedOption === 'common-only' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        background: selectedOption === 'common-only' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
+                          border: selectedOption === 'common-only' ? '5px solid var(--color-primary)' : '2px solid var(--color-border)',
+                          background: 'white'
+                        }} />
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Common Keywords Only</span>
+                          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
+                            — Questions for keywords in both resume & template
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Option 2 */}
+                    <div 
+                      onClick={() => applyQuickOption('add-resume')}
+                      style={{
+                        padding: '10px 12px',
+                        border: selectedOption === 'add-resume' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        background: selectedOption === 'add-resume' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
+                          border: selectedOption === 'add-resume' ? '5px solid var(--color-primary)' : '2px solid var(--color-border)',
+                          background: 'white'
+                        }} />
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Add Resume Keywords</span>
+                          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
+                            — Generate additional questions for resume keywords
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Option 3 */}
+                    <div 
+                      onClick={() => applyQuickOption('add-resume-remove-others')}
+                      style={{
+                        padding: '10px 12px',
+                        border: selectedOption === 'add-resume-remove-others' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        background: selectedOption === 'add-resume-remove-others' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{
+                          width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
+                          border: selectedOption === 'add-resume-remove-others' ? '5px solid var(--color-primary)' : '2px solid var(--color-border)',
+                          background: 'white'
+                        }} />
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Resume-Focused Test</span>
+                          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
+                            — Add resume keywords + remove unmatched topics
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Customize Option */}
+                    <div 
+                      onClick={() => setShowCustomize(true)}
+                      style={{
+                        padding: '10px 12px',
+                        border: '1px dashed var(--color-border)',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        background: 'var(--color-bg-secondary)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" strokeWidth="2">
+                          <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                        <div>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-secondary)' }}>Customize</span>
+                          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
+                            — Manually select keywords and question counts
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="step-actions" style={{ marginTop: '12px', paddingTop: '12px' }}>
+                    <button className="btn-secondary" onClick={() => setCurrentStep(1)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 12H5" />
+                        <path d="M12 19l-7-7 7-7" />
+                      </svg>
+                      Back
+                    </button>
+                    <button className="btn-primary" onClick={proceedWithOption} disabled={!selectedOption}>
+                      Continue
+                    </button>
+                  </div>
                 </div>
-                
-                {matchingKeywords.length > 0 && (
-                  <>
-                    <h4 style={{ marginTop: '20px', marginBottom: '10px', color: 'var(--color-success)' }}>
-                      ✓ Matching Keywords (Already in Template)
-                    </h4>
-                    <table className="keywords-table">
-                      <thead>
-                        <tr>
-                          <th className="col-select"></th>
-                          <th className="col-keyword">Keyword</th>
-                          <th className="col-action">Action</th>
-                          <th className="col-complexity">Complexity</th>
-                          <th className="col-count">Questions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {matchingKeywords.filter(kw => kw.action === 'keep').map((kw, index) => {
-                          const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
-                          const currentKeyword = extractedKeywords[globalIndex];
-                          return (
-                            <tr key={index} className={currentKeyword?.selected ? 'selected' : ''}>
-                              <td className="col-select">
-                                <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
-                              </td>
-                              <td className="col-keyword">{kw.keyword}</td>
-                              <td className="col-action">
-                                <span className="action-badge keep">Keep Existing</span>
-                              </td>
-                              <td className="col-complexity">
-                                <select value={currentKeyword?.complexity || 'beginner'} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!currentKeyword?.selected}>
-                                  <option value="beginner">Beginner</option>
-                                  <option value="intermediate">Intermediate</option>
-                                  <option value="advanced">Advanced</option>
-                                  <option value="expert">Expert</option>
-                                </select>
-                              </td>
-                              <td className="col-count">
-                                <span style={{ color: 'var(--color-text-muted)' }}>Existing</span>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </>
-                )}
+              ) : (
+                /* Full Customize View */
+                <div className="keywords-section" style={{ padding: 0 }}>
+                  {matchingKeywords.length > 0 && (
+                    <>
+                      <h4 style={{ marginTop: '0', marginBottom: '6px', color: 'var(--color-success)', fontSize: '12px' }}>
+                        ✓ Matching Keywords (Already in Template)
+                      </h4>
+                      <table className="keywords-table">
+                        <thead>
+                          <tr>
+                            <th className="col-select"></th>
+                            <th className="col-keyword">Keyword</th>
+                            <th className="col-action">Action</th>
+                            <th className="col-complexity">Complexity</th>
+                            <th className="col-count">Questions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {matchingKeywords.filter(kw => kw.action === 'keep').map((kw, index) => {
+                            const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
+                            const currentKeyword = extractedKeywords[globalIndex];
+                            return (
+                              <tr key={index} className={currentKeyword?.selected ? 'selected' : ''}>
+                                <td className="col-select">
+                                  <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
+                                </td>
+                                <td className="col-keyword">{kw.keyword}</td>
+                                <td className="col-action">
+                                  <span className="action-badge keep">Keep Existing</span>
+                                </td>
+                                <td className="col-complexity">
+                                  <select value={currentKeyword?.complexity || 'beginner'} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!currentKeyword?.selected}>
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                    <option value="expert">Expert</option>
+                                  </select>
+                                </td>
+                                <td className="col-count">
+                                  <span style={{ color: 'var(--color-text-muted)' }}>Existing</span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </>
+                  )}
 
-                {nonMatchingKeywords.length > 0 && (
-                  <>
-                    <h4 style={{ marginTop: '20px', marginBottom: '10px', color: 'var(--color-info)' }}>
-                      + New Keywords (From Resume)
-                    </h4>
-                    <table className="keywords-table">
-                      <thead>
-                        <tr>
-                          <th className="col-select"></th>
-                          <th className="col-keyword">Keyword</th>
-                          <th className="col-action">Action</th>
-                          <th className="col-complexity">Complexity</th>
-                          <th className="col-count">Questions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {nonMatchingKeywords.map((kw, index) => {
-                          const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
-                          const currentKeyword = extractedKeywords[globalIndex];
-                          return (
-                            <tr key={index} className={currentKeyword?.selected ? 'selected' : ''}>
-                              <td className="col-select">
-                                <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
-                              </td>
-                              <td className="col-keyword">{kw.keyword}</td>
-                              <td className="col-action">
-                                <span className="action-badge add">Generate New</span>
-                              </td>
-                              <td className="col-complexity">
-                                <select value={currentKeyword?.complexity || 'beginner'} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!currentKeyword?.selected}>
-                                  <option value="beginner">Beginner</option>
-                                  <option value="intermediate">Intermediate</option>
-                                  <option value="advanced">Advanced</option>
-                                  <option value="expert">Expert</option>
-                                </select>
-                              </td>
-                              <td className="col-count">
-                                <div className="question-count-input">
-                                  <button className="count-btn" onClick={() => updateQuestionCount(globalIndex, currentKeyword?.questionCount - 1)} disabled={!currentKeyword?.selected}>-</button>
-                                  <input type="number" value={currentKeyword?.questionCount || 0} onChange={(e) => updateQuestionCount(globalIndex, e.target.value)} min="0" max="20" disabled={!currentKeyword?.selected} />
-                                  <button className="count-btn" onClick={() => updateQuestionCount(globalIndex, kw.questionCount + 1)} disabled={!kw.selected}>+</button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
-                  </>
-                )}
+                  {nonMatchingKeywords.length > 0 && (
+                    <>
+                      <h4 style={{ marginTop: '12px', marginBottom: '6px', color: 'var(--color-info)', fontSize: '12px' }}>
+                        + New Keywords (From Resume)
+                      </h4>
+                      <table className="keywords-table">
+                        <thead>
+                          <tr>
+                            <th className="col-select"></th>
+                            <th className="col-keyword">Keyword</th>
+                            <th className="col-action">Action</th>
+                            <th className="col-complexity">Complexity</th>
+                            <th className="col-count">Questions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {nonMatchingKeywords.map((kw, index) => {
+                            const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
+                            const currentKeyword = extractedKeywords[globalIndex];
+                            return (
+                              <tr key={index} className={currentKeyword?.selected ? 'selected' : ''}>
+                                <td className="col-select">
+                                  <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
+                                </td>
+                                <td className="col-keyword">{kw.keyword}</td>
+                                <td className="col-action">
+                                  <span className="action-badge add">Generate New</span>
+                                </td>
+                                <td className="col-complexity">
+                                  <select value={currentKeyword?.complexity || 'beginner'} onChange={(e) => updateComplexity(globalIndex, e.target.value)} disabled={!currentKeyword?.selected}>
+                                    <option value="beginner">Beginner</option>
+                                    <option value="intermediate">Intermediate</option>
+                                    <option value="advanced">Advanced</option>
+                                    <option value="expert">Expert</option>
+                                  </select>
+                                </td>
+                                <td className="col-count">
+                                  <div className="question-count-input">
+                                    <button className="count-btn" onClick={() => updateQuestionCount(globalIndex, currentKeyword?.questionCount - 1)} disabled={!currentKeyword?.selected}>-</button>
+                                    <input type="number" value={currentKeyword?.questionCount || 0} onChange={(e) => updateQuestionCount(globalIndex, e.target.value)} min="0" max="20" disabled={!currentKeyword?.selected} />
+                                    <button className="count-btn" onClick={() => updateQuestionCount(globalIndex, kw.questionCount + 1)} disabled={!kw.selected}>+</button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </>
+                  )}
 
-                {extractedKeywords.filter(kw => kw.action === 'remove').length > 0 && (
-                  <>
-                    <h4 style={{ marginTop: '20px', marginBottom: '10px', color: 'var(--color-warning)' }}>
-                      ⚠ Topics Not in Resume (Consider Removing)
-                    </h4>
-                    <p style={{ fontSize: '13px', color: 'var(--color-text-muted)', marginBottom: '10px' }}>
-                      These topics are in the template but not found in the candidate's resume. Uncheck to remove them from the test.
-                    </p>
-                    <table className="keywords-table">
-                      <thead>
-                        <tr>
-                          <th className="col-select"></th>
-                          <th className="col-keyword">Topic</th>
-                          <th className="col-action">Action</th>
-                          <th className="col-complexity">Complexity</th>
-                          <th className="col-count">Questions</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {extractedKeywords.filter(kw => kw.action === 'remove').map((kw, index) => {
-                          const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
-                          const currentKeyword = extractedKeywords[globalIndex];
-                          return (
-                            <tr key={index} className={currentKeyword?.selected ? 'selected' : 'unselected'}>
-                              <td className="col-select">
-                                <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
-                              </td>
-                              <td className="col-keyword">{kw.keyword}</td>
-                              <td className="col-action">
-                                <span className="action-badge remove">
-                                  {currentKeyword?.selected ? 'Keep Anyway' : 'Will Remove'}
+                  {extractedKeywords.filter(kw => kw.action === 'remove').length > 0 && (
+                    <>
+                      <h4 style={{ marginTop: '12px', marginBottom: '6px', color: 'var(--color-warning)', fontSize: '12px' }}>
+                        ⚠ Topics Not in Resume — Uncheck to remove
+                      </h4>
+                      <table className="keywords-table">
+                        <thead>
+                          <tr>
+                            <th className="col-select"></th>
+                            <th className="col-keyword">Topic</th>
+                            <th className="col-action">Action</th>
+                            <th className="col-complexity">Complexity</th>
+                            <th className="col-count">Questions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {extractedKeywords.filter(kw => kw.action === 'remove').map((kw, index) => {
+                            const globalIndex = extractedKeywords.findIndex(k => k.keyword === kw.keyword);
+                            const currentKeyword = extractedKeywords[globalIndex];
+                            return (
+                              <tr key={index} className={currentKeyword?.selected ? 'selected' : 'unselected'}>
+                                <td className="col-select">
+                                  <input type="checkbox" checked={currentKeyword?.selected || false} onChange={() => toggleKeyword(globalIndex)} />
+                                </td>
+                                <td className="col-keyword">{kw.keyword}</td>
+                                <td className="col-action">
+                                  <span className="action-badge remove">
+                                    {currentKeyword?.selected ? 'Keep Anyway' : 'Will Remove'}
                                 </span>
                               </td>
                               <td className="col-complexity">
@@ -963,20 +1166,21 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                     </table>
                   </>
                 )}
-              </div>
 
-              <div className="step-actions">
-                <button className="btn-secondary" onClick={() => setCurrentStep(1)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 12H5" />
-                    <path d="M12 19l-7-7 7-7" />
-                  </svg>
-                  Back
-                </button>
-                <button className="btn-primary" onClick={generateCustomizedQuestions}>
-                  Continue to Review
-                </button>
-              </div>
+                  <div className="step-actions">
+                    <button className="btn-secondary" onClick={() => setShowCustomize(false)}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M19 12H5" />
+                        <path d="M12 19l-7-7 7-7" />
+                      </svg>
+                      Back to Options
+                    </button>
+                    <button className="btn-primary" onClick={generateCustomizedQuestions}>
+                      Continue to Review
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
