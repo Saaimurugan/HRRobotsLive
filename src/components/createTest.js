@@ -64,7 +64,7 @@ const [showCandidateTestModal, setShowCandidateTestModal] = useState(false);
 const [selectedTemplateForCandidate, setSelectedTemplateForCandidate] = useState(null);
 const [searchQuery, setSearchQuery] = useState("");
 const [currentPage, setCurrentPage] = useState(1);
-const templatesPerPage = 6;
+const templatesPerPage = 8;
 
 // Toast functions
 const showToast = (type, title, message) => {
@@ -565,6 +565,14 @@ useEffect(() => {
   setCurrentPage(1);
 }, [searchQuery]);
 
+// Adjust current page if it becomes invalid after deletion
+useEffect(() => {
+  const maxPage = Math.ceil(filteredTemplates.length / templatesPerPage);
+  if (currentPage > maxPage && maxPage > 0) {
+    setCurrentPage(maxPage);
+  }
+}, [filteredTemplates.length, currentPage, templatesPerPage]);
+
 // Pagination handlers
 const goToPage = (pageNumber) => {
   setCurrentPage(pageNumber);
@@ -766,23 +774,34 @@ const getPageNumbers = () => {
             </p>
           </div>
         </div>
-        <div className="search-container">
-          <svg className="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-          <input
-            type="text"
-            className="search-input"
-            placeholder="Search templates by name or assigned user..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {searchQuery && (
-            <button className="search-clear" onClick={() => setSearchQuery("")}>
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '25px', gridColumn: '1 / -1' }}>
+          <div className="search-container" style={{ margin: 0 }}>
+            <svg className="search-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search templates by name or assigned user..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery && (
+              <button className="search-clear" onClick={() => setSearchQuery("")}>
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            )}
+          </div>
+          {filteredTemplates.length > templatesPerPage && (
+            <span style={{
+              fontSize: 'var(--font-size-sm)',
+              color: 'var(--color-text-muted)',
+              whiteSpace: 'nowrap'
+            }}>
+              Showing {indexOfFirstTemplate + 1}-{Math.min(indexOfLastTemplate, filteredTemplates.length)} of {filteredTemplates.length}
+            </span>
           )}
         </div>
         {filteredTemplates.length === 0 && searchQuery ? (
@@ -792,23 +811,7 @@ const getPageNumbers = () => {
             </svg>
             <p>No templates found matching "{searchQuery}"</p>
           </div>
-        ) : (
-          <>
-            {filteredTemplates.length > templatesPerPage && (
-              <div className="pagination-info" style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '16px',
-                padding: '0 4px',
-                color: 'var(--color-text-muted)',
-                fontSize: 'var(--font-size-sm)'
-              }}>
-                <span>Showing {indexOfFirstTemplate + 1}-{Math.min(indexOfLastTemplate, filteredTemplates.length)} of {filteredTemplates.length} templates</span>
-              </div>
-            )}
-          </>
-        )}
+        ) : null}
         </>
         )}
         {currentTemplates.map((card, index) => {
@@ -1022,101 +1025,115 @@ const getPageNumbers = () => {
               </div>
           );
         })}
-        {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="pagination-container" style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            gap: '8px',
-            marginTop: '24px',
-            marginBottom: '16px',
-            gridColumn: '1 / -1',
-            width: '100%'
-          }}>
-            <button
-              onClick={goToPreviousPage}
-              disabled={currentPage === 1}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '8px 12px',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                background: currentPage === 1 ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)',
-                color: currentPage === 1 ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                fontSize: 'var(--font-size-sm)'
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              Previous
-            </button>
-            
-            <div style={{ display: 'flex', gap: '4px' }}>
-              {getPageNumbers().map((page, index) => (
-                page === '...' ? (
-                  <span key={`ellipsis-${index}`} style={{
-                    padding: '8px 4px',
-                    color: 'var(--color-text-muted)'
-                  }}>...</span>
-                ) : (
-                  <button
-                    key={page}
-                    onClick={() => goToPage(page)}
-                    style={{
-                      minWidth: '36px',
-                      height: '36px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: currentPage === page ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
-                      borderRadius: 'var(--radius-md)',
-                      background: currentPage === page ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'var(--color-bg-primary)',
-                      color: currentPage === page ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                      cursor: 'pointer',
-                      fontWeight: currentPage === page ? '600' : '400',
-                      transition: 'all 0.2s ease',
-                      fontSize: 'var(--font-size-sm)'
-                    }}
-                  >
-                    {page}
-                  </button>
-                )
-              ))}
-            </div>
-            
-            <button
-              onClick={goToNextPage}
-              disabled={currentPage === totalPages}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '8px 12px',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-md)',
-                background: currentPage === totalPages ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)',
-                color: currentPage === totalPages ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
-                cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
-                transition: 'all 0.2s ease',
-                fontSize: 'var(--font-size-sm)'
-              }}
-            >
-              Next
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-        )}
         </>
         )}
         </div>
+        {/* Pagination Controls - Outside the container grid */}
+        {!loadingTemplate && templates.length > templatesPerPage && (
+          <div className="pagination-wrapper" style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: '24px 50px',
+            background: 'var(--color-bg-gradient)',
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              background: 'var(--color-bg-primary)',
+              padding: '12px 20px',
+              borderRadius: 'var(--radius-lg)',
+              boxShadow: 'var(--shadow-md)'
+            }}>
+              <span style={{ 
+                fontSize: 'var(--font-size-sm)', 
+                color: 'var(--color-text-muted)',
+                marginRight: '8px'
+              }}>
+                Page {currentPage} of {totalPages} ({filteredTemplates.length} templates)
+              </span>
+              <button
+                onClick={goToPreviousPage}
+                disabled={currentPage === 1}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px 12px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  background: currentPage === 1 ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)',
+                  color: currentPage === 1 ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                  cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontSize: 'var(--font-size-sm)'
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Previous
+              </button>
+              
+              <div style={{ display: 'flex', gap: '4px' }}>
+                {getPageNumbers().map((page, index) => (
+                  page === '...' ? (
+                    <span key={`ellipsis-${index}`} style={{
+                      padding: '8px 4px',
+                      color: 'var(--color-text-muted)'
+                    }}>...</span>
+                  ) : (
+                    <button
+                      key={page}
+                      onClick={() => goToPage(page)}
+                      style={{
+                        minWidth: '36px',
+                        height: '36px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: currentPage === page ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-md)',
+                        background: currentPage === page ? 'var(--color-primary-light, rgba(37, 99, 235, 0.1))' : 'var(--color-bg-primary)',
+                        color: currentPage === page ? 'var(--color-primary)' : 'var(--color-text-primary)',
+                        cursor: 'pointer',
+                        fontWeight: currentPage === page ? '600' : '400',
+                        transition: 'all 0.2s ease',
+                        fontSize: 'var(--font-size-sm)'
+                      }}
+                    >
+                      {page}
+                    </button>
+                  )
+                ))}
+              </div>
+              
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '8px 12px',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  background: currentPage === totalPages ? 'var(--color-bg-secondary)' : 'var(--color-bg-primary)',
+                  color: currentPage === totalPages ? 'var(--color-text-muted)' : 'var(--color-text-primary)',
+                  cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  fontSize: 'var(--font-size-sm)'
+                }}
+              >
+                Next
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
     </div>
   );
 };
