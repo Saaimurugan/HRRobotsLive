@@ -22,6 +22,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   
   // Refs for tracking
   const fetchedRef = React.useRef(false);
+  const savingAnswerRef = React.useRef(null); // Track ongoing answer save
 
   // Load all questions at once (no encryption)
   const loadAllQuestions = async () => {
@@ -95,22 +96,23 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     setAnswers(newAnswers);
     
     // Save answer to backend via saveAnswerSubmitted API
-    try {
-      await fetch(
-        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveAnswerSubmitted",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            testID: testID,
-            questionID: currentQuestion.questionID,
-            answer: selectedAnswer
-          }),
-        }
-      );
-    } catch (error) {
+    const savePromise = fetch(
+      "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveAnswerSubmitted",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          testID: testID,
+          questionID: currentQuestion.questionID,
+          answer: selectedAnswer
+        }),
+      }
+    ).catch(error => {
       console.error('Error saving answer:', error);
-    }
+    });
+    
+    // Store the promise so handleSubmit can wait for it
+    savingAnswerRef.current = savePromise;
     
     // Auto-advance to next question
     if (currentQuestionIndex < questions.length - 1) {
@@ -160,6 +162,12 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
+      // Wait for any pending answer save to complete
+      if (savingAnswerRef.current) {
+        await savingAnswerRef.current;
+        savingAnswerRef.current = null;
+      }
+      
       // Capture screenshot before submission
       await captureSubmissionScreenshot();
 

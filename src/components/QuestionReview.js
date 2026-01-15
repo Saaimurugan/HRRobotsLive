@@ -12,7 +12,6 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Session handler
   const checkUnauthorized = useCallback((data) => {
     if (data?.message === "Unauthorized" || 
         data?.body === '{"message": "Unauthorized"}' ||
@@ -41,9 +40,7 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
         setLoading(true);
         const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestionReview", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ testID, token: JWTValue }),
         });
 
@@ -67,34 +64,29 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
   }, [testID, JWTValue, checkUnauthorized]);
 
   const toggleQuestion = (index) => {
-    setExpandedQuestions(prev => ({
-      ...prev,
-      [index]: !prev[index]
-    }));
+    setExpandedQuestions(prev => ({ ...prev, [index]: !prev[index] }));
   };
 
   const expandAll = () => {
     const allExpanded = {};
-    questions.forEach((_, index) => {
-      allExpanded[index] = true;
-    });
+    questions.forEach((_, index) => { allExpanded[index] = true; });
     setExpandedQuestions(allExpanded);
   };
 
-  const collapseAll = () => {
-    setExpandedQuestions({});
-  };
+  const collapseAll = () => setExpandedQuestions({});
 
-  const getOptionLabel = (index) => {
-    return String.fromCharCode(65 + index); // A, B, C, D...
-  };
+  const getOptionLabel = (index) => String.fromCharCode(65 + index);
+
+  const correctCount = questions.filter(q => q.isCorrect).length;
+  const incorrectCount = questions.filter(q => !q.isCorrect && q.submittedAnswer).length;
+  const unansweredCount = questions.filter(q => !q.submittedAnswer).length;
 
   if (loading) {
     return (
       <div className="question-review-container">
         <div className="question-review-loading">
           <div className="loading-spinner"></div>
-          <p>Loading question details...</p>
+          <p>Loading questions...</p>
         </div>
       </div>
     );
@@ -104,16 +96,14 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
     return (
       <div className="question-review-container">
         <div className="question-review-error">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10"/>
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
           <p>{error}</p>
           {onClose && (
-            <button className="question-review-btn" onClick={onClose}>
-              Close
-            </button>
+            <button className="question-review-btn" onClick={onClose}>Close</button>
           )}
         </div>
       </div>
@@ -140,141 +130,103 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
       </div>
 
       <div className="question-review-summary">
-        <div className="summary-item">
-          <span className="summary-label">Total Questions:</span>
-          <span className="summary-value">{questions.length}</span>
+        <div className="summary-stat">
+          <span className="summary-stat-value">{questions.length}</span>
+          <span className="summary-stat-label">Total</span>
         </div>
-        <div className="summary-item">
-          <span className="summary-label">Correct:</span>
-          <span className="summary-value summary-value--correct">
-            {questions.filter(q => q.isCorrect).length}
-          </span>
+        <div className="summary-stat">
+          <span className="summary-stat-value summary-stat-value--correct">{correctCount}</span>
+          <span className="summary-stat-label">Correct</span>
         </div>
-        <div className="summary-item">
-          <span className="summary-label">Incorrect:</span>
-          <span className="summary-value summary-value--incorrect">
-            {questions.filter(q => !q.isCorrect && q.submittedAnswer).length}
-          </span>
+        <div className="summary-stat">
+          <span className="summary-stat-value summary-stat-value--incorrect">{incorrectCount}</span>
+          <span className="summary-stat-label">Incorrect</span>
         </div>
-        <div className="summary-item">
-          <span className="summary-label">Unanswered:</span>
-          <span className="summary-value summary-value--unanswered">
-            {questions.filter(q => !q.submittedAnswer).length}
-          </span>
+        <div className="summary-stat">
+          <span className="summary-stat-value summary-stat-value--unanswered">{unansweredCount}</span>
+          <span className="summary-stat-label">Skipped</span>
         </div>
       </div>
 
       <div className="question-review-list">
-        {questions.map((q, index) => (
-          <div 
-            key={q.questionID || index} 
-            className={`question-card ${q.isCorrect ? 'question-card--correct' : q.submittedAnswer ? 'question-card--incorrect' : 'question-card--unanswered'}`}
-          >
-            <div 
-              className="question-card-header"
-              onClick={() => toggleQuestion(index)}
-            >
-              <div className="question-number">
-                <span className="question-index">Q{index + 1}</span>
-                {q.topic && <span className="question-topic">{q.topic}</span>}
-              </div>
-              <div className="question-status">
-                {q.isCorrect ? (
-                  <span className="status-badge status-badge--correct">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    Correct
-                  </span>
-                ) : q.submittedAnswer ? (
-                  <span className="status-badge status-badge--incorrect">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <line x1="18" y1="6" x2="6" y2="18"/>
-                      <line x1="6" y1="6" x2="18" y2="18"/>
-                    </svg>
-                    Incorrect
-                  </span>
-                ) : (
-                  <span className="status-badge status-badge--unanswered">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/>
-                      <line x1="8" y1="12" x2="16" y2="12"/>
-                    </svg>
-                    Unanswered
-                  </span>
-                )}
-                <svg 
-                  className={`expand-icon ${expandedQuestions[index] ? 'expanded' : ''}`}
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2"
-                >
-                  <polyline points="6 9 12 15 18 9"/>
-                </svg>
-              </div>
-            </div>
-
-            {expandedQuestions[index] && (
-              <div className="question-card-body">
-                <div className="question-text">
-                  <p>{q.question}</p>
+        {questions.map((q, index) => {
+          const isExpanded = expandedQuestions[index];
+          const statusClass = q.isCorrect ? 'correct' : q.submittedAnswer ? 'incorrect' : 'unanswered';
+          
+          return (
+            <div key={q.questionID || index} className={`question-card question-card--${statusClass}`}>
+              <div className="question-card-header" onClick={() => toggleQuestion(index)}>
+                <div className="question-info">
+                  <div className="question-number-badge">{index + 1}</div>
+                  <div className="question-meta">
+                    <div className="question-preview">{q.question}</div>
+                    {q.topic && <div className="question-topic-label">{q.topic}</div>}
+                  </div>
                 </div>
+                <div className="question-status-area">
+                  <span className={`status-indicator status-indicator--${statusClass}`}>
+                    {q.isCorrect ? 'Correct' : q.submittedAnswer ? 'Incorrect' : 'Skipped'}
+                  </span>
+                  <svg 
+                    className={`expand-chevron ${isExpanded ? 'expanded' : ''}`}
+                    width="20" height="20" viewBox="0 0 24 24" 
+                    fill="none" stroke="currentColor" strokeWidth="2"
+                  >
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+              </div>
 
-                <div className="options-list">
-                  {q.options && q.options.map((option, optIndex) => {
-                    const isCorrectOption = option === q.correctAnswer;
-                    const isUserAnswer = option === q.submittedAnswer;
+              {isExpanded && (
+                <div className="question-card-body">
+                  <div className="question-content">
+                    <p className="question-full-text">{q.question}</p>
                     
-                    let optionClass = "option-item";
-                    if (isCorrectOption) optionClass += " option-item--correct";
-                    if (isUserAnswer && !isCorrectOption) optionClass += " option-item--wrong";
-                    if (isUserAnswer && isCorrectOption) optionClass += " option-item--user-correct";
+                    <div className="options-container">
+                      {q.options && q.options.map((option, optIndex) => {
+                        const isCorrectOption = option === q.correctAnswer;
+                        const isUserAnswer = option === q.submittedAnswer;
+                        
+                        let rowClass = "option-row";
+                        if (isCorrectOption && isUserAnswer) rowClass += " option-row--user-correct";
+                        else if (isCorrectOption) rowClass += " option-row--correct-answer";
+                        else if (isUserAnswer) rowClass += " option-row--user-wrong";
 
-                    return (
-                      <div key={optIndex} className={optionClass}>
-                        <span className="option-label">{getOptionLabel(optIndex)}</span>
-                        <span className="option-text">{option}</span>
-                        <div className="option-indicators">
-                          {isCorrectOption && (
-                            <span className="indicator indicator--correct" title="Correct Answer">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <polyline points="20 6 9 17 4 12"/>
-                              </svg>
-                            </span>
-                          )}
-                          {isUserAnswer && (
-                            <span className={`indicator ${isCorrectOption ? 'indicator--user-correct' : 'indicator--user-wrong'}`} title="Your Answer">
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                <circle cx="12" cy="7" r="4"/>
-                              </svg>
-                            </span>
-                          )}
-                        </div>
+                        return (
+                          <div key={optIndex} className={rowClass}>
+                            <span className="option-letter">{getOptionLabel(optIndex)}</span>
+                            <span className="option-content">{option}</span>
+                            <div className="option-badges">
+                              {isCorrectOption && (
+                                <span className="option-badge option-badge--correct">Correct</span>
+                              )}
+                              {isUserAnswer && (
+                                <span className="option-badge option-badge--your-answer">Your Answer</span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="answer-comparison">
+                      <div className="comparison-item">
+                        <span className="comparison-label">Your Answer</span>
+                        <span className={`comparison-value ${q.submittedAnswer ? (q.isCorrect ? 'comparison-value--correct' : 'comparison-value--incorrect') : 'comparison-value--none'}`}>
+                          {q.submittedAnswer || "Not answered"}
+                        </span>
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className="answer-summary">
-                  <div className="answer-row">
-                    <span className="answer-label">Your Answer:</span>
-                    <span className={`answer-value ${q.submittedAnswer ? (q.isCorrect ? 'answer-value--correct' : 'answer-value--incorrect') : 'answer-value--none'}`}>
-                      {q.submittedAnswer || "Not answered"}
-                    </span>
-                  </div>
-                  <div className="answer-row">
-                    <span className="answer-label">Correct Answer:</span>
-                    <span className="answer-value answer-value--correct">{q.correctAnswer}</span>
+                      <div className="comparison-item">
+                        <span className="comparison-label">Correct Answer</span>
+                        <span className="comparison-value comparison-value--correct">{q.correctAnswer}</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
