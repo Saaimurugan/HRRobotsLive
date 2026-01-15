@@ -5,10 +5,12 @@ import { useSessionHandler } from "../useSessionHandler";
 import ListTestResultPage from "./listTestResultPage"
 import ScoreChart from "./scoreChart";
 import AnalsticsOnResult from "./analsticsOnResult";
+import QuestionReview from "./QuestionReview";
 import { resultCache, cacheKeys } from "../resultCache";
 import "../App.css";
 import "../TableStyles.css";
 import "../analsticsOnResult.css";
+import "../QuestionReview.css";
 
 // Toast Component
 const Toast = ({ toasts, removeToast }) => {
@@ -42,9 +44,11 @@ function SearchResult() {
   const [fileContent, setFileContent] = useState("");
   const [candidateLoading, setCandidateLoading] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showQuestionReview, setShowQuestionReview] = useState(false);
   const [tableFilter, setTableFilter] = useState(""); // Separate filter for the table
   const [toasts, setToasts] = useState([]);
   const analyticsRef = useRef(null);
+  const questionReviewRef = useRef(null);
   const { globalValue, JWTValue } = useGlobalContext("");
   const navigate = useNavigate();
 
@@ -153,6 +157,7 @@ function SearchResult() {
     setFileContent("");
     setCandidateName("");
     setShowAnalytics(false);
+    setShowQuestionReview(false);
     setTableFilter(""); // Clear table filter on back
   };
 
@@ -169,6 +174,21 @@ function SearchResult() {
         analyticsSection.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }, 100);
+  };
+
+  const handleViewQuestions = () => {
+    setShowQuestionReview(true);
+    // Scroll to question review section after a short delay to allow rendering
+    setTimeout(() => {
+      const questionReviewSection = document.querySelector(".question-review-section");
+      if (questionReviewSection) {
+        questionReviewSection.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 100);
+  };
+
+  const handleCloseQuestionReview = () => {
+    setShowQuestionReview(false);
   };
 
   const handleBackToDashboard = () => {
@@ -727,6 +747,21 @@ function SearchResult() {
 
                   <div className="report-actions-group">
                     <button
+                      onClick={handleViewQuestions}
+                      className="modern-button modern-button--primary"
+                      title="View Questions & Answers"
+                      disabled={showQuestionReview}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+                        <rect x="9" y="3" width="6" height="4" rx="1" />
+                        <path d="M9 12h6" />
+                        <path d="M9 16h6" />
+                      </svg>
+                      {showQuestionReview ? "Questions Loaded" : "View Questions"}
+                    </button>
+
+                    <button
                       onClick={handleGenerateAnalytics}
                       className="modern-button modern-button--primary"
                       title="Generate Analytics"
@@ -797,6 +832,17 @@ function SearchResult() {
                       searchTerm={fileContent?.testID || candidateName}
                       hideGenerateButton={true}
                       showToast={showToast}
+                    />
+                  </div>
+                )}
+
+                {showQuestionReview && (
+                  <div className="question-review-section">
+                    <QuestionReview
+                      ref={questionReviewRef}
+                      testID={fileContent?.testID}
+                      showToast={showToast}
+                      onClose={handleCloseQuestionReview}
                     />
                   </div>
                 )}

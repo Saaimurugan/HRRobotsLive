@@ -170,7 +170,7 @@
 
 .modern-button--primary:hover:not(:disabled) svg,
 .modern-button--primary:hover:not(:disabled) svg path {
-  fill: white;
+  fill: none;
   color: white;
   stroke: white;
 }
@@ -209,7 +209,7 @@
 
 .modern-button--outline:hover:not(:disabled) svg,
 .modern-button--outline:hover:not(:disabled) svg path {
-  fill: white;
+  fill: none;
   color: white;
   stroke: white;
 }
@@ -1401,4 +1401,16 @@
 /* Adjust report header when termination banner is present */
 .test-report-card .termination-banner + .report-header-section {
   border-radius: 0;
+}
+
+
+/* Question Review Section */
+.question-review-section {
+  margin-top: 24px;
+}
+
+@media (max-width: 768px) {
+  .question-review-section {
+    margin-top: 16px;
+  }
 }
