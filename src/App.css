@@ -488,6 +488,7 @@ textarea {
 .assigned-badge {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 6px 12px;
   background: var(--color-info-light);
@@ -496,6 +497,8 @@ textarea {
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-full);
   margin-bottom: 12px;
+  max-width: 100%;
+  word-break: break-word;
 }
 
 .assigned-badge svg {
