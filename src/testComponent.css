@@ -816,6 +816,47 @@ fieldset {
   border: 1px solid rgba(173, 181, 189, 0.2);
 }
 
+.question-status.saving {
+  color: #ffc107;
+  background: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+  animation: pulse 1.5s infinite;
+}
+
+.question-status.saved {
+  color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+}
+
+.question-status.save-failed {
+  color: #dc3545;
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Topic nav button with failed saves */
+.topic-nav-button.has-failed {
+  border-color: #dc3545;
+  background: rgba(220, 53, 69, 0.1);
+}
+
+.topic-nav-button .failed-indicator {
+  color: #dc3545;
+  margin-left: 4px;
+}
+
+/* Stats item for failed saves */
+.stat-item.stat-failed .stat-number,
+.stat-item.stat-failed .stat-label {
+  color: #dc3545;
+}
+
 .question-content {
   flex: 1;
   display: flex;

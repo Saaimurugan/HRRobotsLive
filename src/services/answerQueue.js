@@ -173,12 +173,22 @@ class AnswerQueue {
    * @param {string} testID - The test ID
    */
   _startBackgroundSaving(testID) {
+    // Clear any existing timeout to debounce rapid clicks
+    if (this.saveTimeouts && this.saveTimeouts.has(testID)) {
+      clearTimeout(this.saveTimeouts.get(testID));
+    }
+    
+    if (!this.saveTimeouts) {
+      this.saveTimeouts = new Map();
+    }
+    
     // Use a small delay to batch multiple rapid answer selections
-    setTimeout(() => {
-      if (!this.isSaving.get(testID)) {
-        this.saveQueuedAnswers(testID);
-      }
+    const timeoutId = setTimeout(() => {
+      this.saveTimeouts.delete(testID);
+      this.saveQueuedAnswers(testID);
     }, 500); // 500ms delay to batch rapid selections
+    
+    this.saveTimeouts.set(testID, timeoutId);
   }
 
   /**
@@ -192,46 +202,55 @@ class AnswerQueue {
       return;
     }
 
+    // Take a snapshot of current queue items to process
+    const itemsToProcess = [...queue];
+    // Clear the queue - new items added during save will go to fresh queue
+    this.queues.set(testID, []);
+
     const results = [];
     
     // Process answers in parallel for better performance
-    for (const answerData of queue) {
+    for (const answerData of itemsToProcess) {
       results.push(this._saveAnswer(testID, answerData));
     }
 
     const saveResults = await Promise.allSettled(results);
     
-    // Process results and update queue
-    const newQueue = [];
+    // Process results
+    const failedItems = [];
     const savedSet = this.savedAnswers.get(testID) || new Set();
 
     for (let i = 0; i < saveResults.length; i++) {
       const result = saveResults[i];
-      const answerData = queue[i];
+      const answerData = itemsToProcess[i];
 
       if (result.status === 'fulfilled' && result.value.success) {
         // Answer saved successfully
         savedSet.add(answerData.questionID);
-        // console.log(`Successfully saved answer for question ${answerData.questionID}`);
       } else {
         // Answer failed to save
         answerData.attempts++;
         if (answerData.attempts < answerData.maxAttempts) {
           // Retry later
-          newQueue.push(answerData);
-          // console.warn(`Failed to save answer for question ${answerData.questionID}, will retry (attempt ${answerData.attempts}/${answerData.maxAttempts})`);
-        } else {
-          // Max attempts reached
-          // console.error(`Failed to save answer for question ${answerData.questionID} after ${answerData.maxAttempts} attempts`);
+          failedItems.push(answerData);
         }
       }
     }
 
-    // Update queue and saved answers
-    this.queues.set(testID, newQueue);
+    // Update saved answers
     this.savedAnswers.set(testID, savedSet);
+    
+    // Get any new items that were added during save
+    const newItems = this.queues.get(testID) || [];
+    
+    // Merge failed items and new items back to queue
+    const mergedQueue = [...failedItems, ...newItems];
+    this.queues.set(testID, mergedQueue);
 
-    // console.log(`Processed ${queue.length} answers, ${newQueue.length} remaining in queue`);
+    // If there are still items to process, continue saving
+    if (mergedQueue.length > 0) {
+      await this._processSaveQueue(testID);
+    }
   }
 
   /**

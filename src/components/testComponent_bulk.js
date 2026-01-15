@@ -30,6 +30,9 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const [questionCount, setQuestionCount] = useState(0);
   const [totalQuestions, setTotalQuestions] = useState(numberOfQuestions);
   
+  // Track save status for each question
+  const [saveStatus, setSaveStatus] = useState({}); // { questionID: 'saving' | 'saved' | 'failed' }
+  
   // Refs for tracking
   const fetchedRef = React.useRef(false);
 
@@ -244,13 +247,64 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     newAnswers[currentQuestionIndex] = selectedAnswer;
     setAnswers(newAnswers);
     
+    const questionID = currentQuestion.questionID;
+    
+    // Mark as saving
+    setSaveStatus(prev => ({ ...prev, [questionID]: 'saving' }));
+    
     // Queue answer for background saving - handles rapid clicks properly
     answerQueue.queueAnswer(
       testID,
-      currentQuestion.questionID,
+      questionID,
       selectedAnswer
     );
   };
+
+  // Poll answer queue to update save status in UI
+  useEffect(() => {
+    if (!testID || questions.length === 0) return;
+    
+    const updateSaveStatus = () => {
+      const newStatus = {};
+      const savedQuestionIDs = answerQueue.getSavedQuestionIDs(testID);
+      
+      questions.forEach(q => {
+        const questionID = q.questionID;
+        const hasAnswer = answers[q.originalIndex || questions.indexOf(q)] && answers[q.originalIndex || questions.indexOf(q)] !== '';
+        
+        if (!hasAnswer) {
+          // No answer selected yet
+          return;
+        }
+        
+        if (savedQuestionIDs.has(questionID)) {
+          newStatus[questionID] = 'saved';
+        } else if (answerQueue.isSavingInProgress(testID)) {
+          newStatus[questionID] = 'saving';
+        } else {
+          // Has answer but not in saved set and not currently saving = failed
+          const unsavedCount = answerQueue.getUnsavedCount(testID);
+          if (unsavedCount > 0) {
+            newStatus[questionID] = 'failed';
+          } else {
+            newStatus[questionID] = 'saving'; // Still in queue
+          }
+        }
+      });
+      
+      setSaveStatus(prev => {
+        // Only update if changed to avoid unnecessary re-renders
+        const hasChanges = Object.keys(newStatus).some(k => prev[k] !== newStatus[k]);
+        return hasChanges ? { ...prev, ...newStatus } : prev;
+      });
+    };
+    
+    // Update immediately and then poll every second
+    updateSaveStatus();
+    const interval = setInterval(updateSaveStatus, 1000);
+    
+    return () => clearInterval(interval);
+  }, [testID, questions, answers]);
 
   // Capture screenshot of the page before final submission
   const captureSubmissionScreenshot = async () => {
@@ -403,7 +457,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
     if (navigateToQuestionRef) {
       navigateToQuestionRef.current = navigateToQuestion;
     }
-  }, [navigateToQuestionRef]);
+  }, [navigateToQuestionRef, questions, groupedQuestions, topicOrder]);
 
   // Expose submit function to parent via ref
   useEffect(() => {
@@ -534,9 +588,15 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
               <span className="stat-label">Answered</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{topicOrder.length}</span>
-              <span className="stat-label">Topics</span>
+              <span className="stat-number">{Object.values(saveStatus).filter(s => s === 'saved').length}</span>
+              <span className="stat-label">Saved</span>
             </div>
+            {Object.values(saveStatus).filter(s => s === 'failed').length > 0 && (
+              <div className="stat-item stat-failed">
+                <span className="stat-number">{Object.values(saveStatus).filter(s => s === 'failed').length}</span>
+                <span className="stat-label">Failed ⚠</span>
+              </div>
+            )}
           </div>
           <button 
             className="collapse-toggle"
@@ -561,16 +621,18 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
           {topicOrder.map((topic, topicIndex) => {
             const topicQuestions = groupedQuestions[topic] || [];
             const answeredInTopic = topicQuestions.filter(q => answers[q.originalIndex] && answers[q.originalIndex] !== '').length;
+            const failedInTopic = topicQuestions.filter(q => saveStatus[q.questionID] === 'failed').length;
             const isCurrentTopic = topicIndex === currentTopicIndex;
             
             return (
               <button
                 key={topic}
-                className={`topic-nav-button ${isCurrentTopic ? 'current-topic' : ''}`}
+                className={`topic-nav-button ${isCurrentTopic ? 'current-topic' : ''} ${failedInTopic > 0 ? 'has-failed' : ''}`}
                 onClick={() => navigateToTopic(topicIndex)}
-                title={`${topic} (${answeredInTopic}/${topicQuestions.length} answered)`}
+                title={`${topic} (${answeredInTopic}/${topicQuestions.length} answered)${failedInTopic > 0 ? ` - ${failedInTopic} failed to save!` : ''}`}
               >
                 {topic} ({answeredInTopic}/{topicQuestions.length})
+                {failedInTopic > 0 && <span className="failed-indicator"> ⚠</span>}
               </button>
             );
           })}
@@ -601,8 +663,16 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                     <span className="question-number">Q{getDisplayQuestionNumber()}</span>
                     <div className="question-title-container">
                       <h3 className="question-text">{currentQuestion.question}</h3>
-                      <span className={`question-status ${answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? 'answered' : 'unanswered'}`}>
-                        {answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? '✓' : '○'}
+                      <span className={`question-status ${
+                        saveStatus[currentQuestion.questionID] === 'failed' ? 'save-failed' :
+                        saveStatus[currentQuestion.questionID] === 'saving' ? 'saving' :
+                        saveStatus[currentQuestion.questionID] === 'saved' ? 'saved' :
+                        answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? 'answered' : 'unanswered'
+                      }`}>
+                        {saveStatus[currentQuestion.questionID] === 'failed' ? '⚠' :
+                         saveStatus[currentQuestion.questionID] === 'saving' ? '⏳' :
+                         saveStatus[currentQuestion.questionID] === 'saved' ? '✓' :
+                         answers[currentQuestionIndex] && answers[currentQuestionIndex] !== '' ? '✓' : '○'}
                       </span>
                     </div>
                   </div>
