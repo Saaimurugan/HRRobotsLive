@@ -965,6 +965,7 @@ button.question-dot.unanswered {
   justify-content: center;
   z-index: 10000;
   backdrop-filter: blur(4px);
+  pointer-events: auto;
 }
 
 .submit-confirm-modal {
@@ -1008,6 +1009,16 @@ button.question-dot.unanswered {
   align-items: center;
   justify-content: center;
   color: white;
+}
+
+.submit-confirm-icon.submitting {
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.8; }
 }
 
 .submit-confirm-message {

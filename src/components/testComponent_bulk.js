@@ -428,6 +428,25 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
 
   return (
     <>
+    {/* Submitting Overlay - blocks all interactions during submission */}
+    {isSubmitting && (
+      <div className="submit-confirm-modal-overlay" role="dialog" aria-modal="true" aria-label="Submitting test">
+        <div className="submit-confirm-modal">
+          <div className="submit-confirm-header">
+            <div className="submit-confirm-icon submitting">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" strokeDasharray="60" strokeDashoffset="0">
+                  <animate attributeName="stroke-dashoffset" values="0;60" dur="1.5s" repeatCount="indefinite"/>
+                </circle>
+              </svg>
+            </div>
+            <h2 className="submit-confirm-title">Submitting Your Test</h2>
+            <p className="submit-confirm-subtitle">Please wait while we process your answers...</p>
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* Loading State */}
     {isInitialLoading && (
       <div className="test-skeleton-container">
