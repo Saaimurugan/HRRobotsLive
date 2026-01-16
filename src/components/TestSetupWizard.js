@@ -24,6 +24,7 @@ const TestSetupWizard = ({
   const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
   const [captureError, setCaptureError] = useState(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [isDemoVideoExpanded, setIsDemoVideoExpanded] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -390,6 +391,78 @@ const TestSetupWizard = ({
                 {singleScreenOnly === null ? '⏳ Checking...' : singleScreenOnly ? '✓ Single Screen' : '✗ Multiple Screens Detected'}
               </span>
             </div>
+          </div>
+
+          {/* Demo Video Collapsible Section */}
+          <div style={{ marginTop: '15px', border: '1px solid #e0e0e0', borderRadius: '8px', overflow: 'hidden' }}>
+            <button
+              onClick={() => setIsDemoVideoExpanded(!isDemoVideoExpanded)}
+              style={{
+                width: '100%',
+                padding: '12px 15px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: '#f5f5f5',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '500',
+                color: '#333',
+                transition: 'background 0.2s ease'
+              }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="#2563eb">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                Watch Assessment Demo Video
+              </span>
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="#666"
+                style={{ 
+                  transform: isDemoVideoExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.3s ease'
+                }}
+              >
+                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+              </svg>
+            </button>
+            {isDemoVideoExpanded && (
+              <div style={{ padding: '15px', background: '#fff' }}>
+                <p style={{ fontSize: '13px', color: '#666', marginBottom: '12px' }}>
+                  Watch this short video to understand how the test works and what to expect.
+                </p>
+                <div style={{ 
+                  position: 'relative', 
+                  paddingBottom: '56.37%', 
+                  height: 0, 
+                  overflow: 'hidden',
+                  borderRadius: '8px',
+                  background: '#000'
+                }}>
+                  <iframe
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: '100%',
+                      border: 'none'
+                    }}
+                    src="https://player.vimeo.com/video/1154905656?badge=0&autopause=0&player_id=0&app_id=58479&amp;autoplay=1"
+                    title="Assessment Demo Video"
+                    frameBorder="0"
+                    allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {!canProceedToStep2 && (
