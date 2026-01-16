@@ -123,15 +123,24 @@ const Header = () => {
 
   // Add hover effect via onMouseEnter/onMouseLeave since inline styles don't support :hover
   const handleNavBtnMouseEnter = (e) => {
-    e.currentTarget.style.background = "#e5e7eb";
-    // Change SVG icon color to dark grey on hover
+    e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+    // Change SVG icon color to white on hover
     const paths = e.currentTarget.querySelectorAll('path');
     paths.forEach(path => {
       if (path.getAttribute('stroke')) {
-        path.setAttribute('stroke', '#374151');
+        path.setAttribute('stroke', '#ffffff');
       }
       if (path.getAttribute('fill') && path.getAttribute('fill') !== 'none') {
-        path.setAttribute('fill', '#374151');
+        path.setAttribute('fill', '#ffffff');
+      }
+    });
+    const circles = e.currentTarget.querySelectorAll('circle');
+    circles.forEach(circle => {
+      if (circle.getAttribute('stroke')) {
+        circle.setAttribute('stroke', '#ffffff');
+      }
+      if (circle.getAttribute('fill') && circle.getAttribute('fill') !== 'none') {
+        circle.setAttribute('fill', '#ffffff');
       }
     });
   };
@@ -146,6 +155,15 @@ const Header = () => {
       }
       if (path.getAttribute('fill') && path.getAttribute('fill') !== 'none') {
         path.setAttribute('fill', '#292D32');
+      }
+    });
+    const circles = e.currentTarget.querySelectorAll('circle');
+    circles.forEach(circle => {
+      if (circle.getAttribute('stroke')) {
+        circle.setAttribute('stroke', '#1C274C');
+      }
+      if (circle.getAttribute('fill') && circle.getAttribute('fill') !== 'none') {
+        circle.setAttribute('fill', '#292D32');
       }
     });
   };

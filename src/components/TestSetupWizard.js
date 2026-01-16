@@ -22,6 +22,8 @@ const TestSetupWizard = ({
   const [videoReady, setVideoReady] = useState(false);
   const [hasScrolledConsent, setHasScrolledConsent] = useState(false);
   const [isSubmittingConsent, setIsSubmittingConsent] = useState(false);
+  const [captureError, setCaptureError] = useState(null);
+  const [isCapturing, setIsCapturing] = useState(false);
   
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
@@ -70,26 +72,57 @@ const TestSetupWizard = ({
       context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
 
       const imageData = canvas.toDataURL('image/png');
+      setCaptureError(null);
+      setIsCapturing(true);
+      
       if (type === 'photo') {
-        setPhotoImage(imageData);
-        setPhotoStage('id');
+        const result = await callApi(imageData, 'PHOTO');
+        setIsCapturing(false);
+        
+        if (result.success) {
+          setPhotoImage(imageData);
+          setPhotoStage('id');
+        } else {
+          setCaptureError(result.message);
+        }
       } else if (type === 'id') {
-        setIdCardImage(imageData);
-        setPhotoStage('done');
+        const result = await callApi(imageData, 'ID');
+        setIsCapturing(false);
+        
+        if (result.success) {
+          setIdCardImage(imageData);
+          setPhotoStage('done');
+        } else {
+          setCaptureError(result.message);
+        }
       }
-      await callApi(imageData);
     }
   };
 
-  const callApi = async (imageData) => {
+  const callApi = async (imageData, type) => {
     try {
-      await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
+      const response = await fetch('https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto_', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: imageData, userUniqueID, outputQuality: 5 }),  // Low quality for photos/ID
+        body: JSON.stringify({ 
+          image: imageData, 
+          userUniqueID, 
+          outputQuality: 5,
+          type: type
+        }),
       });
+      const data = await response.json();
+      
+      // Handle Lambda proxy response format (statusCode in body)
+      if (data.statusCode === 400 || !response.ok) {
+        const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data;
+        return { success: false, message: errorBody.message || 'Face validation failed. Please try again.' };
+      }
+      
+      return { success: true, data };
     } catch (error) {
-      //console.error('Error calling API:', error);
+      console.error('Error calling API:', error);
+      return { success: false, message: 'Network error. Please try again.' };
     }
   };
 
@@ -149,7 +182,7 @@ const TestSetupWizard = ({
       const imageData = canvas.toDataURL("image/jpeg", 0.7);
       
       // Save the consent screenshot
-      await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
+      await fetch('https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto_', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -688,10 +721,15 @@ const TestSetupWizard = ({
               </div>
               {videoReady && photoStage === 'photo' && (
                 <div style={{ textAlign: 'center' }}>
-                  <button onClick={() => captureImage('photo')} style={{ padding: '6px 14px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <button onClick={() => captureImage('photo')} disabled={isCapturing} style={{ padding: '6px 14px', backgroundColor: isCapturing ? '#ccc' : '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
-                    Capture
+                    {isCapturing ? 'Validating...' : 'Capture'}
                   </button>
+                  {captureError && photoStage === 'photo' && (
+                    <p style={{ color: '#c62828', fontSize: '11px', marginTop: '6px', background: '#ffebee', padding: '6px 10px', borderRadius: '4px' }}>
+                      ⚠️ {captureError}
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -733,10 +771,15 @@ const TestSetupWizard = ({
               </div>
               {videoReady && photoStage === 'id' && (
                 <div style={{ textAlign: 'center' }}>
-                  <button onClick={() => captureImage('id')} style={{ padding: '6px 14px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <button onClick={() => captureImage('id')} disabled={isCapturing} style={{ padding: '6px 14px', backgroundColor: isCapturing ? '#ccc' : '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/></svg>
-                    Capture
+                    {isCapturing ? 'Validating...' : 'Capture'}
                   </button>
+                  {captureError && photoStage === 'id' && (
+                    <p style={{ color: '#c62828', fontSize: '11px', marginTop: '6px', background: '#ffebee', padding: '6px 10px', borderRadius: '4px' }}>
+                      ⚠️ {captureError}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

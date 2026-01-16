@@ -22,7 +22,7 @@ const FaceWarningMessage = ({count, offFocus, userUniqueID, warningType = "nofac
 
   const sendToAPI = async (imageData) => {
     try {
-      await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto', {
+      await fetch('https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto_', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: imageData, userUniqueID, outputQuality: 5 }),  // Low quality for face photos

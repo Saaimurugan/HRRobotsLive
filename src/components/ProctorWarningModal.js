@@ -63,7 +63,7 @@ const ProctorWarningModal = ({
       const imageData = canvas.toDataURL("image/jpeg", 0.7);
       
       if (userUniqueID) {
-        fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto", {
+        fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/saveCandidatePhoto_", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
