@@ -41,17 +41,24 @@ const TestSetupWizard = ({
   const startVideo = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current && !videoRef.current.srcObject) {
+      if (videoRef.current) {
+        // Stop any existing stream first
+        if (videoRef.current.srcObject) {
+          const existingTracks = videoRef.current.srcObject.getTracks();
+          existingTracks.forEach((track) => track.stop());
+        }
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
           videoRef.current.play().catch((error) => {
-            //console.error('Error playing video:', error);
+            console.error('Error playing video:', error);
           });
           setVideoReady(true);
         };
+        // Also try to play immediately in case metadata is already loaded
+        videoRef.current.play().catch(() => {});
       }
     } catch (error) {
-      //console.error('Error accessing webcam:', error);
+      console.error('Error accessing webcam:', error);
     }
   };
 
@@ -129,12 +136,26 @@ const TestSetupWizard = ({
 
   // Handle video start/stop based on step and photo stage
   useEffect(() => {
-    if (currentStep === 4 && (photoStage === 'photo' || photoStage === 'id')) {
-      startVideo();
-    } else {
+    let mounted = true;
+    
+    const initVideo = async () => {
+      if (currentStep === 4 && (photoStage === 'photo' || photoStage === 'id')) {
+        // Small delay to ensure video element is mounted
+        await new Promise(resolve => setTimeout(resolve, 100));
+        if (mounted) {
+          startVideo();
+        }
+      } else {
+        stopVideo();
+      }
+    };
+    
+    initVideo();
+    
+    return () => {
+      mounted = false;
       stopVideo();
-    }
-    return () => stopVideo();
+    };
   }, [currentStep, photoStage]);
 
   // Update parent with candidate name
@@ -329,12 +350,12 @@ const TestSetupWizard = ({
           .identity-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 20px;
           }
-          @media (max-width: 600px) {
+          @media (max-width: 768px) {
             .identity-grid {
               grid-template-columns: 1fr;
-              gap: 10px;
+              gap: 16px;
             }
           }
         `}
@@ -726,147 +747,242 @@ const TestSetupWizard = ({
         </div>
       )}
 
-      {/* Step 4: Photo & ID Capture - Two Column Layout */}
+      {/* Step 4: Photo & ID Capture - Modern Design */}
       {currentStep === 4 && (
         <div style={cardStyle}>
-          <h3 style={{ fontSize: '15px', color: '#444', marginBottom: '10px', textAlign: 'center' }}>
-            Capture Your Photo and Government ID
-          </h3>
-          
-          {/* Two Column Layout */}
-          <div className="identity-grid" style={{ marginBottom: '10px' }}>
+          {/* Modern Two Column Layout */}
+          <div className="identity-grid" style={{ gap: '20px' }}>
             {/* Left Column - Face Capture */}
             <div style={{ 
-              padding: '10px', 
-              background: '#f9f9f9', 
-              borderRadius: '8px',
-              border: photoStage === 'photo' ? '2px solid #2563eb' : (photoImage ? '2px solid #2e7d32' : '1px solid #e0e0e0')
+              background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+              borderRadius: '16px',
+              padding: '20px',
+              boxShadow: photoStage === 'photo' ? '0 0 0 2px #2563eb, 0 8px 25px rgba(37, 99, 235, 0.15)' : (photoImage ? '0 0 0 2px #10b981, 0 8px 25px rgba(16, 185, 129, 0.15)' : '0 4px 20px rgba(0, 0, 0, 0.08)'),
+              transition: 'all 0.3s ease'
             }}>
+              {/* Header */}
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center', 
-                justifyContent: 'center',
-                gap: '6px',
-                marginBottom: '8px',
-                padding: '4px 10px',
-                background: photoImage ? '#e8f5e9' : (photoStage === 'photo' ? '#e3f2fd' : '#fff'),
-                borderRadius: '15px',
-                width: 'fit-content',
-                margin: '0 auto 8px auto'
+                gap: '12px',
+                marginBottom: '16px'
               }}>
-                {photoImage ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#2e7d32">
-                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                  </svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill={photoStage === 'photo' ? '#2563eb' : '#666'}>
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                  </svg>
-                )}
-                <span style={{ fontWeight: '500', fontSize: '12px', color: photoImage ? '#2e7d32' : (photoStage === 'photo' ? '#2563eb' : '#666') }}>
-                  {photoImage ? 'Photo Captured' : '4a. Capture Photo'}
-                </span>
+                <div style={{ 
+                  width: '40px', height: '40px', borderRadius: '12px',
+                  background: photoImage ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : (photoStage === 'photo' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : '#e2e8f0'),
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {photoImage ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill={photoStage === 'photo' ? 'white' : '#94a3b8'}><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                  )}
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: '600', fontSize: '15px', color: '#1e293b' }}>
+                    {photoImage ? 'Photo Captured' : 'Take Your Photo'}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                    {photoImage ? 'Looking good!' : 'Position your face in the frame'}
+                  </p>
+                </div>
               </div>
-              <div style={{ position: 'relative', width: '100%', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '8px' }}>
+              
+              {/* Capture Area */}
+              <div style={{ position: 'relative', width: '100%', height: '200px', borderRadius: '12px', overflow: 'hidden', background: '#0f172a', marginBottom: '16px' }}>
                 {photoImage ? (
-                  <div style={{ position: 'relative' }}>
-                    <img src={photoImage} alt="Your Photo" style={{ height: '130px', borderRadius: '6px', border: '2px solid #1CBBB4' }} />
-                    {photoStage === 'done' && (
-                      <button onClick={() => { setPhotoStage('photo'); setPhotoImage(null); setIdCardImage(null); }} style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: '#ff4444', color: 'white', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0' }}>×</button>
-                    )}
-                  </div>
+                  <>
+                    <img src={photoImage} alt="Your Photo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <button onClick={() => { setPhotoStage('photo'); setPhotoImage(null); if (idCardImage) { setIdCardImage(null); } }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(239, 68, 68, 0.9)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '8px', padding: '8px 14px', color: 'white', fontSize: '12px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} title="Retake photo">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                      Retake
+                    </button>
+                  </>
                 ) : photoStage === 'photo' ? (
-                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                    <video ref={videoRef} style={{ width: '100%', height: '100%', borderRadius: '6px', background: '#000', objectFit: 'cover' }} />
+                  <>
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted 
+                      style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover',
+                        background: '#000'
+                      }} 
+                    />
                     <canvas ref={canvasRef} style={{ display: 'none' }} />
                     {videoReady && (
-                      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100px', height: '100px', border: '2px dashed #FF5722', borderRadius: '50%', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <p style={{ color: '#FF5722', fontWeight: 'bold', fontSize: '10px', textAlign: 'center', background: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '3px' }}>Align face</p>
-                      </div>
+                      <>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '100px', height: '130px', border: '3px solid rgba(255, 255, 255, 0.6)', borderRadius: '50px', boxShadow: '0 0 0 4px rgba(37, 99, 235, 0.3)', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(37, 99, 235, 0.9)', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: '500', color: 'white', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+                          Align your face
+                        </div>
+                      </>
                     )}
-                  </div>
+                  </>
                 ) : (
-                  <div style={{ width: '80px', height: '80px', borderRadius: '50%', border: '2px dashed #ccc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
-                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#ccc"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                    <span style={{ fontSize: '9px', color: '#999' }}>Waiting</span>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9' }}>
+                    <div style={{ width: '70px', height: '90px', borderRadius: '35px', border: '3px dashed #cbd5e1', marginBottom: '12px' }} />
+                    <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>Waiting for photo capture</p>
                   </div>
                 )}
               </div>
+              
+              {/* Capture Button */}
               {videoReady && photoStage === 'photo' && (
                 <div style={{ textAlign: 'center' }}>
-                  <button onClick={() => captureImage('photo')} disabled={isCapturing} style={{ padding: '6px 14px', backgroundColor: isCapturing ? '#ccc' : '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
-                    {isCapturing ? 'Validating...' : 'Capture'}
+                  <button onClick={() => captureImage('photo')} disabled={isCapturing} style={{ padding: '12px 28px', background: isCapturing ? '#94a3b8' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: isCapturing ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: isCapturing ? 'none' : '0 4px 15px rgba(37, 99, 235, 0.4)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="3.2"/><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+                    {isCapturing ? 'Validating...' : 'Capture Photo'}
                   </button>
                   {captureError && photoStage === 'photo' && (
-                    <p style={{ color: '#c62828', fontSize: '11px', marginTop: '6px', background: '#ffebee', padding: '6px 10px', borderRadius: '4px' }}>
-                      ⚠️ {captureError}
-                    </p>
+                    <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                      <p style={{ margin: 0, color: '#dc2626', fontSize: '12px', textAlign: 'left' }}>{captureError}</p>
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
             {/* Right Column - ID Card Capture */}
-            <div style={{ padding: '10px', background: '#f9f9f9', borderRadius: '8px', border: photoStage === 'id' ? '2px solid #2563eb' : (idCardImage ? '2px solid #2e7d32' : '1px solid #e0e0e0') }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', marginBottom: '8px', padding: '4px 10px', background: idCardImage ? '#e8f5e9' : (photoStage === 'id' ? '#e3f2fd' : '#fff'), borderRadius: '15px', width: 'fit-content', margin: '0 auto 8px auto' }}>
-                {idCardImage ? (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#2e7d32"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill={photoStage === 'id' ? '#2563eb' : '#666'}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/></svg>
-                )}
-                <span style={{ fontWeight: '500', fontSize: '12px', color: idCardImage ? '#2e7d32' : (photoStage === 'id' ? '#2563eb' : '#666') }}>
-                  {idCardImage ? 'ID Captured' : '4b. Capture ID'}
-                </span>
+            <div style={{ 
+              background: 'linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)',
+              borderRadius: '16px',
+              padding: '20px',
+              boxShadow: photoStage === 'id' ? '0 0 0 2px #2563eb, 0 8px 25px rgba(37, 99, 235, 0.15)' : (idCardImage ? '0 0 0 2px #10b981, 0 8px 25px rgba(16, 185, 129, 0.15)' : '0 4px 20px rgba(0, 0, 0, 0.08)'),
+              transition: 'all 0.3s ease'
+            }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ 
+                  width: '40px', height: '40px', borderRadius: '12px',
+                  background: idCardImage ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : (photoStage === 'id' ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)' : '#e2e8f0'),
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  {idCardImage ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill={photoStage === 'id' ? 'white' : '#94a3b8'}><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12zM6 10h2v2H6zm0 4h8v2H6zm10 0h2v2h-2zm-6-4h8v2h-8z"/></svg>
+                  )}
+                </div>
+                <div>
+                  <p style={{ margin: 0, fontWeight: '600', fontSize: '15px', color: '#1e293b' }}>
+                    {idCardImage ? 'ID Captured' : 'Scan Your ID'}
+                  </p>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#64748b' }}>
+                    {idCardImage ? 'Document verified' : 'Government-issued photo ID'}
+                  </p>
+                </div>
               </div>
-              <div style={{ position: 'relative', width: '100%', height: '140px', display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: '8px' }}>
+              
+              {/* Capture Area */}
+              <div style={{ position: 'relative', width: '100%', height: '200px', borderRadius: '12px', overflow: 'hidden', background: '#0f172a', marginBottom: '16px' }}>
                 {idCardImage ? (
-                  <div style={{ position: 'relative' }}>
-                    <img src={idCardImage} alt="ID Card" style={{ height: '100px', borderRadius: '6px', border: '2px solid #1CBBB4' }} />
-                    <button onClick={() => { setPhotoStage('id'); setIdCardImage(null); }} style={{ position: 'absolute', top: '-6px', right: '-6px', width: '20px', height: '20px', borderRadius: '50%', background: '#ff4444', color: 'white', border: 'none', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0' }}>×</button>
-                  </div>
+                  <>
+                    <img src={idCardImage} alt="ID Card" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                    <button onClick={() => { setPhotoStage('id'); setIdCardImage(null); }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(239, 68, 68, 0.9)', backdropFilter: 'blur(4px)', border: 'none', borderRadius: '8px', padding: '8px 14px', color: 'white', fontSize: '12px', fontWeight: '500', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }} title="Retake ID">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0112 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                      Retake
+                    </button>
+                  </>
                 ) : photoStage === 'id' ? (
-                  <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-                    <video ref={videoRef} style={{ width: '100%', height: '100%', borderRadius: '6px', background: '#000', objectFit: 'cover' }} />
+                  <>
+                    <video 
+                      ref={videoRef} 
+                      autoPlay 
+                      playsInline 
+                      muted 
+                      style={{ 
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover',
+                        background: '#000'
+                      }} 
+                    />
                     <canvas ref={canvasRef} style={{ display: 'none' }} />
                     {videoReady && (
-                      <div style={{ position: 'absolute', top: '5%', left: '10%', width: '80%', height: '90%', border: '2px dashed #FF5722', borderRadius: '6px', pointerEvents: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <p style={{ color: '#FF5722', fontWeight: 'bold', fontSize: '10px', textAlign: 'center', background: 'rgba(255,255,255,0.9)', padding: '2px 6px', borderRadius: '3px' }}>Align ID</p>
-                      </div>
+                      <>
+                        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80%', height: '55%', border: '3px solid rgba(255, 255, 255, 0.6)', borderRadius: '12px', boxShadow: '0 0 0 4px rgba(37, 99, 235, 0.3)', pointerEvents: 'none' }} />
+                        <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(37, 99, 235, 0.9)', padding: '6px 14px', borderRadius: '20px', fontSize: '11px', fontWeight: '500', color: 'white', whiteSpace: 'nowrap', pointerEvents: 'none' }}>
+                          Align ID card
+                        </div>
+                      </>
                     )}
-                  </div>
+                  </>
                 ) : (
-                  <div style={{ width: '100px', height: '65px', borderRadius: '6px', border: '2px dashed #ccc', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="#ccc"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/></svg>
-                    <span style={{ fontSize: '9px', color: '#999' }}>Waiting</span>
+                  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9' }}>
+                    <div style={{ width: '100px', height: '65px', borderRadius: '8px', border: '3px dashed #cbd5e1', marginBottom: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="#cbd5e1"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/></svg>
+                    </div>
+                    <p style={{ margin: 0, fontSize: '13px', color: '#94a3b8' }}>Complete photo capture first</p>
                   </div>
                 )}
               </div>
+              
+              {/* Capture Button */}
               {videoReady && photoStage === 'id' && (
                 <div style={{ textAlign: 'center' }}>
-                  <button onClick={() => captureImage('id')} disabled={isCapturing} style={{ padding: '6px 14px', backgroundColor: isCapturing ? '#ccc' : '#2563eb', color: '#fff', border: 'none', borderRadius: '4px', cursor: isCapturing ? 'not-allowed' : 'pointer', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM4 6h16v2H4V6zm0 4h16v8H4v-8z"/></svg>
-                    {isCapturing ? 'Validating...' : 'Capture'}
+                  <button onClick={() => captureImage('id')} disabled={isCapturing} style={{ padding: '12px 28px', background: isCapturing ? '#94a3b8' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)', color: 'white', border: 'none', borderRadius: '12px', fontSize: '14px', fontWeight: '600', cursor: isCapturing ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px', boxShadow: isCapturing ? 'none' : '0 4px 15px rgba(37, 99, 235, 0.4)' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 14H4V6h16v12z"/></svg>
+                    {isCapturing ? 'Validating...' : 'Capture ID'}
                   </button>
                   {captureError && photoStage === 'id' && (
-                    <p style={{ color: '#c62828', fontSize: '11px', marginTop: '6px', background: '#ffebee', padding: '6px 10px', borderRadius: '4px' }}>
-                      ⚠️ {captureError}
-                    </p>
+                    <div style={{ marginTop: '12px', padding: '10px 14px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }}><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                      <p style={{ margin: 0, color: '#dc2626', fontSize: '12px', textAlign: 'left' }}>{captureError}</p>
+                    </div>
                   )}
                 </div>
               )}
             </div>
           </div>
 
+          {/* Success Message */}
           {photoStage === 'done' && (
-            <div style={{ padding: '8px', background: '#e8f5e9', borderRadius: '6px', textAlign: 'center', marginBottom: '10px' }}>
-              <p style={{ color: '#2e7d32', fontWeight: '500', fontSize: '13px', margin: 0 }}>✓ Identity verification complete!</p>
+            <div style={{ 
+              marginTop: '20px', padding: '16px 24px', 
+              background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+              border: '1px solid #a7f3d0',
+              borderRadius: '14px', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px'
+            }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              </div>
+              <p style={{ margin: 0, color: '#065f46', fontWeight: '600', fontSize: '15px' }}>Identity verification complete! You're ready to start.</p>
             </div>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          {/* Navigation */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
             <button style={backButtonStyle} onClick={handleBack}>← Back</button>
-            <button style={buttonStyle(canStartTest)} onClick={handleStartTest} disabled={!canStartTest}>Start Test</button>
+            <button 
+              style={{
+                background: canStartTest ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : '#e2e8f0',
+                color: canStartTest ? 'white' : '#94a3b8',
+                border: 'none',
+                boxShadow: canStartTest ? '0 4px 15px rgba(16, 185, 129, 0.4)' : 'none',
+                padding: '14px 32px',
+                borderRadius: '12px',
+                fontWeight: '600',
+                fontSize: '15px',
+                cursor: canStartTest ? 'pointer' : 'not-allowed',
+                transition: 'all 0.2s ease'
+              }} 
+              onClick={handleStartTest} 
+              disabled={!canStartTest}
+            >
+              Start Test →
+            </button>
           </div>
         </div>
       )}
