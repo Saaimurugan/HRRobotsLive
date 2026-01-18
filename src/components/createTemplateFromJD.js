@@ -290,6 +290,29 @@ const CreateTemplateFromJD = () => {
     showToast('success', 'Complete', `Generated ${allQuestions.length} questions successfully!`);
   };
 
+  const checkTemplateDuplicate = async (templateName) => {
+    try {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ globalValue: globalValue, token: JWTValue }),
+      });
+
+      const data = await response.json();
+
+      if (checkUnauthorized(data)) return false;
+
+      if (data.statusCode === 200) {
+        const templates = data.body || [];
+        const isDuplicate = templates.some(t => t.templateName && t.templateName.toLowerCase() === templateName.toLowerCase());
+        return isDuplicate;
+      }
+      return false;
+    } catch (error) {
+      //console.error('Error checking duplicate template:', error);
+      return false;
+    }
+  };
 
   // Save template
   const saveTemplate = async () => {
@@ -298,8 +321,44 @@ const CreateTemplateFromJD = () => {
       return;
     }
 
+    if (!templateName.trim()) {
+      showToast('warning', 'Template Name Required', 'Please enter a template name.');
+      return;
+    }
+
+    // Check for duplicate template name
+    const isDuplicate = await checkTemplateDuplicate(templateName);
+    if (isDuplicate) {
+      showToast('error', 'Duplicate Template Name', `A template with the name "${templateName}" already exists. Please use a different name.`);
+      return;
+    }
+
+    if (!templateName.trim()) {
+      showToast('warning', 'Template Name Required', 'Please enter a template name.');
+      return;
+    }
+
     setIsSaving(true);
     try {
+      // Check for duplicate template name
+      const checkResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ globalValue: globalValue, token: JWTValue }),
+      });
+
+      const checkData = await checkResponse.json();
+
+      if (!checkUnauthorized(checkData) && checkData.statusCode === 200) {
+        const templates = checkData.templates || [];
+        const isDuplicate = templates.some(t => t.templateName && t.templateName.toLowerCase() === templateName.toLowerCase());
+        if (isDuplicate) {
+          showToast('error', 'Duplicate Template Name', `A template with the name "${templateName}" already exists. Please use a different name.`);
+          setIsSaving(false);
+          return;
+        }
+      }
+
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

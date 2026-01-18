@@ -370,12 +370,42 @@ const CreateTemplate = () => {
     clearForm();
   };
 
+  const checkTemplateDuplicate = async (templateName) => {
+    try {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ globalValue: globalValue, token: JWTValue }),
+      });
+
+      const data = await response.json();
+
+      if (checkUnauthorized(data)) return false;
+
+      if (data.statusCode === 200) {
+        const templates = data.body || [];
+        const isDuplicate = templates.some(t => t.templateName && t.templateName.toLowerCase() === templateName.toLowerCase());
+        return isDuplicate;
+      }
+      return false;
+    } catch (error) {
+      //console.error('Error checking duplicate template:', error);
+      return false;
+    }
+  };
+
   const saveQuestions = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     if (!questionSet || !Array.isArray(questionSet)) {
       showToast('error', 'Error', 'Invalid question set');
+      setLoading(false);
+      return;
+    }
+
+    if (!ttname.trim()) {
+      showToast('warning', 'Template Name Required', 'Please enter a template name.');
       setLoading(false);
       return;
     }
@@ -390,6 +420,14 @@ const CreateTemplate = () => {
       return;
     } else if (questionSet.length > 60) {
       showToast('warning', 'Too Many Questions', `Maximum 60 questions allowed. You have ${questionSet.length} questions.`);
+      setLoading(false);
+      return;
+    }
+
+    // Check for duplicate template name
+    const isDuplicate = await checkTemplateDuplicate(ttname);
+    if (isDuplicate) {
+      showToast('error', 'Duplicate Template Name', `A template with the name "${ttname}" already exists. Please use a different name.`);
       setLoading(false);
       return;
     }

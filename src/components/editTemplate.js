@@ -260,6 +260,7 @@ const EditTemplate = () => {
   const url = window.location.href;
   const parts = url.split('/');
   const passedTemplateID = parts[parts.length - 1];
+  const [originalTemplateName, setOriginalTemplateName] = useState("");
 
   useEffect(() => {
     if (!globalValue) {
@@ -375,6 +376,30 @@ const EditTemplate = () => {
     clearForm();
   };
 
+  const checkTemplateDuplicate = async (templateName) => {
+    try {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ globalValue: globalValue, token: JWTValue }),
+      });
+
+      const data = await response.json();
+
+      if (checkUnauthorized(data)) return false;
+
+      if (data.statusCode === 200) {
+        const templates = data.body || [];
+        const isDuplicate = templates.some(t => t.templateName && t.templateName.toLowerCase() === templateName.toLowerCase());
+        return isDuplicate;
+      }
+      return false;
+    } catch (error) {
+      //console.error('Error checking duplicate template:', error);
+      return false;
+    }
+  };
+
   const saveQuestions = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -385,16 +410,30 @@ const EditTemplate = () => {
       return;
     }
 
+    if (!ttname.trim()) {
+      showToast('warning', 'Template Name Required', 'Please enter a template name.');
+      setLoading(false);
+      return;
+    }
+
     if (questionSet.length === 0) {
       showToast('warning', 'No Questions', 'No questions to save. Please add some questions first.');
       setLoading(false);
       return;
     } else if (questionSet.length < 5) {
-      showToast('warning', 'Not Enough Questions', `Minimum 5 questions required. You have ${questionSet.length} questions.`);
+      showToast('warning', 'Not Enough Questions', `Minimum ${minQuestions} questions required. You have ${questionSet.length} questions.`);
       setLoading(false);
       return;
     } else if (questionSet.length > 60) {
       showToast('warning', 'Too Many Questions', `Maximum 60 questions allowed. You have ${questionSet.length} questions.`);
+      setLoading(false);
+      return;
+    }
+
+    // Check for duplicate template name
+    const isDuplicate = await checkTemplateDuplicate(ttname);
+    if (isDuplicate) {
+      showToast('error', 'Duplicate Template Name', `A template with the name "${ttname}" already exists. Please use a different name.`);
       setLoading(false);
       return;
     }
@@ -444,6 +483,7 @@ const EditTemplate = () => {
           if (Array.isArray(parsedBody.questions)) {
             setQuestionSet(parsedBody.questions);
             setTtname(parsedBody.templateName);
+            setOriginalTemplateName(parsedBody.templateName);
             // Show sample placeholder if no questions exist
             setShowSamplePlaceholder(parsedBody.questions.length === 0);
           } else {
