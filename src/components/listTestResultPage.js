@@ -63,10 +63,9 @@ const SkeletonTableRow = () => (
 const LoadingOverlay = () => (
     <div className="loading-overlay">
         <div className="loading-spinner">
-            <svg className="spinner-icon" viewBox="0 0 50 50">
-                <circle className="spinner-path" cx="25" cy="25" r="20" fill="none" strokeWidth="4"></circle>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="spin-animation">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="15.7 47.1"/>
             </svg>
-            <span className="loading-text">Loading...</span>
         </div>
     </div>
 );
@@ -568,27 +567,20 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         
         // Optimistically remove from UI immediately
         setItems((prevItems) => {
-            const updatedItems = prevItems.filter((item) => item.testID !== index);
-
-            // Update total pages based on new item count
-            const newTotalPages = Math.max(1, Math.ceil(updatedItems.length / pageSize));
-            setTotalPages(newTotalPages);
-
-            // If current page is now empty and it's not the first page, go to previous page
-            const startIndex = (currentPage - 1) * pageSize;
-            const itemsOnCurrentPage = updatedItems.slice(startIndex, startIndex + pageSize).length;
-
-            if (itemsOnCurrentPage === 0 && currentPage > 1) {
-                setCurrentPage(currentPage - 1);
-            } else if (currentPage > newTotalPages) {
-                setCurrentPage(newTotalPages);
-            }
-
-            return updatedItems;
+            return prevItems.filter((item) => item.testID !== index);
         });
 
-        // Delete in background
+        // Delete in background and then refetch data
         handleDeleteTest(index, testToDelete);
+        
+        // Refetch data after deletion to get accurate pagination
+        setTimeout(() => {
+            setItems([]);
+            setLastKey(null);
+            setHasMore(true);
+            setCurrentPage(1);
+            fetchData(true); // Fetch fresh data from server
+        }, 500); // Small delay to ensure deletion is processed
     }
 
     const handleConfirmationRowIndex = (index) => {

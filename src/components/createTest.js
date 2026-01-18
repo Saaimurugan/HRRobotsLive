@@ -286,7 +286,7 @@ const handleCreateTest = async (templateID) => {
     showToast(
       'warning',
       'Test Limit Reached',
-      `You have ${existingTestsCount} existing tests. The maximum limit is 25. Please delete some old tests before creating a new one.`
+      `You have ${existingTestsCount} existing assessments. The maximum limit is 25. Please delete some old assessments from the "Results" before creating a new one.`
     );
     console.log("Test creation blocked due to limit");
     return;
@@ -857,9 +857,9 @@ const getPageNumbers = () => {
                 </svg>
               </div>
               <div className="section-header-content">
-                <h2>Your Screening Test Templates</h2>
+                <h2>Your Screening Assessment Templates</h2>
                 <p>
-                  Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
+                  Select a template to generate a unique assessment link. Share it with candidates via email to begin their assessment.
                 </p>
               </div>
             </div>
@@ -896,9 +896,9 @@ const getPageNumbers = () => {
             </svg>
           </div>
           <div className="section-header-content">
-            <h2>Your Screening Test Templates</h2>
+            <h2>Your Screening Assessment Templates</h2>
             <p>
-              Select a template to generate a unique test link. Share it with candidates via email to begin their assessment.
+              Select a template to generate a unique assessment link. Share it with candidates via email to begin their assessment.
             </p>
           </div>
         </div>

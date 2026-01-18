@@ -245,43 +245,24 @@ td.status-not-started {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-}
-
-.spinner-icon {
-  width: 48px;
-  height: 48px;
-  animation: rotate 1.4s linear infinite;
-}
-
-.spinner-path {
-  stroke: var(--color-primary, #4f46e5);
-  stroke-linecap: round;
-  animation: dash 1.4s ease-in-out infinite;
+  color: var(--color-primary, #4f46e5);
 }
 
 .loading-text {
   font-size: var(--font-size-sm, 14px);
   color: var(--color-text-secondary, #6b7280);
   font-weight: var(--font-weight-medium, 500);
+  animation: none !important;
+  transform: none !important;
+}
+
+.loading-text-wrapper {
+  animation: none !important;
+  transform: none !important;
 }
 
 @keyframes rotate {
   100% {
     transform: rotate(360deg);
-  }
-}
-
-@keyframes dash {
-  0% {
-    stroke-dasharray: 1, 150;
-    stroke-dashoffset: 0;
-  }
-  50% {
-    stroke-dasharray: 90, 150;
-    stroke-dashoffset: -35;
-  }
-  100% {
-    stroke-dasharray: 90, 150;
-    stroke-dashoffset: -124;
   }
 }

@@ -472,7 +472,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         showToast(
           'warning',
           'Test Limit Reached',
-          `You have ${existingTestsCount} existing tests. The maximum limit is 25. Please delete some old tests before creating a new one.`
+          `You have ${existingTestsCount} existing assessments. The maximum limit is 25. Please delete some old assessments from the "Results" before creating a new one.`
         );
         console.log("Test creation blocked due to limit");
         setIsCreatingTest(false);
