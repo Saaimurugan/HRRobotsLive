@@ -946,7 +946,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                 /* Quick Options View */
                 <div className="keywords-section" style={{ padding: '0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px', padding: '0 5px' }}>
-                    <h3 style={{ margin: 0, fontSize: '15px' }}>Choose Test Configuration</h3>
+                    <h3 style={{ margin: '10px', fontSize: '15px' }}>Choose Test Configuration</h3>
                     <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>
                       {candidateName && <strong style={{ color: 'var(--color-primary)' }}>{candidateName}</strong>}
                       {candidateName && ' • '}
@@ -974,9 +974,9 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                           background: 'white'
                         }} />
                         <div>
-                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Common Keywords Only</span>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Common Skills Only</span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
-                            — Questions for keywords in both resume & template
+                            — Questions for skills in both resume & job description.
                           </span>
                         </div>
                       </div>
@@ -1001,9 +1001,9 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                           background: 'white'
                         }} />
                         <div>
-                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Add Resume Keywords</span>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Add Resume Skills</span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
-                            — Generate additional questions for resume keywords
+                            — Generate additional questions for resume skills.
                           </span>
                         </div>
                       </div>
@@ -1028,9 +1028,9 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                           background: 'white'
                         }} />
                         <div>
-                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Resume-Focused Test</span>
+                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Resume-Focused</span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
-                            — Add resume keywords + remove unmatched topics
+                            — Generate questions for the new skills from resume and remove skills not matching.
                           </span>
                         </div>
                       </div>
@@ -1056,14 +1056,14 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                         <div>
                           <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-secondary)' }}>Customize</span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
-                            — Manually select keywords and question counts
+                            — Manually select skills and number of questions for each skill.
                           </span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="step-actions" style={{ marginTop: '12px', paddingTop: '12px' }}>
+                  <div className="step-actions" style={{ marginTop: '12px', padding: '12px' }}>
                     <button className="btn-secondary" onClick={() => setCurrentStep(1)}>
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M19 12H5" />
