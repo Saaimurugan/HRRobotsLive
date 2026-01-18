@@ -223,6 +223,44 @@ useEffect(() => {
     }
 }, [globalValue, navigate]);
 
+const checkExistingTestsCount = async () => {
+  try {
+    const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestCount", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ globalValue, token: JWTValue }),
+    });
+
+    const data = await response.json();
+    console.log("getTestCount response:", data);
+    
+    if (checkUnauthorized(data)) return null;
+
+    if (data.statusCode === 200) {
+      // Parse the body if it's a string
+      let body = data.body;
+      if (typeof body === 'string') {
+        try {
+          body = JSON.parse(body);
+        } catch (e) {
+          console.error("Failed to parse response body:", e);
+          return 0;
+        }
+      }
+      
+      const totalCount = body.total_count || 0;
+      console.log("Total test count:", totalCount);
+      return totalCount;
+    }
+    return 0;
+  } catch (error) {
+    console.error("Error checking existing tests:", error);
+    return 0;
+  }
+};
+
 const handleCreateTest = async (templateID) => {
   // Find the template to check question count vs numberOfQuestions
   const template = templates.find(t => t.templateID === templateID);
@@ -239,6 +277,22 @@ const handleCreateTest = async (templateID) => {
       return;
     }
   }
+
+  // Check existing tests count
+  const existingTestsCount = await checkExistingTestsCount();
+  console.log("Existing tests count:", existingTestsCount);
+  
+  if (existingTestsCount !== null && existingTestsCount >= 25) {
+    showToast(
+      'warning',
+      'Test Limit Reached',
+      `You have ${existingTestsCount} existing tests. The maximum limit is 25. Please delete some old tests before creating a new one.`
+    );
+    console.log("Test creation blocked due to limit");
+    return;
+  }
+  
+  console.log("Test creation proceeding...");
 
   setTemplateStates({}); // Clear all messages
   setLoading(true);
