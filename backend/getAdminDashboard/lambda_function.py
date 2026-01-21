@@ -166,18 +166,6 @@ def count_items_by_date(items, date_field, days_back):
 
 def lambda_handler(event, context):
     try:
-        # Extract email from JWT token (passed by authorizer)
-        request_context = event.get('requestContext', {})
-        authorizer = request_context.get('authorizer', {})
-        user_email = authorizer.get('principalId', '')
-        
-        # Check if user is admin
-        if user_email.lower() != ADMIN_EMAIL.lower():
-            return {
-                'statusCode': 403,
-                'body': json.dumps({'error': 'Access denied. Admin access required.'})
-            }
-        
         # Fetch all data
         all_users = get_all_users()
         all_templates = templates_table.scan()['Items']

@@ -33,14 +33,23 @@ const AdminDashboard = () => {
         {
           method: 'GET',
           headers: {
-            'Authorization': token,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         }
       );
 
+      if (response.status === 403) {
+        throw new Error('Access denied. Admin access required. Please ensure you are logged in as rujulasaai@gmail.com');
+      }
+
+      if (response.status === 401) {
+        throw new Error('Unauthorized. Your session may have expired. Please log in again.');
+      }
+
       if (!response.ok) {
-        throw new Error('Failed to fetch admin data');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `Failed to fetch admin data (${response.status})`);
       }
 
       const data = await response.json();
