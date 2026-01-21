@@ -150,6 +150,40 @@ def get_active_users():
     
     return active_count
 
+def get_test_count_by_status(user_email):
+    """Get test count grouped by status for a user"""
+    status_counts = {
+        'completed': 0,
+        'pending': 0,
+        'failed': 0,
+        'in_progress': 0
+    }
+    
+    last_evaluated_key = None
+    
+    while True:
+        scan_params = {
+            'FilterExpression': Attr('email').eq(user_email)
+        }
+        if last_evaluated_key:
+            scan_params['ExclusiveStartKey'] = last_evaluated_key
+        
+        response = test_transactions_table.scan(**scan_params)
+        
+        for transaction in response.get('Items', []):
+            status = transaction.get('status', 'pending').lower()
+            if status in status_counts:
+                status_counts[status] += 1
+            else:
+                # Count unknown statuses as pending
+                status_counts['pending'] += 1
+        
+        last_evaluated_key = response.get('LastEvaluatedKey')
+        if not last_evaluated_key:
+            break
+    
+    return status_counts
+
 def count_items_by_date(items, date_field, days_back):
     """Count items created in the last N days"""
     start_date, end_date = get_date_range(days_back)
@@ -166,6 +200,9 @@ def count_items_by_date(items, date_field, days_back):
 
 def lambda_handler(event, context):
     try:
+        print(f"Event: {event}")
+        print(f"Method: {event.get('httpMethod', 'unknown')}")
+        
         # Fetch all data
         all_users = get_all_users()
         all_templates = templates_table.scan()['Items']
@@ -235,6 +272,7 @@ def lambda_handler(event, context):
                 'templateCount': len(user_templates),
                 'testCount': len([t for template in user_templates for t in get_template_test_transactions(template.get('templateID', ''))]),
                 'lastActive': user.get('lastActive'),
+                'testCountByStatus': get_test_count_by_status(user_email),
                 'templates': templates_data
             })
         
@@ -256,13 +294,17 @@ def lambda_handler(event, context):
             'statusCode': 200,
             'headers': {
                 'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*'
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
             },
             'body': json.dumps(response_data, cls=DecimalEncoder)
         }
     
     except Exception as e:
         print(f'Error: {str(e)}')
+        import traceback
+        traceback.print_exc()
         return {
             'statusCode': 500,
             'headers': {

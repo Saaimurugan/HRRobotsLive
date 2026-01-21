@@ -166,6 +166,69 @@
   color: #333;
 }
 
+/* Test Status Summary */
+.test-status-summary {
+  margin: 15px 0;
+  padding: 12px;
+  background: white;
+  border-radius: 4px;
+  border-left: 3px solid #1CBBB4;
+}
+
+.test-status-summary h4 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.status-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  background: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid #e0e0e0;
+}
+
+.status-label {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.status-count {
+  font-size: 18px;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-radius: 3px;
+  color: white;
+}
+
+.status-count.completed {
+  background: #4CAF50;
+}
+
+.status-count.pending {
+  background: #FF9800;
+}
+
+.status-count.failed {
+  background: #f44336;
+}
+
+.status-count.in_progress {
+  background: #2196F3;
+}
+
 /* Nested Sections */
 .nested-section {
   margin-top: 20px;
