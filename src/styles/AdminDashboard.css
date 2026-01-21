@@ -1,0 +1,349 @@
+.admin-dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-header h1 {
+  margin: 0;
+  color: #333;
+  font-size: 28px;
+}
+
+.refresh-btn {
+  padding: 10px 20px;
+  background: #1CBBB4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s;
+}
+
+.refresh-btn:hover {
+  background: #16a39f;
+}
+
+/* Summary Stats */
+.admin-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #1CBBB4;
+}
+
+.stat-card h3 {
+  margin: 0 0 10px 0;
+  color: #666;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  margin: 0 0 15px 0;
+  font-size: 32px;
+  font-weight: bold;
+  color: #1CBBB4;
+}
+
+.stat-detail {
+  margin: 5px 0;
+  font-size: 12px;
+  color: #999;
+}
+
+/* Admin Section */
+.admin-section {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.admin-section h2 {
+  margin: 0 0 20px 0;
+  color: #333;
+  font-size: 20px;
+  border-bottom: 2px solid #1CBBB4;
+  padding-bottom: 10px;
+}
+
+/* Users List */
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.user-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #fafafa;
+}
+
+.user-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  cursor: pointer;
+  background: white;
+  transition: background 0.2s;
+}
+
+.user-header:hover {
+  background: #f9f9f9;
+}
+
+.user-info h3 {
+  margin: 0;
+  color: #333;
+  font-size: 16px;
+}
+
+.user-meta {
+  margin: 5px 0 0 0;
+  font-size: 12px;
+  color: #999;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.active-badge {
+  background: #4CAF50;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.expand-icon {
+  color: #999;
+  font-size: 12px;
+  transition: transform 0.2s;
+}
+
+.user-details {
+  padding: 15px;
+  background: #f5f5f5;
+  border-top: 1px solid #e0e0e0;
+}
+
+.user-details p {
+  margin: 8px 0;
+  font-size: 13px;
+  color: #555;
+}
+
+.user-details strong {
+  color: #333;
+}
+
+/* Nested Sections */
+.nested-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.nested-section h4,
+.nested-section h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.nested-section h4 {
+  color: #1CBBB4;
+}
+
+/* Template Card */
+.template-card {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+.template-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  cursor: pointer;
+  background: #fafafa;
+  transition: background 0.2s;
+}
+
+.template-header:hover {
+  background: #f0f0f0;
+}
+
+.template-header h5 {
+  margin: 0;
+  color: #333;
+  font-size: 14px;
+}
+
+.template-meta {
+  margin: 3px 0 0 0;
+  font-size: 11px;
+  color: #999;
+}
+
+.template-details {
+  padding: 12px;
+  background: #fafafa;
+  border-top: 1px solid #e0e0e0;
+  font-size: 12px;
+}
+
+.template-details p {
+  margin: 5px 0;
+  color: #555;
+}
+
+/* Transactions List */
+.transactions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.transaction-item {
+  background: white;
+  padding: 10px;
+  border-left: 3px solid #1CBBB4;
+  border-radius: 2px;
+  font-size: 12px;
+}
+
+.transaction-item p {
+  margin: 4px 0;
+  color: #555;
+}
+
+.transaction-item strong {
+  color: #333;
+}
+
+.status-completed {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.status-pending {
+  color: #FF9800;
+  font-weight: bold;
+}
+
+.status-failed {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.status-in_progress {
+  color: #2196F3;
+  font-weight: bold;
+}
+
+/* Loading & Error States */
+.admin-loading,
+.admin-error {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: white;
+  border-radius: 8px;
+  gap: 20px;
+}
+
+.admin-error {
+  color: #f44336;
+}
+
+.admin-error button {
+  padding: 10px 20px;
+  background: #1CBBB4;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #1CBBB4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 10px;
+  }
+
+  .admin-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .admin-header h1 {
+    font-size: 22px;
+  }
+
+  .user-header,
+  .template-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .expand-icon {
+    align-self: flex-end;
+  }
+}

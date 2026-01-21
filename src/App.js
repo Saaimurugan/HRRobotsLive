@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from
 import { GoogleReCaptchaProvider } from 'react-google-recaptcha-v3';
 import { GlobalProvider, useGlobalContext } from "./globalContext";
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { TourProvider } from './components/TourProvider';
 import modelPreloader from './services/modelPreloader';
 import performanceMonitor from './utils/performanceMonitor';
@@ -32,6 +33,7 @@ const SignupSuccess = lazy(() => import('./components/signupSuccess'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const DataProtectionPolicy = lazy(() => import('./components/DataProtectionPolicy'));
 const EULA = lazy(() => import('./components/EULA'));
+const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -239,6 +241,21 @@ const Header = () => {
                 <path d="M14 9.5C14 10.6046 13.1046 11.5 12 11.5C10.8954 11.5 10 10.6046 10 9.5C10 8.39543 10.8954 7.5 12 7.5C13.1046 7.5 14 8.39543 14 9.5Z" stroke="#1C274C" strokeWidth="1.5"/>
               </svg>
             </button>
+            {globalValue && globalValue.toLowerCase() === 'rujulasaai@gmail.com' && (
+              <button 
+                className="nav-btn"
+                style={navButtonStyle} 
+                onClick={() => navigate("/admin")} 
+                aria-label="Go to Admin Dashboard" 
+                title="Admin Dashboard"
+                onMouseEnter={handleNavBtnMouseEnter}
+                onMouseLeave={handleNavBtnMouseLeave}
+              >
+                <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#1C274C"/>
+                </svg>
+              </button>
+            )}
             <div 
               style={{ position: "relative" }}
               onMouseEnter={() => setShowProfilePopup(true)}
@@ -365,6 +382,7 @@ const App = () => {
                 <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
                 <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
                 <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
+                <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
                   </Routes>
                 </Suspense>
               </main>
