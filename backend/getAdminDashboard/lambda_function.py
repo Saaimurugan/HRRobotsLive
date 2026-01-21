@@ -281,6 +281,76 @@ def lambda_handler(event, context):
         tests_date_wise = get_date_wise_data(all_test_transactions, 'datetime', 30)
         tests_status_date_wise = get_date_wise_status_data(all_test_transactions, 'datetime', 'status', 30)
         
+        # Generate time period data
+        users_today = count_items_by_date(all_users, 'createdAt', 0)
+        users_this_week = count_items_by_date(all_users, 'createdAt', 7)
+        users_this_month = count_items_by_date(all_users, 'createdAt', 30)
+        
+        templates_today = count_items_by_date(all_templates, 'datetime', 0)
+        templates_this_week = count_items_by_date(all_templates, 'datetime', 7)
+        templates_this_month = count_items_by_date(all_templates, 'datetime', 30)
+        
+        tests_today = count_items_by_date(all_test_transactions, 'datetime', 0)
+        tests_this_week = count_items_by_date(all_test_transactions, 'datetime', 7)
+        tests_this_month = count_items_by_date(all_test_transactions, 'datetime', 30)
+        
+        # Count test transactions by status
+        status_counts = {
+            'completed': 0,
+            'pending': 0,
+            'failed': 0,
+            'in_progress': 0
+        }
+        for transaction in all_test_transactions:
+            status = transaction.get('status', 'pending').lower()
+            if status in status_counts:
+                status_counts[status] += 1
+        
+        # Count templates by status (if templates have status field)
+        template_status_counts = {
+            'active': 0,
+            'archived': 0,
+            'draft': 0
+        }
+        for template in all_templates:
+            status = template.get('status', 'active').lower()
+            if status in template_status_counts:
+                template_status_counts[status] += 1
+            else:
+                template_status_counts['active'] += 1
+        
+        # Group templates by user
+        templates_by_user = {}
+        for template in all_templates:
+            user_email = template.get('email', 'Unknown')
+            if user_email not in templates_by_user:
+                templates_by_user[user_email] = 0
+            templates_by_user[user_email] += 1
+        
+        # Group test transactions by user
+        tests_by_user = {}
+        for transaction in all_test_transactions:
+            user_email = transaction.get('email', 'Unknown')
+            if user_email not in tests_by_user:
+                tests_by_user[user_email] = 0
+            tests_by_user[user_email] += 1
+        
+        # Group test transactions by template
+        tests_by_template = {}
+        for transaction in all_test_transactions:
+            template_id = transaction.get('templateID', 'Unknown')
+            if template_id not in tests_by_template:
+                tests_by_template[template_id] = 0
+            tests_by_template[template_id] += 1
+        
+        # Group templates by status
+        templates_by_status = {}
+        for template in all_templates:
+            status = template.get('status', 'active').lower()
+            if status not in templates_by_status:
+                templates_by_status[status] = 0
+            templates_by_status[status] += 1
+        
         # Build detailed user data with nested templates and transactions
         users_data = []
         for user in all_users:
@@ -348,7 +418,46 @@ def lambda_handler(event, context):
                 'usersDateWise': users_date_wise,
                 'templatesDateWise': templates_date_wise,
                 'testsDateWise': tests_date_wise,
-                'testsStatusDateWise': tests_status_date_wise
+                'testsStatusDateWise': tests_status_date_wise,
+                'timePeriods': {
+                    'users': {
+                        'today': users_today,
+                        'thisWeek': users_this_week,
+                        'thisMonth': users_this_month
+                    },
+                    'templates': {
+                        'today': templates_today,
+                        'thisWeek': templates_this_week,
+                        'thisMonth': templates_this_month
+                    },
+                    'tests': {
+                        'today': tests_today,
+                        'thisWeek': tests_this_week,
+                        'thisMonth': tests_this_month
+                    }
+                },
+                'comparisons': {
+                    'usersVsTemplates': {
+                        'users': total_users,
+                        'templates': total_templates
+                    },
+                    'usersVsTests': {
+                        'users': total_users,
+                        'tests': total_test_transactions
+                    },
+                    'templatesVsTests': {
+                        'templates': total_templates,
+                        'tests': total_test_transactions
+                    },
+                    'statusCounts': status_counts,
+                    'templateStatusCounts': template_status_counts
+                },
+                'groupedData': {
+                    'templatesByUser': templates_by_user,
+                    'testsByUser': tests_by_user,
+                    'testsByTemplate': tests_by_template,
+                    'templatesByStatus': templates_by_status
+                }
             },
             'users': users_data
         }
