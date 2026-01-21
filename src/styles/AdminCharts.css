@@ -6,6 +6,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
+  overflow: hidden;
 }
 
 .admin-charts-section h2 {
@@ -18,61 +19,69 @@
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 30px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
   margin-top: 20px;
+  overflow-x: auto;
 }
 
 /* Chart Container */
 .chart-container {
   background: #f9f9f9;
-  padding: 20px;
+  padding: 15px;
   border-radius: 6px;
   border: 1px solid #e0e0e0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .chart-container h3 {
   margin: 0 0 15px 0;
   color: #333;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
+  word-break: break-word;
 }
 
 /* Bar Chart */
 .chart-bars {
   display: flex;
   align-items: flex-end;
-  justify-content: space-around;
-  height: 250px;
-  gap: 8px;
+  justify-content: space-between;
+  height: 200px;
+  gap: 4px;
   padding: 10px 0;
   border-bottom: 2px solid #ddd;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .bar-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
-  min-width: 20px;
+  flex: 0 0 auto;
+  min-width: 12px;
+  max-width: 20px;
 }
 
 .bar-value {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 5px;
-  height: 16px;
+  margin-bottom: 3px;
+  height: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 12px;
 }
 
 .bar {
   width: 100%;
-  border-radius: 3px 3px 0 0;
+  border-radius: 2px 2px 0 0;
   transition: opacity 0.2s;
-  min-height: 2px;
+  min-height: 1px;
 }
 
 .bar:hover {
@@ -80,52 +89,57 @@
 }
 
 .bar-label {
-  font-size: 10px;
+  font-size: 8px;
   color: #999;
-  margin-top: 5px;
+  margin-top: 3px;
   text-align: center;
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 20px;
 }
 
 /* Stacked Bar Chart */
 .stacked-chart-bars {
   display: flex;
   align-items: flex-end;
-  justify-content: space-around;
-  height: 250px;
-  gap: 8px;
+  justify-content: space-between;
+  height: 200px;
+  gap: 4px;
   padding: 10px 0;
   border-bottom: 2px solid #ddd;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .stacked-bar-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
-  min-width: 20px;
+  flex: 0 0 auto;
+  min-width: 12px;
+  max-width: 20px;
 }
 
 .stacked-bar-value {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: bold;
   color: #333;
-  margin-bottom: 5px;
-  height: 16px;
+  margin-bottom: 3px;
+  height: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 12px;
 }
 
 .stacked-bar {
   width: 100%;
-  height: 200px;
+  height: 150px;
   display: flex;
-  flex-direction: column-reverse;
-  border-radius: 3px;
+  flex-direction: column;
+  border-radius: 2px;
   overflow: hidden;
   border: 1px solid #ddd;
   background: white;
@@ -158,14 +172,172 @@
 }
 
 .stacked-bar-label {
-  font-size: 10px;
+  font-size: 8px;
   color: #999;
-  margin-top: 5px;
+  margin-top: 3px;
   text-align: center;
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  max-width: 20px;
+}
+
+/* Comparison Bar Chart */
+.comparison-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 200px;
+  gap: 15px;
+  padding: 10px 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.comparison-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 40px;
+}
+
+.comparison-bar-value {
+  font-size: 11px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.comparison-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  transition: opacity 0.2s;
+  min-height: 2px;
+}
+
+.comparison-bar:hover {
+  opacity: 0.8;
+}
+
+.comparison-bar-label {
+  font-size: 11px;
+  color: #333;
+  margin-top: 8px;
+  text-align: center;
+  width: 100%;
+  font-weight: 500;
+}
+
+/* Time Period Bar Chart */
+.time-period-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  height: 200px;
+  gap: 20px;
+  padding: 10px 0;
+  border-bottom: 2px solid #ddd;
+}
+
+.time-period-bar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 50px;
+}
+
+.time-period-bar-value {
+  font-size: 11px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 5px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.time-period-bar {
+  width: 100%;
+  border-radius: 3px 3px 0 0;
+  transition: opacity 0.2s;
+  min-height: 2px;
+}
+
+.time-period-bar:hover {
+  opacity: 0.8;
+}
+
+.time-period-bar-label {
+  font-size: 11px;
+  color: #333;
+  margin-top: 8px;
+  text-align: center;
+  width: 100%;
+  font-weight: 500;
+}
+
+/* Grouped Data Chart */
+.grouped-data-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.grouped-data-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.grouped-data-label {
+  min-width: 80px;
+  max-width: 100px;
+  font-size: 11px;
+  color: #555;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.grouped-data-bar-container {
+  flex: 1;
+  height: 20px;
+  background: #f9f9f9;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.grouped-data-bar {
+  height: 100%;
+  border-radius: 2px;
+  transition: opacity 0.2s;
+  min-width: 2px;
+}
+
+.grouped-data-bar:hover {
+  opacity: 0.8;
+}
+
+.grouped-data-value {
+  min-width: 30px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: bold;
+  color: #333;
 }
 
 /* Chart Legend */
@@ -210,7 +382,7 @@
 /* Responsive Design */
 @media (max-width: 1200px) {
   .charts-grid {
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: 1fr;
   }
 }
 
@@ -220,30 +392,60 @@
   }
 
   .chart-container {
-    padding: 15px;
+    padding: 12px;
   }
 
   .chart-bars,
-  .stacked-chart-bars {
-    height: 200px;
-  }
-
-  .stacked-bar {
+  .stacked-chart-bars,
+  .comparison-bars,
+  .time-period-bars {
     height: 150px;
   }
 
-  .chart-legend {
-    gap: 10px;
+  .stacked-bar {
+    height: 120px;
   }
 
-  .legend-item {
-    font-size: 11px;
+  .chart-container h3 {
+    font-size: 12px;
+  }
+
+  .bar-value,
+  .stacked-bar-value,
+  .comparison-bar-value,
+  .time-period-bar-value {
+    font-size: 8px;
+  }
+
+  .bar-label,
+  .stacked-bar-label,
+  .comparison-bar-label,
+  .time-period-bar-label {
+    font-size: 7px;
+  }
+
+  .grouped-data-chart {
+    max-height: 250px;
+  }
+
+  .grouped-data-label {
+    min-width: 60px;
+    max-width: 80px;
+    font-size: 10px;
+  }
+
+  .grouped-data-value {
+    font-size: 10px;
   }
 }
 
 @media (max-width: 480px) {
   .admin-charts-section {
-    padding: 15px;
+    padding: 12px;
+  }
+
+  .charts-grid {
+    gap: 15px;
   }
 
   .chart-container {
@@ -251,22 +453,55 @@
   }
 
   .chart-bars,
-  .stacked-chart-bars {
-    height: 150px;
-    gap: 4px;
+  .stacked-chart-bars,
+  .comparison-bars,
+  .time-period-bars {
+    height: 120px;
+    gap: 2px;
   }
 
   .stacked-bar {
     height: 100px;
   }
 
+  .bar-item,
+  .stacked-bar-item,
+  .comparison-bar-item,
+  .time-period-bar-item {
+    min-width: 10px;
+    max-width: 15px;
+  }
+
   .bar-value,
-  .stacked-bar-value {
-    font-size: 9px;
+  .stacked-bar-value,
+  .comparison-bar-value,
+  .time-period-bar-value {
+    font-size: 7px;
   }
 
   .bar-label,
-  .stacked-bar-label {
-    font-size: 8px;
+  .stacked-bar-label,
+  .comparison-bar-label,
+  .time-period-bar-label {
+    font-size: 6px;
+  }
+
+  .chart-container h3 {
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+
+  .grouped-data-chart {
+    max-height: 200px;
+  }
+
+  .grouped-data-label {
+    min-width: 50px;
+    max-width: 60px;
+    font-size: 9px;
+  }
+
+  .grouped-data-value {
+    font-size: 9px;
   }
 }
