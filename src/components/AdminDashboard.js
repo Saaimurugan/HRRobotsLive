@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useGlobalContext } from '../globalContext';
 import '../styles/AdminDashboard.css';
 
-const ADMIN_EMAIL = 'rujulasaai@gmail.com';
+const ADMIN_EMAIL = 'saaimurugan@gmail.com';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();

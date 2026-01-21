@@ -2,7 +2,7 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useGlobalContext } from '../globalContext';
 
-const ADMIN_EMAIL = 'rujulasaai@gmail.com';
+const ADMIN_EMAIL = 'saaimurugan@gmail.com';
 
 const AdminProtectedRoute = ({ children }) => {
   const { globalValue, isAuthenticated } = useGlobalContext();

@@ -21,7 +21,7 @@ questions_table = dynamodb.Table('MCQQuestions')
 test_transactions_table = dynamodb.Table('testTransactions')
 auth_table = dynamodb.Table('authTable')
 
-ADMIN_EMAIL = 'rujulasaai@gmail.com'
+ADMIN_EMAIL = 'saaimurugan@gmail.com'
 
 def get_date_range(days_back):
     """Get date range for filtering"""
