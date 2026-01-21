@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalContext } from '../globalContext';
+import AdminCharts from './AdminCharts';
 import '../styles/AdminDashboard.css';
 
 const ADMIN_EMAIL = 'saaimurugan@gmail.com';
@@ -130,6 +131,9 @@ const AdminDashboard = () => {
           <p className="stat-detail">Currently logged in</p>
         </div>
       </div>
+
+      {/* Charts Section */}
+      <AdminCharts adminData={adminData} />
 
       {/* Users Section */}
       <div className="admin-section">

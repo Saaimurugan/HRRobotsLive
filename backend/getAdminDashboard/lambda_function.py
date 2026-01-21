@@ -198,6 +198,57 @@ def count_items_by_date(items, date_field, days_back):
     
     return count
 
+def get_date_wise_data(items, date_field, days_back=30):
+    """Get items grouped by date for the last N days"""
+    date_buckets = {}
+    today = datetime.datetime.utcnow().date()
+    
+    # Initialize buckets for last N days
+    for i in range(days_back):
+        date = (today - datetime.timedelta(days=i)).isoformat()
+        date_buckets[date] = 0
+    
+    # Count items by date
+    for item in items:
+        if date_field in item:
+            item_date = item[date_field]
+            if isinstance(item_date, str):
+                # Extract date part (YYYY-MM-DD)
+                item_date_only = item_date.split('T')[0]
+                if item_date_only in date_buckets:
+                    date_buckets[item_date_only] += 1
+    
+    # Sort by date (ascending)
+    sorted_dates = sorted(date_buckets.keys())
+    return {date: date_buckets[date] for date in sorted_dates}
+
+def get_date_wise_status_data(items, date_field, status_field, days_back=30):
+    """Get items grouped by date and status for the last N days"""
+    date_status_buckets = {}
+    today = datetime.datetime.utcnow().date()
+    
+    # Initialize buckets for last N days with all statuses
+    statuses = ['completed', 'pending', 'failed', 'in_progress']
+    for i in range(days_back):
+        date = (today - datetime.timedelta(days=i)).isoformat()
+        date_status_buckets[date] = {status: 0 for status in statuses}
+    
+    # Count items by date and status
+    for item in items:
+        if date_field in item and status_field in item:
+            item_date = item[date_field]
+            item_status = item[status_field].lower()
+            if isinstance(item_date, str):
+                # Extract date part (YYYY-MM-DD)
+                item_date_only = item_date.split('T')[0]
+                if item_date_only in date_status_buckets:
+                    if item_status in date_status_buckets[item_date_only]:
+                        date_status_buckets[item_date_only][item_status] += 1
+    
+    # Sort by date (ascending)
+    sorted_dates = sorted(date_status_buckets.keys())
+    return {date: date_status_buckets[date] for date in sorted_dates}
+
 def lambda_handler(event, context):
     try:
         print(f"Event: {event}")
@@ -223,6 +274,12 @@ def lambda_handler(event, context):
         test_transactions_created_this_week = count_items_by_date(all_test_transactions, 'datetime', 7)
         
         active_users = get_active_users()
+        
+        # Generate date-wise chart data (last 30 days)
+        users_date_wise = get_date_wise_data(all_users, 'createdAt', 30)
+        templates_date_wise = get_date_wise_data(all_templates, 'datetime', 30)
+        tests_date_wise = get_date_wise_data(all_test_transactions, 'datetime', 30)
+        tests_status_date_wise = get_date_wise_status_data(all_test_transactions, 'datetime', 'status', 30)
         
         # Build detailed user data with nested templates and transactions
         users_data = []
@@ -287,6 +344,12 @@ def lambda_handler(event, context):
             'testTransactionsCreatedToday': test_transactions_created_today,
             'testTransactionsCreatedThisWeek': test_transactions_created_this_week,
             'activeUsers': active_users,
+            'chartData': {
+                'usersDateWise': users_date_wise,
+                'templatesDateWise': templates_date_wise,
+                'testsDateWise': tests_date_wise,
+                'testsStatusDateWise': tests_status_date_wise
+            },
             'users': users_data
         }
         
