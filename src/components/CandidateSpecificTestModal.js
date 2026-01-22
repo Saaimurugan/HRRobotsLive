@@ -27,6 +27,8 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
   const [isSavingName, setIsSavingName] = useState(false);
   const [showCustomize, setShowCustomize] = useState(false);
   const [selectedOption, setSelectedOption] = useState(null);
+  const [includeProjectAnalysis, setIncludeProjectAnalysis] = useState(false);
+  const [expandedOption, setExpandedOption] = useState(null);
   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -78,6 +80,8 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
     setIsSavingName(false);
     setShowCustomize(false);
     setSelectedOption(null);
+    setIncludeProjectAnalysis(false);
+    setExpandedOption(null);
   };
 
   const handleClose = () => {
@@ -355,6 +359,68 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
 
     const allQuestions = [];
     
+    // If project analysis is enabled, generate scenario-based questions
+    if (includeProjectAnalysis) {
+      try {
+        setGenerationProgress({
+          current: 1,
+          total: 1,
+          currentKeyword: 'Analyzing projects and generating scenario-based questions...'
+        });
+
+        const skillsList = selectedKeywords.map(kw => kw.keyword);
+        const existingQuestions = selectedKeywords.map(kw => kw.keyword).join(", ");
+
+        const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractProjectsAndGenerateQuestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resumeText: resumeText,
+            skills: skillsList,
+            level: selectedKeywords[0]?.complexity || 'intermediate',
+            existingQuestions: existingQuestions,
+            token: JWTValue
+          })
+        });
+
+        const data = await response.json();
+        if (checkUnauthorized(data)) {
+          setIsGenerating(false);
+          return;
+        }
+
+        if (data.statusCode === 200) {
+          const parsedBody = JSON.parse(data.body);
+          const generatedQuestions = parsedBody.questions || [];
+          
+          // Add generated scenario-based questions
+          allQuestions.push(...generatedQuestions);
+          setCustomizedQuestions([...allQuestions]);
+          
+          showToast('success', 'Complete', `Generated ${allQuestions.length} scenario-based questions from project analysis!`);
+        } else {
+          const errorBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+          const errorMsg = errorBody?.error || 'Could not generate scenario-based questions';
+          showToast('warning', 'Partial Success', errorMsg + ' Falling back to standard question generation.');
+          // Fall back to standard question generation
+          await generateStandardQuestions(selectedKeywords, allQuestions);
+        }
+      } catch (error) {
+        console.error('Error in project analysis:', error);
+        showToast('warning', 'Fallback Mode', 'Project analysis failed. Generating standard questions instead.');
+        // Fall back to standard question generation
+        await generateStandardQuestions(selectedKeywords, allQuestions);
+      }
+    } else {
+      // Standard question generation
+      await generateStandardQuestions(selectedKeywords, allQuestions);
+    }
+
+    setIsGenerating(false);
+  };
+
+  // Helper function for standard question generation
+  const generateStandardQuestions = async (selectedKeywords, allQuestions) => {
     for (let i = 0; i < selectedKeywords.length; i++) {
       const kw = selectedKeywords[i];
       setGenerationProgress({
@@ -414,7 +480,6 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       }
     }
 
-    setIsGenerating(false);
     showToast('success', 'Complete', `Generated ${allQuestions.length} new questions successfully!`);
   };
 
@@ -1011,7 +1076,10 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
 
                     {/* Option 3 */}
                     <div 
-                      onClick={() => applyQuickOption('add-resume-remove-others')}
+                      onClick={() => {
+                        applyQuickOption('add-resume-remove-others');
+                        setExpandedOption(expandedOption === 'option3' ? null : 'option3');
+                      }}
                       style={{
                         padding: '10px 12px',
                         border: selectedOption === 'add-resume-remove-others' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
@@ -1027,18 +1095,55 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                           border: selectedOption === 'add-resume-remove-others' ? '5px solid var(--color-primary)' : '2px solid var(--color-border)',
                           background: 'white'
                         }} />
-                        <div>
+                        <div style={{ flex: 1 }}>
                           <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Resume-Focused</span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
                             — Generate questions for the new skills from resume and remove skills not matching.
                           </span>
                         </div>
+                        <svg 
+                          width="16" height="16" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2"
+                          style={{
+                            transform: expandedOption === 'option3' ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s ease',
+                            flexShrink: 0
+                          }}
+                        >
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
                       </div>
+                      
+                      {/* Sub-option for Resume-Focused */}
+                      {expandedOption === 'option3' && selectedOption === 'add-resume-remove-others' && (
+                        <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '1px solid var(--color-border)' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '13px' }}>
+                            <input 
+                              type="checkbox" 
+                              checked={includeProjectAnalysis} 
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                setIncludeProjectAnalysis(!includeProjectAnalysis);
+                              }}
+                              style={{ cursor: 'pointer', width: '16px', height: '16px' }}
+                            />
+                            <span style={{ color: 'var(--color-text-primary)', fontWeight: '500' }}>
+                              Extract projects and work experience to generate scenario-based questions.
+                            </span>
+                          </label>
+                        </div>
+                      )}
                     </div>
 
                     {/* Customize Option */}
                     <div 
-                      onClick={() => setShowCustomize(true)}
+                      onClick={() => {
+                        setShowCustomize(true);
+                        setExpandedOption(null);
+                      }}
                       style={{
                         padding: '10px 12px',
                         border: '1px dashed var(--color-border)',
