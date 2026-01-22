@@ -1020,15 +1020,18 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', margin: '5px' }}>
-                    {/* Option 1 */}
+                    {/* Option 1: Common Skills Only - Enabled only if matching keywords exist */}
                     <div 
-                      onClick={() => applyQuickOption('common-only')}
+                      onClick={() => matchingKeywords.length > 0 && applyQuickOption('common-only')}
                       style={{
                         padding: '10px 12px',
                         border: selectedOption === 'common-only' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                         borderRadius: '6px',
-                        cursor: 'pointer',
-                        background: selectedOption === 'common-only' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)',
+                        cursor: matchingKeywords.length > 0 ? 'pointer' : 'not-allowed',
+                        background: matchingKeywords.length > 0 
+                          ? (selectedOption === 'common-only' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)')
+                          : 'var(--color-bg-secondary)',
+                        opacity: matchingKeywords.length > 0 ? 1 : 0.5,
                         transition: 'all 0.2s ease'
                       }}
                     >
@@ -1036,26 +1039,41 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                         <div style={{
                           width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
                           border: selectedOption === 'common-only' ? '5px solid var(--color-primary)' : '2px solid var(--color-border)',
-                          background: 'white'
+                          background: 'white',
+                          opacity: matchingKeywords.length > 0 ? 1 : 0.5
                         }} />
                         <div>
-                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Common Skills Only</span>
+                          <span style={{ 
+                            fontSize: '13px', 
+                            fontWeight: '500', 
+                            color: matchingKeywords.length > 0 ? 'var(--color-text-primary)' : 'var(--color-text-muted)'
+                          }}>
+                            Common Skills Only
+                          </span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
                             — Questions for skills in both resume & job description.
                           </span>
+                          {matchingKeywords.length === 0 && (
+                            <span style={{ fontSize: '11px', color: 'var(--color-warning)', marginLeft: '8px', display: 'block', marginTop: '4px' }}>
+                              ⚠ No matching skills found
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Option 2 */}
+                    {/* Option 2: Add Resume Skills - Enabled only if new keywords exist */}
                     <div 
-                      onClick={() => applyQuickOption('add-resume')}
+                      onClick={() => nonMatchingKeywords.length > 0 && applyQuickOption('add-resume')}
                       style={{
                         padding: '10px 12px',
                         border: selectedOption === 'add-resume' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                         borderRadius: '6px',
-                        cursor: 'pointer',
-                        background: selectedOption === 'add-resume' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)',
+                        cursor: nonMatchingKeywords.length > 0 ? 'pointer' : 'not-allowed',
+                        background: nonMatchingKeywords.length > 0 
+                          ? (selectedOption === 'add-resume' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)')
+                          : 'var(--color-bg-secondary)',
+                        opacity: nonMatchingKeywords.length > 0 ? 1 : 0.5,
                         transition: 'all 0.2s ease'
                       }}
                     >
@@ -1063,29 +1081,46 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                         <div style={{
                           width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
                           border: selectedOption === 'add-resume' ? '5px solid var(--color-primary)' : '2px solid var(--color-border)',
-                          background: 'white'
+                          background: 'white',
+                          opacity: nonMatchingKeywords.length > 0 ? 1 : 0.5
                         }} />
                         <div>
-                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Add Resume Skills</span>
+                          <span style={{ 
+                            fontSize: '13px', 
+                            fontWeight: '500', 
+                            color: nonMatchingKeywords.length > 0 ? 'var(--color-text-primary)' : 'var(--color-text-muted)'
+                          }}>
+                            Add Resume Skills
+                          </span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
                             — Generate additional questions for resume skills.
                           </span>
+                          {nonMatchingKeywords.length === 0 && (
+                            <span style={{ fontSize: '11px', color: 'var(--color-warning)', marginLeft: '8px', display: 'block', marginTop: '4px' }}>
+                              ⚠ No new skills found
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Option 3 */}
+                    {/* Option 3: Resume-Focused - Enabled only if both matching and new keywords exist */}
                     <div 
                       onClick={() => {
-                        applyQuickOption('add-resume-remove-others');
-                        setExpandedOption(expandedOption === 'option3' ? null : 'option3');
+                        if (matchingKeywords.length > 0 && nonMatchingKeywords.length > 0) {
+                          applyQuickOption('add-resume-remove-others');
+                          setExpandedOption(expandedOption === 'option3' ? null : 'option3');
+                        }
                       }}
                       style={{
                         padding: '10px 12px',
                         border: selectedOption === 'add-resume-remove-others' ? '2px solid var(--color-primary)' : '1px solid var(--color-border)',
                         borderRadius: '6px',
-                        cursor: 'pointer',
-                        background: selectedOption === 'add-resume-remove-others' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)',
+                        cursor: (matchingKeywords.length > 0 && nonMatchingKeywords.length > 0) ? 'pointer' : 'not-allowed',
+                        background: (matchingKeywords.length > 0 && nonMatchingKeywords.length > 0)
+                          ? (selectedOption === 'add-resume-remove-others' ? 'var(--color-primary-light)' : 'var(--color-bg-primary)')
+                          : 'var(--color-bg-secondary)',
+                        opacity: (matchingKeywords.length > 0 && nonMatchingKeywords.length > 0) ? 1 : 0.5,
                         transition: 'all 0.2s ease'
                       }}
                     >
@@ -1093,13 +1128,25 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                         <div style={{
                           width: '16px', height: '16px', borderRadius: '50%', flexShrink: 0,
                           border: selectedOption === 'add-resume-remove-others' ? '5px solid var(--color-primary)' : '2px solid var(--color-border)',
-                          background: 'white'
+                          background: 'white',
+                          opacity: (matchingKeywords.length > 0 && nonMatchingKeywords.length > 0) ? 1 : 0.5
                         }} />
                         <div style={{ flex: 1 }}>
-                          <span style={{ fontSize: '13px', fontWeight: '500', color: 'var(--color-text-primary)' }}>Resume-Focused</span>
+                          <span style={{ 
+                            fontSize: '13px', 
+                            fontWeight: '500', 
+                            color: (matchingKeywords.length > 0 && nonMatchingKeywords.length > 0) ? 'var(--color-text-primary)' : 'var(--color-text-muted)'
+                          }}>
+                            Resume-Focused
+                          </span>
                           <span style={{ fontSize: '12px', color: 'var(--color-text-muted)', marginLeft: '8px' }}>
                             — Generate questions for the new skills from resume and remove skills not matching.
                           </span>
+                          {(matchingKeywords.length === 0 || nonMatchingKeywords.length === 0) && (
+                            <span style={{ fontSize: '11px', color: 'var(--color-warning)', marginLeft: '8px', display: 'block', marginTop: '4px' }}>
+                              ⚠ Requires both matching and new skills
+                            </span>
+                          )}
                         </div>
                         <svg 
                           width="16" height="16" 
@@ -1110,7 +1157,8 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                           style={{
                             transform: expandedOption === 'option3' ? 'rotate(180deg)' : 'rotate(0deg)',
                             transition: 'transform 0.2s ease',
-                            flexShrink: 0
+                            flexShrink: 0,
+                            opacity: (matchingKeywords.length > 0 && nonMatchingKeywords.length > 0) ? 1 : 0.5
                           }}
                         >
                           <polyline points="6 9 12 15 18 9" />
@@ -1131,9 +1179,12 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                               style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                             />
                             <span style={{ color: 'var(--color-text-primary)', fontWeight: '500' }}>
-                              Extract projects and work experience to generate scenario-based questions.
+                              Analyze Projects from Resume
                             </span>
                           </label>
+                          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '8px 0 0 26px' }}>
+                            Extract projects and work experience to generate scenario-based questions
+                          </p>
                         </div>
                       )}
                     </div>
