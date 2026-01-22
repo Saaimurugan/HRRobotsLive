@@ -182,7 +182,58 @@
   padding: 8px 12px;
   background: var(--color-primary-light);
   border-radius: var(--radius-md);
-  display: inline-block;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+  position: relative;
+  cursor: help;
+}
+
+.template-name-tooltip {
+  color: var(--color-primary-dark);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+  margin: 12px 0 8px;
+  padding: 8px 12px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-md);
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  word-break: break-word;
+}
+
+.template-tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-text-primary);
+  color: white;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: 300px;
+  z-index: 1000;
+  margin-bottom: 8px;
+  font-size: var(--font-size-sm);
+  font-weight: normal;
+  box-shadow: var(--shadow-lg);
+  pointer-events: none;
+}
+
+.template-name-tooltip:hover ~ .template-tooltip,
+.template-tooltip:hover {
+  display: block;
 }
 
 /* Feature card icon container */

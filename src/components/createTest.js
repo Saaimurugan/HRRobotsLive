@@ -1404,7 +1404,10 @@ const getPageNumbers = () => {
                     </div>
                   </>
                 )}
-                <h5 style={{marginTop: "-10px"}}>{card.templateName}</h5>
+                <div style={{position: 'relative', display: 'inline-block', width: '100%'}}>
+                  <h5 style={{marginTop: "-10px"}} className="template-name-tooltip">{card.templateName}</h5>
+                  <div className="template-tooltip">{card.templateName}</div>
+                </div>
                 {templateState.message && (
                   <p style={{
                     color: templateState.uuid ? 'var(--color-success-text)' : 'var(--color-error-text)',
