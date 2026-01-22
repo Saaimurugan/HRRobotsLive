@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import * as pdfjsLib from 'pdfjs-dist';
 import { useGlobalContext } from "../globalContext";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -89,6 +89,17 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
     onClose();
   };
 
+  // Auto-extract keywords when modal opens with profiler template
+  useEffect(() => {
+    if (isOpen && template.templateID === 'profiler-template' && template.resume && currentStep === 1) {
+      // Auto-trigger keyword extraction
+      setResumeText(template.resume);
+      setTimeout(() => {
+        extractAndMatchKeywordsAuto(template.resume);
+      }, 100);
+    }
+  }, [isOpen]);
+
   // PDF text extraction
   const extractTextFromPDF = async (file) => {
     const arrayBuffer = await file.arrayBuffer();
@@ -159,6 +170,12 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
   // Fetch template topics (existing questions)
   const fetchTemplateTopics = async () => {
     try {
+      // If this is a profiler template (no templateID), return empty array
+      if (template.templateID === 'profiler-template') {
+        console.log('Profiler template detected - no existing topics');
+        return [];
+      }
+      
       console.log('Fetching topics for template:', template.templateID);
       
       // Use the new getTemplateQuestions endpoint
@@ -197,15 +214,37 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
 
   // Extract keywords from resume and match with template
   const extractAndMatchKeywords = async () => {
-    if (!resumeText.trim()) {
+    // Pre-populate resume text from profiler if available
+    let textToUse = resumeText;
+    if (!textToUse && template.resume) {
+      textToUse = template.resume;
+      setResumeText(template.resume);
+    }
+    
+    if (!textToUse.trim()) {
       showToast('warning', 'No Content', 'Please upload a resume or paste the text.');
       return;
     }
 
+    await performKeywordExtraction(textToUse);
+  };
+
+  // Auto-extraction function for profiler template
+  const extractAndMatchKeywordsAuto = async (resumeTextToUse) => {
+    if (!resumeTextToUse.trim()) {
+      showToast('warning', 'No Content', 'Resume text is missing.');
+      return;
+    }
+
+    await performKeywordExtraction(resumeTextToUse);
+  };
+
+  // Core keyword extraction logic
+  const performKeywordExtraction = async (textToUse) => {
     setIsExtracting(true);
     try {
       // Extract candidate name from resume
-      const extractedName = extractCandidateName(resumeText);
+      const extractedName = extractCandidateName(textToUse);
       setCandidateName(extractedName);
       
       // Fetch template topics first
@@ -213,16 +252,20 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       console.log('Fetched template topics:', topics);
       setTemplateTopics(topics);
 
-      // Show warning if template has no topics
+      // Show appropriate message based on template type
       if (topics.length === 0) {
-        showToast('warning', 'No Template Topics', 'This template has no questions with topics. All keywords from the resume will be treated as new.');
+        if (template.templateID === 'profiler-template') {
+          showToast('info', 'New Test', 'Creating a new test from scratch. All keywords from the resume will be used to generate questions.');
+        } else {
+          showToast('info', 'No Template Topics', 'This template has no questions with topics. All keywords from the resume will be treated as new.');
+        }
       }
 
       // Extract keywords from resume
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractKeywordsFromJD", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jdText: resumeText, token: JWTValue })
+        body: JSON.stringify({ jdText: textToUse, token: JWTValue })
       });
       const data = await response.json();
       
@@ -301,7 +344,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       setNonMatchingKeywords(nonMatching);
       setCurrentStep(2);
     } catch (error) {
-      console.error('Error in extractAndMatchKeywords:', error);
+      console.error('Error in performKeywordExtraction:', error);
       showToast('error', 'Error', 'Failed to extract keywords from resume.');
     } finally {
       setIsExtracting(false);
@@ -545,25 +588,33 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       }
       
       console.log("Test creation proceeding...");
-      // Get all questions from the original template
-      const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passedTemplateID: template.templateID, token: JWTValue })
-      });
       
-      const questionsData = await questionsResponse.json();
-      console.log('Questions API response:', questionsData);
+      // For profiler template, skip fetching existing questions
+      let allTemplateQuestions = [];
       
-      if (checkUnauthorized(questionsData)) {
-        setIsCreatingTest(false);
-        return;
-      }
+      if (template.templateID !== 'profiler-template') {
+        // Get all questions from the original template
+        const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ passedTemplateID: template.templateID, token: JWTValue })
+        });
+        
+        const questionsData = await questionsResponse.json();
+        console.log('Questions API response:', questionsData);
+        
+        if (checkUnauthorized(questionsData)) {
+          setIsCreatingTest(false);
+          return;
+        }
 
-      const parsedQuestionsBody = JSON.parse(questionsData.body);
-      console.log('Parsed questions body:', parsedQuestionsBody);
-      const allTemplateQuestions = parsedQuestionsBody.questions || [];
-      console.log('All template questions count:', allTemplateQuestions.length);
+        const parsedQuestionsBody = JSON.parse(questionsData.body);
+        console.log('Parsed questions body:', parsedQuestionsBody);
+        allTemplateQuestions = parsedQuestionsBody.questions || [];
+        console.log('All template questions count:', allTemplateQuestions.length);
+      } else {
+        console.log('Profiler template - no existing questions to fetch');
+      }
       
       console.log('extractedKeywords:', extractedKeywords);
       console.log('extractedKeywords with action keep:', extractedKeywords.filter(kw => kw.action === 'keep'));
@@ -649,15 +700,15 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       
       // Validate that we have questions
       if (allQuestions.length === 0) {
-        showToast('warning', 'No Questions', 'No questions available for the test. Please select at least one matching keyword to keep existing questions, or generate new questions from resume keywords.');
+        showToast('warning', 'No Questions', 'No questions available for the test. Please select at least one keyword to generate questions.');
         setIsCreatingTest(false);
         return;
       }
       
       // Use the templateName state (which can be edited by user in Step 4)
       const finalTemplateName = templateName || (candidateName 
-        ? `${template.templateName} - ${candidateName}`
-        : `${template.templateName} - Candidate Specific`);
+        ? `Assessment for ${candidateName}`
+        : `Candidate-Specific Assessment`);
       
       // Save questions (this will create a new template)
       const saveResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
@@ -681,28 +732,44 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       const newTemplateID = saveData.templateID;
       setNewTemplateID(newTemplateID); // Store the new template ID for later updates
 
-      // Copy test configuration from original template
-      const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateID: template.templateID, token: JWTValue })
-      });
-      
-      const configData = await configResponse.json();
-      if (!checkUnauthorized(configData) && configData.statusCode === 200) {
-        const parsedConfigBody = JSON.parse(configData.body);
-        const config = parsedConfigBody.config || {};
+      // Copy test configuration from original template (if not profiler template)
+      if (template.templateID !== 'profiler-template') {
+        const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateID: template.templateID, token: JWTValue })
+        });
         
-        // Set configuration for new template
+        const configData = await configResponse.json();
+        if (!checkUnauthorized(configData) && configData.statusCode === 200) {
+          const parsedConfigBody = JSON.parse(configData.body);
+          const config = parsedConfigBody.config || {};
+          
+          // Set configuration for new template
+          await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              templateID: newTemplateID,
+              allowedDefaults: config.allowedDefaults || '10',
+              numberOfQuestions: Math.min(allQuestions.length, parseInt(config.numberOfQuestions || '10')).toString(),
+              testDuration: config.testDuration || '60',
+              sensitivityLevel: config.sensitivityLevel || '5',
+              token: JWTValue 
+            })
+          });
+        }
+      } else {
+        // Set default configuration for profiler template
         await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             templateID: newTemplateID,
-            allowedDefaults: config.allowedDefaults || '10',
-            numberOfQuestions: Math.min(allQuestions.length, parseInt(config.numberOfQuestions || '10')).toString(),
-            testDuration: config.testDuration || '60',
-            sensitivityLevel: config.sensitivityLevel || '5',
+            allowedDefaults: '10',
+            numberOfQuestions: Math.min(allQuestions.length, 10).toString(),
+            testDuration: '60',
+            sensitivityLevel: '5',
             token: JWTValue 
           })
         });
