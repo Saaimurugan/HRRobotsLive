@@ -292,7 +292,7 @@
 /* Questions List */
 .questions-list {
   overflow-y: auto;
-  max-height: 810px;
+  max-height: 100vh;
   padding-right: 10px;
 }
 
