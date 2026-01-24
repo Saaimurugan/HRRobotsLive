@@ -125,6 +125,7 @@ const EditTemplate = () => {
   const [manualTopic, setManualTopic] = useState(""); // Topic for manual question entry
   const [level, setLevel] = useState("fresher");
   const [groupByTopic, setGroupByTopic] = useState(true);
+  const [aiQuestionTypes, setAiQuestionTypes] = useState({ mcq: 20, range: 0, elaborate: 0, code: 0 }); // Question types for AI generation
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingOriginalIndex, setEditingOriginalIndex] = useState(null); // Track original index in questionSet
@@ -575,6 +576,17 @@ const EditTemplate = () => {
       return;
     }
 
+    const totalQuestions = Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0);
+    if (totalQuestions === 0) {
+      showToast('warning', 'No Questions', 'Please specify at least one question to generate.');
+      return;
+    }
+    
+    if (totalQuestions > 20) {
+      showToast('warning', 'Too Many Questions', 'Total questions cannot exceed 20. Please reduce the counts.');
+      return;
+    }
+
     setIsGenerating(true);
     const formattedQuestions = questionSet.map(q => q.question).join(", ");
 
@@ -582,7 +594,7 @@ const EditTemplate = () => {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI__", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, level, formattedQuestions, token: JWTValue }),
+        body: JSON.stringify({ topic, level, formattedQuestions, questionTypes: aiQuestionTypes, token: JWTValue }),
       });
 
       const data = await response.json();
@@ -592,8 +604,8 @@ const EditTemplate = () => {
       const generatedQuestions = JSON.parse(responseContent);
 
       const questionsWithTopic = generatedQuestions.map(q => {
-        // Calculate correctAnswerIndex from correctAnswer value
-        const correctAnswerIndex = q.options ? q.options.indexOf(q.correctAnswer) : -1;
+        // Calculate correctAnswerIndex from correctAnswer value for MCQ
+        const correctAnswerIndex = q.options && Array.isArray(q.options) ? q.options.indexOf(q.correctAnswer) : -1;
         return {
           ...q,
           question: q.question,  // Clean question text without topic
@@ -607,6 +619,8 @@ const EditTemplate = () => {
       if (!ttname) {
         setTtname(topic + " - " + level);
       }
+      
+      showToast('success', 'Success', `Generated ${questionsWithTopic.length} questions successfully!`);
     } catch (error) {
       //console.error(error);
       showToast('error', 'Generation Failed', 'Error generating questions. Please try again later.');
@@ -929,8 +943,74 @@ const EditTemplate = () => {
                     <option value="Super Advanced/very complex">Super Advanced</option>
                   </select>
                 </div>
-                <button className="btn-primary" onClick={generateQuestions} disabled={isGenerating}>
-                  {isGenerating ? "Generating..." : "Generate 20 Questions"}
+                <div className="form-group">
+                  <label>Question Types (Total: {Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0)} / 20)</label>
+                  <div className="question-types-grid">
+                    <div className="type-input-group">
+                      <label>MCQ</label>
+                      <input
+                        type="number"
+                        value={aiQuestionTypes.mcq}
+                        onChange={(e) => {
+                          const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                          setAiQuestionTypes({ ...aiQuestionTypes, mcq: newVal });
+                        }}
+                        min="0"
+                        max="20"
+                      />
+                    </div>
+                    <div className="type-input-group">
+                      <label>Range</label>
+                      <input
+                        type="number"
+                        value={aiQuestionTypes.range}
+                        onChange={(e) => {
+                          const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                          setAiQuestionTypes({ ...aiQuestionTypes, range: newVal });
+                        }}
+                        min="0"
+                        max="20"
+                      />
+                    </div>
+                    <div className="type-input-group">
+                      <label>Elaborate</label>
+                      <input
+                        type="number"
+                        value={aiQuestionTypes.elaborate}
+                        onChange={(e) => {
+                          const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                          setAiQuestionTypes({ ...aiQuestionTypes, elaborate: newVal });
+                        }}
+                        min="0"
+                        max="20"
+                      />
+                    </div>
+                    <div className="type-input-group">
+                      <label>Code</label>
+                      <input
+                        type="number"
+                        value={aiQuestionTypes.code}
+                        onChange={(e) => {
+                          const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                          setAiQuestionTypes({ ...aiQuestionTypes, code: newVal });
+                        }}
+                        min="0"
+                        max="20"
+                      />
+                    </div>
+                  </div>
+                  {Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0) > 20 && (
+                    <p style={{ color: 'var(--color-error)', fontSize: '0.85em', marginTop: '8px' }}>
+                      Total questions cannot exceed 20. Please reduce the counts.
+                    </p>
+                  )}
+                </div>
+                <button 
+                  className="btn-primary" 
+                  onClick={generateQuestions} 
+                  disabled={isGenerating || Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0) === 0 || Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0) > 20}
+                >
+                  {isGenerating ? "Generating..." : `Generate ${Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0)} Questions`}
                 </button>
                 <p>New questions will be added to the existing ones. Change topic to mix questions from different areas.</p>
               </div>
