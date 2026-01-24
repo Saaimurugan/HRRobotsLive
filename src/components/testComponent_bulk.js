@@ -99,6 +99,9 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
         
         // Set first question
         if (parsedBody.questions.length > 0) {
+          console.log('First question data:', parsedBody.questions[0]); // DEBUG
+          console.log('Question type:', parsedBody.questions[0].type); // DEBUG
+          console.log('Question options:', parsedBody.questions[0].options); // DEBUG
           setCurrentQuestion(parsedBody.questions[0]);
         }
         
@@ -363,7 +366,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       // Submit test - answers are already saved by saveAnswerSubmitted
       // Just trigger score calculation
       const response = await fetch(
-        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore__",
+        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore____",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -679,35 +682,106 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                   
                   <div className="question-content">
                     
-                    <fieldset className="question-options">
-                      <legend className="sr-only">Select your answer for question {getDisplayQuestionNumber()}</legend>
-                      <ul className="options-list" role="radiogroup">
-                        {currentQuestion.options?.map((option, optionIndex) => {
-                          const isSelected = answers[currentQuestionIndex] === option;
-                          return (
-                            <li 
-                              key={optionIndex} 
-                              onClick={() => saveAnswer(option)}
-                              className={`option-item ${isSelected ? 'selected' : ''}`}
-                              role="presentation"
-                            >
-                              <input
-                                type="radio"
-                                id={`q${currentQuestionIndex}-option-${optionIndex}`}
-                                name={`question-${currentQuestionIndex}`}
-                                value={option}
-                                checked={isSelected}
-                                onChange={() => saveAnswer(option)}
-                              />
-                              <label htmlFor={`q${currentQuestionIndex}-option-${optionIndex}`} className="option-label">
-                                <span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span>
-                                <span className="option-text">{option}</span>
-                              </label>
-                            </li>
-                          );
-                        }) || []}
-                      </ul>
-                    </fieldset>
+                    {/* Elaborate Questions */}
+                    {currentQuestion.type === 'elaborate' && (
+                      <div className="elaborate-question-container">
+                        <textarea
+                          value={answers[currentQuestionIndex] || ''}
+                          onChange={(e) => saveAnswer(e.target.value)}
+                          placeholder="Type your detailed answer here..."
+                          className="elaborate-textarea"
+                          rows="10"
+                          aria-label="Enter your elaborate answer"
+                        />
+                        <div className="character-count">
+                          {(answers[currentQuestionIndex] || '').length} characters
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Code Questions */}
+                    {currentQuestion.type === 'code' && (
+                      <div className="code-question-container">
+                        <textarea
+                          value={answers[currentQuestionIndex] || ''}
+                          onChange={(e) => saveAnswer(e.target.value)}
+                          placeholder="Write your code solution here..."
+                          className="code-textarea"
+                          rows="15"
+                          spellCheck="false"
+                          aria-label="Enter your code solution"
+                          style={{ fontFamily: 'monospace', fontSize: '14px' }}
+                        />
+                        <div className="character-count">
+                          {(answers[currentQuestionIndex] || '').length} characters
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Range Questions */}
+                    {currentQuestion.type === 'range' && (
+                      <div className="range-question-container">
+                        <div className="range-info">
+                          <span>Min: {currentQuestion.rangeMin || 0}</span>
+                          <span>Max: {currentQuestion.rangeMax || 100}</span>
+                          <span>Selected: {answers[currentQuestionIndex] || 'Not selected'}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={currentQuestion.rangeMin || 0}
+                          max={currentQuestion.rangeMax || 100}
+                          value={answers[currentQuestionIndex] || currentQuestion.rangeMin || 0}
+                          onChange={(e) => saveAnswer(e.target.value)}
+                          className="range-slider"
+                          aria-label={`Select value between ${currentQuestion.rangeMin || 0} and ${currentQuestion.rangeMax || 100}`}
+                        />
+                        <div className="range-labels">
+                          <span>{currentQuestion.rangeMin || 0}</span>
+                          <span>{currentQuestion.rangeMax || 100}</span>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* MCQ Questions */}
+                    {(!currentQuestion.type || currentQuestion.type === 'mcq') && Array.isArray(currentQuestion.options) && currentQuestion.options.length > 0 && (
+                      <fieldset className="question-options">
+                        <legend className="sr-only">Select your answer for question {getDisplayQuestionNumber()}</legend>
+                        <ul className="options-list" role="radiogroup">
+                          {currentQuestion.options.map((option, optionIndex) => {
+                            const isSelected = answers[currentQuestionIndex] === option;
+                            return (
+                              <li 
+                                key={optionIndex} 
+                                onClick={() => saveAnswer(option)}
+                                className={`option-item ${isSelected ? 'selected' : ''}`}
+                                role="presentation"
+                              >
+                                <input
+                                  type="radio"
+                                  id={`q${currentQuestionIndex}-option-${optionIndex}`}
+                                  name={`question-${currentQuestionIndex}`}
+                                  value={option}
+                                  checked={isSelected}
+                                  onChange={() => saveAnswer(option)}
+                                />
+                                <label htmlFor={`q${currentQuestionIndex}-option-${optionIndex}`} className="option-label">
+                                  <span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span>
+                                  <span className="option-text">{option}</span>
+                                </label>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </fieldset>
+                    )}
+                    
+                    {/* MCQ with no options - show error */}
+                    {(!currentQuestion.type || currentQuestion.type === 'mcq') && (!Array.isArray(currentQuestion.options) || currentQuestion.options.length === 0) && (
+                      <div className="question-error">
+                        <p>⚠️ This question has no options available. Please contact support.</p>
+                      </div>
+                    )}
+                    
                   </div>
                 </div>
               </div>
