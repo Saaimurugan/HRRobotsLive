@@ -45,6 +45,7 @@ const ProfilerPage = () => {
   const [showForm, setShowForm] = useState(true);
   const [toasts, setToasts] = useState([]);
   const [showTestModal, setShowTestModal] = useState(false);
+  const [showReportPopup, setShowReportPopup] = useState(false);
   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
   const location = useLocation();
@@ -259,6 +260,7 @@ const ProfilerPage = () => {
       const responseContent = parsedBody.data;
       setReport(responseContent);
       setShowForm(false);
+      setShowReportPopup(true);
     } catch (error) {
       //console.error(error);
       showToast('error', 'Error', 'Error generating suitability report.');
@@ -453,18 +455,62 @@ const ProfilerPage = () => {
           </div>
         )}
 
-        {report && (
-          <div className="report-actions" style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px', paddingBottom: '20px' }}>
-            <button 
-              className="submit-btn" 
-              onClick={() => setShowTestModal(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
-              </svg>
-              Generate Candidate-Specific Test
-            </button>
+        {/* Report Completion Popup */}
+        {showReportPopup && report && (
+          <div className="jd-modal-overlay" onClick={() => setShowReportPopup(false)}>
+            <div className="jd-modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+              <div className="jd-modal-header">
+                <h2>Suitability Report Generated</h2>
+                <button className="jd-modal-close" onClick={() => setShowReportPopup(false)}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="jd-modal-body" style={{ textAlign: 'center', padding: '30px 20px' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--color-success, #38a169)" strokeWidth="2" style={{ margin: '0 auto', display: 'block' }}>
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                    <polyline points="22 4 12 14.01 9 11.01" />
+                  </svg>
+                </div>
+
+                <h3 style={{ marginBottom: '10px', fontSize: '18px', fontWeight: '600' }}>
+                  {report.CandidateName}
+                </h3>
+                <p style={{ color: 'var(--color-text-muted)', marginBottom: '20px', fontSize: '14px' }}>
+                  Suitability Score: <span style={{ fontWeight: '600', color: 'var(--color-success)' }}>{report.Suitability}</span>
+                </p>
+
+                <p style={{ color: 'var(--color-text-secondary)', marginBottom: '30px', fontSize: '14px', lineHeight: '1.6' }}>
+                  The suitability report has been generated successfully. Would you like to create a candidate-specific test based on this assessment?
+                </p>
+
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <button 
+                    className="btn-secondary" 
+                    onClick={() => setShowReportPopup(false)}
+                    style={{ minWidth: '120px' }}
+                  >
+                    View Report
+                  </button>
+                  <button 
+                    className="btn-primary" 
+                    onClick={() => {
+                      setShowReportPopup(false);
+                      setShowTestModal(true);
+                    }}
+                    style={{ minWidth: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" />
+                    </svg>
+                    Generate Test
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
