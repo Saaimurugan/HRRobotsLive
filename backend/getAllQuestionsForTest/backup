@@ -6,14 +6,6 @@ import dateutil.tz
 from boto3.dynamodb.conditions import Attr, Key
 from concurrent.futures import ThreadPoolExecutor
 import threading
-from decimal import Decimal
-
-# Custom JSON encoder to handle Decimal types from DynamoDB
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return int(obj) if obj % 1 == 0 else float(obj)
-        return super(DecimalEncoder, self).default(obj)
 
 # Initialize DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
@@ -297,7 +289,7 @@ def lambda_handler(event, context):
                     'questions': [],
                     'total_questions': 0,
                     'answered_count': len(previous_answers_dict)
-                }, cls=DecimalEncoder)
+                })
             }
 
         # Build topic summary
@@ -318,7 +310,7 @@ def lambda_handler(event, context):
                     'template_id': template_id,
                     'max_questions': num_questions_for_test
                 }
-            }, cls=DecimalEncoder)
+            })
         }
 
     except Exception as e:

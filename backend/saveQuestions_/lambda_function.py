@@ -137,12 +137,19 @@ def lambda_handler(event, context):
             question_item = {
                 'questionID': question_ID,
                 'templateID': template_ID,
+                'type': question.get('type', 'mcq'),  # Include question type
                 'topic': topic,  # Separate topic field
                 'question': question_text,  # Clean question text
                 'options': question.get('options'),
                 'correctAnswer': question.get('correctAnswer'),
                 "datetime": str(datetime.datetime.now())
             }
+            
+            # Add range-specific fields if present
+            if question.get('type') == 'range':
+                question_item['rangeMin'] = question.get('rangeMin', 0)
+                question_item['rangeMax'] = question.get('rangeMax', 100)
+                question_item['anyAnswerCorrect'] = question.get('anyAnswerCorrect', False)
             
             questions_table.put_item(Item=question_item)
 
