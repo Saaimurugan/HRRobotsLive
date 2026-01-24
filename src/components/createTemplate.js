@@ -120,11 +120,15 @@ const CreateTemplate = () => {
     options: [],
     correctAnswer: "",
     correctAnswerIndex: -1,
+    rangeMin: 0,
+    rangeMax: 10,
+    anyAnswerCorrect: false,
   });
   const [topic, setTopic] = useState("");
   const [manualTopic, setManualTopic] = useState(""); // Topic for manual question entry
   const [level, setLevel] = useState("fresher");
   const [groupByTopic, setGroupByTopic] = useState(true);
+  const [aiQuestionTypes, setAiQuestionTypes] = useState({ mcq: 20, range: 0, elaborate: 0, code: 0 }); // Question types for AI generation
   const [isEditing, setIsEditing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [editingOriginalIndex, setEditingOriginalIndex] = useState(null); // Track original index in questionSet
@@ -294,6 +298,12 @@ const CreateTemplate = () => {
   };
 
   const addQuestion = () => {
+    // Validate question field is not empty
+    if (!formData.question || !formData.question.trim()) {
+      showToast('warning', 'Missing Question', 'Question field cannot be empty.');
+      return;
+    }
+
     // NEW: Use separate topic field instead of embedding in question text
     const newQuestion = { 
       type: formData.type, 
@@ -306,6 +316,12 @@ const CreateTemplate = () => {
         showToast('warning', 'Missing Options', 'MCQ must have at least one option.');
         return;
       }
+      // Validate that all options are not empty
+      const hasEmptyOption = formData.options.some(opt => !opt || !opt.trim());
+      if (hasEmptyOption) {
+        showToast('warning', 'Empty Options', 'All options must have text. Please fill in or remove empty options.');
+        return;
+      }
       if (formData.correctAnswerIndex < 0) {
         showToast('warning', 'No Answer Selected', 'Please select a correct answer.');
         return;
@@ -313,6 +329,24 @@ const CreateTemplate = () => {
       newQuestion.options = formData.options;
       newQuestion.correctAnswer = formData.options[formData.correctAnswerIndex];
       newQuestion.correctAnswerIndex = formData.correctAnswerIndex;
+    } else if (formData.type === "range") {
+      if (formData.rangeMin >= formData.rangeMax) {
+        showToast('warning', 'Invalid Range', 'Minimum value must be less than maximum value.');
+        return;
+      }
+      if (!formData.anyAnswerCorrect && (!formData.correctAnswer || formData.correctAnswer === '')) {
+        showToast('warning', 'Missing Correct Answer', 'Please enter a correct answer or check "Any selection is a correct answer".');
+        return;
+      }
+      newQuestion.options = "Range";
+      newQuestion.rangeMin = formData.rangeMin;
+      newQuestion.rangeMax = formData.rangeMax;
+      newQuestion.correctAnswer = formData.anyAnswerCorrect ? "All" : formData.correctAnswer;
+      newQuestion.anyAnswerCorrect = formData.anyAnswerCorrect;
+    } else if (formData.type === "elaborate" || formData.type === "code") {
+      // For elaborate and code questions, correctAnswer is optional (can be empty for manual evaluation)
+      newQuestion.options = "";
+      newQuestion.correctAnswer = formData.correctAnswer || "";
     } else {
       if (!formData.correctAnswer) {
         showToast('warning', 'Missing Answer', 'Answer cannot be empty for a descriptive question.');
@@ -328,7 +362,7 @@ const CreateTemplate = () => {
   };
 
   const clearForm = () => {
-    setFormData({ type: "mcq", question: "", options: [], correctAnswer: "", correctAnswerIndex: -1 });
+    setFormData({ type: "mcq", question: "", options: [], correctAnswer: "", correctAnswerIndex: -1, rangeMin: 0, rangeMax: 10, anyAnswerCorrect: false });
     setManualTopic("");
     setIsEditing(false);
     setEditingOriginalIndex(null);
@@ -343,13 +377,16 @@ const CreateTemplate = () => {
     const questionToEdit = questionSet[originalIndex];
     // NEW: Use separate topic field directly
     const topic = questionToEdit.topic || '__NO_TOPIC__';
-    const correctIndex = questionToEdit.options ? questionToEdit.options.indexOf(questionToEdit.correctAnswer) : -1;
+    const correctIndex = questionToEdit.options && Array.isArray(questionToEdit.options) ? questionToEdit.options.indexOf(questionToEdit.correctAnswer) : -1;
     setFormData({
       type: questionToEdit.type,
       question: questionToEdit.question, // Clean question text
-      options: questionToEdit.options || [],
+      options: Array.isArray(questionToEdit.options) ? questionToEdit.options : [],
       correctAnswer: questionToEdit.correctAnswer || "",
       correctAnswerIndex: correctIndex,
+      rangeMin: questionToEdit.rangeMin || 0,
+      rangeMax: questionToEdit.rangeMax || 10,
+      anyAnswerCorrect: questionToEdit.anyAnswerCorrect || false,
     });
     setManualTopic(topic === '__NO_TOPIC__' ? '' : topic);
     setIsEditing(true);
@@ -358,13 +395,27 @@ const CreateTemplate = () => {
 
   const saveEditedQuestion = () => {
     const updatedQuestions = [...questionSet];
-    const correctAnswer = formData.correctAnswerIndex >= 0 ? formData.options[formData.correctAnswerIndex] : formData.correctAnswer;
+    let correctAnswer = formData.correctAnswer;
+    let options = formData.options;
+    
+    if (formData.type === "mcq") {
+      correctAnswer = formData.correctAnswerIndex >= 0 ? formData.options[formData.correctAnswerIndex] : formData.correctAnswer;
+      options = formData.options;
+    } else if (formData.type === "range") {
+      correctAnswer = formData.anyAnswerCorrect ? "All" : formData.correctAnswer;
+      options = "Range";
+    } else if (formData.type === "elaborate" || formData.type === "code") {
+      correctAnswer = formData.correctAnswer || "";
+      options = "";
+    }
+    
     updatedQuestions[editingOriginalIndex] = { 
       ...formData,
-      topic: manualTopic || '__NO_TOPIC__',  // NEW: Separate topic field
-      question: formData.question,  // Clean question text without topic prefix
+      topic: manualTopic || '__NO_TOPIC__',
+      question: formData.question,
       correctAnswer: correctAnswer,
       correctAnswerIndex: formData.correctAnswerIndex >= 0 ? formData.correctAnswerIndex : undefined,
+      options: options,
     };
     setQuestionSet(updatedQuestions);
     clearForm();
@@ -482,14 +533,25 @@ const CreateTemplate = () => {
       return;
     }
 
+    const totalQuestions = Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0);
+    if (totalQuestions === 0) {
+      showToast('warning', 'No Questions', 'Please specify at least one question to generate.');
+      return;
+    }
+    
+    if (totalQuestions > 20) {
+      showToast('warning', 'Too Many Questions', 'Total questions cannot exceed 20. Please reduce the counts.');
+      return;
+    }
+
     setIsGenerating(true);
     const formattedQuestions = questionSet.map(q => q.question).join(", ");
 
     try {
-      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
+      const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI__", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic, level, formattedQuestions, token: JWTValue }),
+        body: JSON.stringify({ topic, level, formattedQuestions, questionTypes: aiQuestionTypes, token: JWTValue }),
       });
 
       const data = await response.json();
@@ -499,8 +561,8 @@ const CreateTemplate = () => {
       const generatedQuestions = JSON.parse(responseContent);
 
       const questionsWithTopic = generatedQuestions.map(q => {
-        // Calculate correctAnswerIndex from correctAnswer value
-        const correctAnswerIndex = q.options ? q.options.indexOf(q.correctAnswer) : -1;
+        // Calculate correctAnswerIndex from correctAnswer value for MCQ
+        const correctAnswerIndex = q.options && Array.isArray(q.options) ? q.options.indexOf(q.correctAnswer) : -1;
         return {
           ...q,
           topic: topic, // Use separate topic field
@@ -525,6 +587,8 @@ const CreateTemplate = () => {
         const topicsString = Array.from(allTopics).sort().join('/');
         setTtname(topicsString + " - " + level);
       }
+      
+      showToast('success', 'Success', `Generated ${questionsWithTopic.length} questions successfully!`);
     } catch (error) {
       //console.error(error);
       showToast('error', 'Generation Failed', 'Error generating questions. Please try again later.');
@@ -621,7 +685,36 @@ const CreateTemplate = () => {
                         {isSample && <span className="sample-question-badge">Sample - Will be replaced when you add questions</span>}
                         {q.topic && !isSample && <span className="question-topic-tag">{q.topic}</span>}
                         <h4>{index + 1}. {q.displayQuestion}</h4>
-                        {q.options && (
+                        {q.type === "range" ? (
+                          <div className="range-display">
+                            <p><strong>Range:</strong> {q.rangeMin} to {q.rangeMax}</p>
+                            <p><strong>Correct Answer:</strong> {q.anyAnswerCorrect ? "Any selection is correct" : q.correctAnswer}</p>
+                          </div>
+                        ) : q.type === "elaborate" ? (
+                          <div className="elaborate-display">
+                            <p><strong>Type:</strong> Elaborate Answer</p>
+                            {q.correctAnswer && (
+                              <div style={{ marginTop: '8px' }}>
+                                <strong>Expected Answer:</strong>
+                                <p style={{ whiteSpace: 'pre-wrap', marginTop: '4px', padding: '8px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
+                                  {q.correctAnswer}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ) : q.type === "code" ? (
+                          <div className="code-display">
+                            <p><strong>Type:</strong> Code Solution</p>
+                            {q.correctAnswer && (
+                              <div style={{ marginTop: '8px' }}>
+                                <strong>Expected Solution:</strong>
+                                <pre style={{ whiteSpace: 'pre-wrap', marginTop: '4px', padding: '8px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', fontFamily: 'monospace', fontSize: '0.9em' }}>
+                                  {q.correctAnswer}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        ) : q.options && Array.isArray(q.options) && (
                           <ul>{q.options.map((opt, i) => <li key={i} className={(q.correctAnswerIndex !== undefined ? i === q.correctAnswerIndex : opt === q.correctAnswer) ? 'correct-answer' : ''}>{opt}</li>)}</ul>
                         )}
                         <div className="qcard-actions">
@@ -650,6 +743,9 @@ const CreateTemplate = () => {
                 <label>Type</label>
                 <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
                   <option value="mcq">MCQ</option>
+                  <option value="range">Range</option>
+                  <option value="elaborate">Elaborate</option>
+                  <option value="code">Code</option>
                 </select>
               </div>
 
@@ -701,6 +797,74 @@ const CreateTemplate = () => {
                 </div>
               )}
 
+              {formData.type === "range" && (
+                <div className="form-group">
+                  <label>Range Settings</label>
+                  <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>Minimum</label>
+                      <input
+                        type="number"
+                        value={formData.rangeMin}
+                        onChange={(e) => setFormData({ ...formData, rangeMin: Number(e.target.value) })}
+                        placeholder="Min value"
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>Maximum</label>
+                      <input
+                        type="number"
+                        value={formData.rangeMax}
+                        onChange={(e) => setFormData({ ...formData, rangeMax: Number(e.target.value) })}
+                        placeholder="Max value"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="form-group" style={{ marginTop: '15px' }}>
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={formData.anyAnswerCorrect}
+                        onChange={(e) => setFormData({ ...formData, anyAnswerCorrect: e.target.checked })}
+                      />
+                      Any selection is a correct answer
+                    </label>
+                  </div>
+
+                  {!formData.anyAnswerCorrect && (
+                    <div style={{ marginTop: '10px' }}>
+                      <label style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>Correct Answer</label>
+                      <input
+                        type="number"
+                        value={formData.correctAnswer}
+                        onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                        placeholder="Enter correct value"
+                        min={formData.rangeMin}
+                        max={formData.rangeMax}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {(formData.type === "elaborate" || formData.type === "code") && (
+                <div className="form-group">
+                  <label>{formData.type === "elaborate" ? "Expected Answer (Optional)" : "Expected Code Solution (Optional)"}</label>
+                  <textarea
+                    value={formData.correctAnswer}
+                    onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                    placeholder={formData.type === "elaborate" ? "Enter the expected elaborate answer or leave empty for manual evaluation..." : "Enter the expected code solution or leave empty for manual evaluation..."}
+                    style={{ minHeight: '150px', fontFamily: formData.type === "code" ? 'monospace' : 'inherit' }}
+                  />
+                  <p style={{ fontSize: '0.85em', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+                    {formData.type === "elaborate" 
+                      ? "This will be used as a reference answer for evaluation. Candidates will provide their own elaborate response."
+                      : "This will be used as a reference solution for evaluation. Candidates will write their own code."}
+                  </p>
+                </div>
+              )}
+
               {isEditing ? (
                 <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
                   <button className="btn-primary" onClick={saveEditedQuestion}>Save Changes</button>
@@ -748,10 +912,76 @@ const CreateTemplate = () => {
                   <option value="Super Advanced/very complex">Super Advanced</option>
                 </select>
               </div>
-              <button className="btn-primary" onClick={generateQuestions} disabled={isGenerating}>
-                {isGenerating ? "Generating..." : "Generate 20 Questions"}
+              <div className="form-group">
+                <label>Question Types (Total: {Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0)} / 20)</label>
+                <div className="question-types-grid">
+                  <div className="type-input-group">
+                    <label>MCQ</label>
+                    <input
+                      type="number"
+                      value={aiQuestionTypes.mcq}
+                      onChange={(e) => {
+                        const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                        setAiQuestionTypes({ ...aiQuestionTypes, mcq: newVal });
+                      }}
+                      min="0"
+                      max="20"
+                    />
+                  </div>
+                  <div className="type-input-group">
+                    <label>Range</label>
+                    <input
+                      type="number"
+                      value={aiQuestionTypes.range}
+                      onChange={(e) => {
+                        const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                        setAiQuestionTypes({ ...aiQuestionTypes, range: newVal });
+                      }}
+                      min="0"
+                      max="20"
+                    />
+                  </div>
+                  <div className="type-input-group">
+                    <label>Elaborate</label>
+                    <input
+                      type="number"
+                      value={aiQuestionTypes.elaborate}
+                      onChange={(e) => {
+                        const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                        setAiQuestionTypes({ ...aiQuestionTypes, elaborate: newVal });
+                      }}
+                      min="0"
+                      max="20"
+                    />
+                  </div>
+                  <div className="type-input-group">
+                    <label>Code</label>
+                    <input
+                      type="number"
+                      value={aiQuestionTypes.code}
+                      onChange={(e) => {
+                        const newVal = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+                        setAiQuestionTypes({ ...aiQuestionTypes, code: newVal });
+                      }}
+                      min="0"
+                      max="20"
+                    />
+                  </div>
+                </div>
+                {Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0) > 20 && (
+                  <p style={{ color: 'var(--color-error)', fontSize: '0.85em', marginTop: '8px' }}>
+                    Total questions cannot exceed 20. Please reduce the counts.
+                  </p>
+                )}
+              </div>
+              <button 
+                className="btn-primary" 
+                onClick={generateQuestions} 
+                disabled={isGenerating || Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0) === 0 || Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0) > 20}
+              >
+                {isGenerating ? "Generating..." : `Generate ${Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0)} Questions`}
               </button>
-              <p>Each click generates 20 new questions. Change topic to mix questions from different areas.</p>
+              <p>Adjust question types above. Change topic to mix questions from different areas.</p>
             </div>
 
             <div className="ai-section" data-tour="jd-template-section">

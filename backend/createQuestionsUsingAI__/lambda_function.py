@@ -26,8 +26,7 @@ def sanitize_and_parse_json(response_data):
     # 1. Remove trailing commas before ] or }
     json_str = re.sub(r',(\s*[}\]])', r'\1', json_str)
     
-    # 2. Fix unquoted string values (e.g., All of the above" -> "All of the above")
-    # This pattern finds lines where a value starts without a quote but ends with one
+    # 2. Fix unquoted string values
     json_str = re.sub(
         r'([,\[]\s*)([A-Za-z][^"\n,\]]*)"(\s*[,\]])',
         r'\1"\2"\3',
@@ -35,12 +34,9 @@ def sanitize_and_parse_json(response_data):
     )
     
     # 3. Ensure all string values in arrays are properly quoted
-    # Process line by line for better control
     lines = json_str.split('\n')
     fixed_lines = []
     for line in lines:
-        # Check for unquoted array elements (common AI mistake)
-        # Pattern: whitespace + unquoted text + ending quote
         unquoted_match = re.match(r'^(\s*)([A-Za-z][^"]*)"(\s*,?\s*)$', line)
         if unquoted_match:
             line = f'{unquoted_match.group(1)}"{unquoted_match.group(2)}"{unquoted_match.group(3)}'
@@ -54,44 +50,36 @@ def sanitize_and_parse_json(response_data):
         return parsed
     except json.JSONDecodeError as e:
         # If still failing, try more aggressive fixing
-        # Remove any non-printable characters except newlines/tabs
         json_str = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]', '', json_str)
         
-        # Try parsing again
         try:
             parsed = json.loads(json_str)
             return parsed
         except json.JSONDecodeError:
-            # Last resort: extract questions manually using regex
+            # Last resort: extract questions manually
             return extract_questions_manually(response_data)
 
 
 def extract_questions_manually(response_data):
     """
     Last resort: extract question data using regex patterns when JSON parsing fails.
-    Updated to include topic field.
     """
     questions = []
     
-    # Pattern to match question blocks with topic field
-    pattern = r'"type"\s*:\s*"([^"]+)"[^}]*"topic"\s*:\s*"([^"]+)"[^}]*"question"\s*:\s*"([^"]+)"[^}]*"options"\s*:\s*\[(.*?)\][^}]*"correctAnswer"\s*:\s*"([^"]+)"'
+    # Pattern to match question blocks
+    pattern = r'"type"\s*:\s*"([^"]+)"[^}]*"topic"\s*:\s*"([^"]+)"[^}]*"question"\s*:\s*"([^"]+)"'
     
     matches = re.finditer(pattern, response_data, re.DOTALL)
     
     for match in matches:
-        q_type, topic, question, options_str, correct_answer = match.groups()
-        
-        # Extract options
-        options = re.findall(r'"([^"]+)"', options_str)
-        
-        if options:
-            questions.append({
-                "type": q_type,
-                "topic": topic,
-                "question": question,
-                "options": options,
-                "correctAnswer": correct_answer
-            })
+        q_type, topic, question = match.groups()
+        questions.append({
+            "type": q_type,
+            "topic": topic,
+            "question": question,
+            "options": [],
+            "correctAnswer": ""
+        })
     
     if not questions:
         raise ValueError("Could not extract any questions from response")
@@ -99,11 +87,132 @@ def extract_questions_manually(response_data):
     return questions
 
 
+def generate_questions_by_type(client, model_id, topic, level, question_type, count, existing_questions):
+    """
+    Generate questions of a specific type.
+    """
+    type_prompts = {
+        "mcq": f"""Generate EXACTLY {count} Multiple Choice Questions (MCQ) about "{topic}" at {level} level.
+
+Each question MUST have 4 options and one correct answer.
+
+Return ONLY a JSON array with {count} objects:
+[
+    {{
+        "type": "mcq",
+        "topic": "{topic}",
+        "question": "Your question here?",
+        "options": ["Option A", "Option B", "Option C", "Option D"],
+        "correctAnswer": "Option A"
+    }}
+]
+
+CRITICAL: Generate EXACTLY {count} MCQ questions. No more, no less.""",
+
+        "range": f"""Generate EXACTLY {count} Range-based questions about "{topic}" at {level} level.
+
+Each question should ask the user to select a value from a range.
+
+Return ONLY a JSON array with {count} objects:
+[
+    {{
+        "type": "range",
+        "topic": "{topic}",
+        "question": "Rate or select a value for this question?",
+        "options": "Range",
+        "rangeMin": 0,
+        "rangeMax": 10,
+        "correctAnswer": "5",
+        "anyAnswerCorrect": false
+    }}
+]
+
+CRITICAL: Generate EXACTLY {count} Range questions. No more, no less.""",
+
+        "elaborate": f"""Generate EXACTLY {count} Elaborate/Open-ended questions about "{topic}" at {level} level.
+
+These questions should require detailed text answers.
+
+Return ONLY a JSON array with {count} objects:
+[
+    {{
+        "type": "elaborate",
+        "topic": "{topic}",
+        "question": "Explain or describe this concept in detail?",
+        "options": "",
+        "correctAnswer": "Expected detailed answer (optional)"
+    }}
+]
+
+CRITICAL: Generate EXACTLY {count} Elaborate questions. No more, no less.""",
+
+        "code": f"""Generate EXACTLY {count} Code/Programming questions about "{topic}" at {level} level.
+
+These questions should require writing code as the answer.
+
+Return ONLY a JSON array with {count} objects:
+[
+    {{
+        "type": "code",
+        "topic": "{topic}",
+        "question": "Write code to solve this problem?",
+        "options": "",
+        "correctAnswer": "Expected code solution (optional)"
+    }}
+]
+
+CRITICAL: Generate EXACTLY {count} Code questions. No more, no less."""
+    }
+    
+    prompt = type_prompts.get(question_type, "")
+    if existing_questions:
+        prompt += f"\n\nDon't generate questions similar to these:\n{existing_questions}"
+    
+    prompt += f"\n\nReturn ONLY valid JSON array with EXACTLY {count} question objects. No additional text."
+    
+    message_list = [
+        {
+            "role": "user",
+            "content": [{"text": prompt}]
+        }
+    ]
+    
+    system_list = [{"text": f"You are a JSON generator. You ONLY output valid, parseable JSON arrays with EXACTLY {count} questions. Every string value must be enclosed in double quotes."}]
+    
+    inf_params = {
+        "max_new_tokens": 4000,
+        "top_p": 0.9,
+        "top_k": 20,
+        "temperature": 0.7
+    }
+    
+    request_body = {
+        "schemaVersion": "messages-v1",
+        "messages": message_list,
+        "system": system_list,
+        "inferenceConfig": inf_params,
+    }
+    
+    response = client.invoke_model_with_response_stream(
+        modelId=model_id, body=json.dumps(request_body)
+    )
+    
+    stream = response.get("body")
+    response_data = ""
+    
+    for event in stream:
+        chunk = event.get("chunk")
+        if chunk:
+            chunk_json = json.loads(chunk.get("bytes").decode())
+            content_block_delta = chunk_json.get("contentBlockDelta", {}).get("delta", {}).get("text", "")
+            response_data += content_block_delta
+    
+    return response_data
+
+
 def lambda_handler(event, context):
     try:
-        # Create a Bedrock Runtime client in the AWS Region of your choice.
         client = boto3.client("bedrock-runtime", region_name="us-east-1")
-
         LITE_MODEL_ID = "amazon.nova-micro-v1:0"
 
         topic = event.get('topic', '')
@@ -111,183 +220,56 @@ def lambda_handler(event, context):
         formattedQuestions = event.get('formattedQuestions', '')
         questionTypes = event.get('questionTypes', {'mcq': 20, 'range': 0, 'elaborate': 0, 'code': 0})
         
-        # Calculate total questions to generate
         totalQuestions = sum(questionTypes.values())
         if totalQuestions == 0:
             totalQuestions = 20
             questionTypes = {'mcq': 20, 'range': 0, 'elaborate': 0, 'code': 0}
 
-        # Build question type instructions
-        typeInstructions = []
-        typeBreakdown = []
-        if questionTypes.get('mcq', 0) > 0:
-            count = questionTypes['mcq']
-            typeInstructions.append(f"- Generate EXACTLY {count} Multiple Choice Questions (MCQ) with 4 options each")
-            typeBreakdown.append(f"{count} MCQ questions")
-        if questionTypes.get('range', 0) > 0:
-            count = questionTypes['range']
-            typeInstructions.append(f"- Generate EXACTLY {count} Range questions with rangeMin and rangeMax values")
-            typeBreakdown.append(f"{count} Range questions")
-        if questionTypes.get('elaborate', 0) > 0:
-            count = questionTypes['elaborate']
-            typeInstructions.append(f"- Generate EXACTLY {count} Elaborate answer questions (open-ended)")
-            typeBreakdown.append(f"{count} Elaborate questions")
-        if questionTypes.get('code', 0) > 0:
-            count = questionTypes['code']
-            typeInstructions.append(f"- Generate EXACTLY {count} Code/Programming questions")
-            typeBreakdown.append(f"{count} Code questions")
+        print(f"Generating questions - Total: {totalQuestions}, Types: {questionTypes}")
         
-        typeInstructionsStr = "\n".join(typeInstructions)
-        typeBreakdownStr = ", ".join(typeBreakdown)
-
-        # Define system prompt with stricter JSON instructions and support for multiple question types
-        message_list = [
-            {
-                "role": "user",
-                "content": [{
-                    "text": f"""Generate EXACTLY {totalQuestions} questions related to the topic: "{topic}".
-
-Level: {level}
-
-CRITICAL - You MUST generate these EXACT counts:
-{typeInstructionsStr}
-
-Total: {typeBreakdownStr} = {totalQuestions} questions
-
-Don't generate the questions below:
-{formattedQuestions}
-
-IMPORTANT: Return ONLY valid JSON array. Every string value MUST be enclosed in double quotes.
-
-Return the response as a JSON array with EXACTLY {totalQuestions} question objects in this format:
-
-For MCQ questions (generate {questionTypes.get('mcq', 0)} of these):
-{{
-    "type": "mcq",
-    "topic": "{topic}",
-    "question": "Your MCQ question here?",
-    "options": ["Option A", "Option B", "Option C", "Option D"],
-    "correctAnswer": "Option A"
-}}
-
-For Range questions (generate {questionTypes.get('range', 0)} of these):
-{{
-    "type": "range",
-    "topic": "{topic}",
-    "question": "Rate or select a value for this question?",
-    "options": "Range",
-    "rangeMin": 0,
-    "rangeMax": 10,
-    "correctAnswer": "5",
-    "anyAnswerCorrect": false
-}}
-
-For Elaborate questions (generate {questionTypes.get('elaborate', 0)} of these):
-{{
-    "type": "elaborate",
-    "topic": "{topic}",
-    "question": "Explain or elaborate on this topic?",
-    "options": "",
-    "correctAnswer": "Expected detailed answer here (optional)"
-}}
-
-For Code questions (generate {questionTypes.get('code', 0)} of these):
-{{
-    "type": "code",
-    "topic": "{topic}",
-    "question": "Write code to solve this problem?",
-    "options": "",
-    "correctAnswer": "Expected code solution here (optional)"
-}}
-
-CRITICAL RULES:
-- Generate EXACTLY {totalQuestions} questions total
-- Generate EXACTLY {questionTypes.get('mcq', 0)} MCQ questions
-- Generate EXACTLY {questionTypes.get('range', 0)} Range questions
-- Generate EXACTLY {questionTypes.get('elaborate', 0)} Elaborate questions
-- Generate EXACTLY {questionTypes.get('code', 0)} Code questions
-- All string values must be in double quotes
-- Include the topic field with the exact topic provided: "{topic}"
-- No trailing commas after the last item in arrays or objects
-- Escape special characters properly (use \\" for quotes inside strings)
-- For range questions, set appropriate min/max values based on the question context
-- For elaborate and code questions, correctAnswer can be empty string or contain a reference answer
-- Return ONLY the JSON array with {totalQuestions} objects, no additional text
-- DO NOT generate more or fewer questions than specified"""
-                }]
-            }
-        ]
-
-        system_list = [{"text": f"You are a JSON generator that creates educational questions. You ONLY output valid, parseable JSON arrays. You MUST generate EXACTLY the number of questions requested for each type. Every string value must be enclosed in double quotes. Never output malformed JSON. You can generate different types of questions: MCQ, Range, Elaborate, and Code questions. Follow the exact counts specified: {typeBreakdownStr}."}]
-
-        # Configure inference parameters - increased tokens for multiple question types
-        inf_params = {
-            "max_new_tokens": 8000,
-            "top_p": 0.9,
-            "top_k": 20,
-            "temperature": 0.7
-        }
-
-        request_body = {
-            "schemaVersion": "messages-v1",
-            "messages": message_list,
-            "system": system_list,
-            "inferenceConfig": inf_params,
-        }
-
-        start_time = datetime.now()
-
-        # Invoke the model with response stream
-        response = client.invoke_model_with_response_stream(
-            modelId=LITE_MODEL_ID, body=json.dumps(request_body)
-        )
-
-        request_id = response.get("ResponseMetadata", {}).get("RequestId", "N/A")
-        stream = response.get("body")
-
-        if not stream:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({
-                    'message': 'Response not received, please contact support.',
-                    'request_id': request_id
-                })
-            }
-
-        # Collect response chunks
-        response_data = ""
-        for event in stream:
-            chunk = event.get("chunk")
-            if chunk:
-                chunk_json = json.loads(chunk.get("bytes").decode())
-                content_block_delta = chunk_json.get("contentBlockDelta", {}).get("delta", {}).get("text", "")
-                response_data += content_block_delta
-
-        # Debugging: Log raw response data
-        print(f"Raw Response Data: {response_data}")
+        all_questions = []
         
-        # Sanitize and validate the JSON response
-        try:
-            validated_questions = sanitize_and_parse_json(response_data)
-            
-            # Return the validated JSON as a properly formatted string
-            validated_json_str = json.dumps(validated_questions, ensure_ascii=False)
-        except (ValueError, json.JSONDecodeError) as parse_error:
-            print(f"JSON parsing/sanitization failed: {str(parse_error)}")
-            print(f"Problematic response: {response_data[:1000]}")
+        # Generate questions for each type separately
+        for q_type, count in questionTypes.items():
+            if count > 0:
+                print(f"Generating {count} {q_type} questions...")
+                try:
+                    response_data = generate_questions_by_type(
+                        client, LITE_MODEL_ID, topic, level, q_type, count, formattedQuestions
+                    )
+                    
+                    print(f"Raw response for {q_type}: {response_data[:500]}")
+                    
+                    questions = sanitize_and_parse_json(response_data)
+                    
+                    # Ensure we got the right number
+                    if len(questions) > count:
+                        questions = questions[:count]
+                    
+                    all_questions.extend(questions)
+                    print(f"Successfully generated {len(questions)} {q_type} questions")
+                    
+                except Exception as e:
+                    print(f"Error generating {q_type} questions: {str(e)}")
+                    # Continue with other types even if one fails
+        
+        if not all_questions:
             return {
                 'statusCode': 500,
                 'body': json.dumps({
-                    'error': 'Failed to generate valid questions. Please try again.',
-                    'details': str(parse_error),
-                    'request_id': request_id
+                    'error': 'Failed to generate any questions',
+                    'details': 'All question type generations failed'
                 })
             }
+        
+        validated_json_str = json.dumps(all_questions, ensure_ascii=False)
+        
+        print(f"Total questions generated: {len(all_questions)}")
    
         return {
             'statusCode': 200,
             'body': json.dumps({
-                'request_id': request_id,
+                'request_id': str(uuid.uuid4()),
                 'data': validated_json_str
             })
         }

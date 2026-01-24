@@ -930,8 +930,60 @@
   cursor: not-allowed;
 }
 
+.keywords-table .col-types {
+  min-width: 280px;
+}
+
 .keywords-table .col-count {
-  width: 110px;
+  width: 60px;
+  text-align: center;
+}
+
+.keywords-table .col-count strong {
+  font-size: 16px;
+  color: var(--color-primary, #2563eb);
+}
+
+/* Question Types Grid */
+.question-types-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.type-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.type-input-group label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--color-text-muted, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-input-group input[type="number"] {
+  width: 100%;
+  padding: 6px 4px;
+  text-align: center;
+  border: 1px solid var(--color-border, #e0e0e0);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.type-input-group input[type="number"]:disabled {
+  background: #f5f5f5;
+  color: #999;
+}
+
+.type-input-group input[type="number"]:focus {
+  outline: none;
+  border-color: var(--color-primary, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .keywords-table .question-count-input {

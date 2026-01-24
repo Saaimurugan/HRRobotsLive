@@ -136,7 +136,8 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
         keyword: kw.keyword || kw,
         questionCount: kw.suggestedCount || 5,
         complexity: extractedComplexity,
-        selected: true
+        selected: true,
+        questionTypes: { mcq: 5, range: 0, elaborate: 0, code: 0 } // Default all to MCQ
       }));
       
       setKeywords(keywordsWithCount);
@@ -156,9 +157,50 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
 
   const updateQuestionCount = (index, count) => {
     const newCount = Math.max(1, Math.min(20, parseInt(count) || 1));
-    setKeywords(prev => prev.map((kw, i) => 
-      i === index ? { ...kw, questionCount: newCount } : kw
-    ));
+    setKeywords(prev => prev.map((kw, i) => {
+      if (i === index) {
+        // Distribute questions proportionally across types
+        const types = kw.questionTypes;
+        const totalTypes = Object.values(types).reduce((sum, val) => sum + val, 0);
+        
+        if (totalTypes === 0) {
+          // If no types selected, default to MCQ
+          return { ...kw, questionCount: newCount, questionTypes: { mcq: newCount, range: 0, elaborate: 0, code: 0 } };
+        }
+        
+        // Keep the same proportion
+        const ratio = newCount / totalTypes;
+        const newTypes = {};
+        let distributed = 0;
+        
+        Object.keys(types).forEach((type, idx, arr) => {
+          if (idx === arr.length - 1) {
+            // Last type gets the remainder
+            newTypes[type] = newCount - distributed;
+          } else {
+            const val = Math.floor(types[type] * ratio);
+            newTypes[type] = val;
+            distributed += val;
+          }
+        });
+        
+        return { ...kw, questionCount: newCount, questionTypes: newTypes };
+      }
+      return kw;
+    }));
+  };
+
+  // Update question type count for a keyword
+  const updateQuestionTypeCount = (keywordIndex, type, count) => {
+    const newCount = Math.max(0, Math.min(20, parseInt(count) || 0));
+    setKeywords(prev => prev.map((kw, i) => {
+      if (i === keywordIndex) {
+        const newTypes = { ...kw.questionTypes, [type]: newCount };
+        const totalCount = Object.values(newTypes).reduce((sum, val) => sum + val, 0);
+        return { ...kw, questionTypes: newTypes, questionCount: totalCount };
+      }
+      return kw;
+    }));
   };
 
   // Update complexity for a keyword
@@ -214,14 +256,27 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
           const batchSize = Math.min(20, remaining);
           const existingQuestions = [...allQuestions, ...questionsForKeyword].map(q => q.question).join(", ");
           
-          const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI_", {
+          // Calculate how many of each type to generate in this batch
+          const batchTypes = {};
+          const totalTypes = Object.values(kw.questionTypes).reduce((sum, val) => sum + val, 0);
+          
+          if (totalTypes > 0) {
+            Object.keys(kw.questionTypes).forEach(type => {
+              const ratio = kw.questionTypes[type] / totalTypes;
+              batchTypes[type] = Math.round(ratio * batchSize);
+            });
+          } else {
+            batchTypes = { mcq: batchSize, range: 0, elaborate: 0, code: 0 };
+          }
+          
+          const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI__", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ 
               topic: kw.keyword, 
               level: kw.complexity, 
               formattedQuestions: existingQuestions,
-              questionCount: batchSize,
+              questionTypes: batchTypes,
               token: JWTValue 
             })
           });
@@ -236,14 +291,14 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
           const responseContent = parsedBody.data;
           const generatedBatch = JSON.parse(responseContent);
 
-          const questionsWithTopic = generatedBatch.slice(0, batchSize).map(q => ({
-            type: "mcq",
-            topic: kw.keyword,  // NEW: Use separate topic field
-            question: q.question,  // Clean question text without topic prefix
-            options: q.options || [],
-            correctAnswer: q.correctAnswer,
-            correctAnswerIndex: q.options ? q.options.indexOf(q.correctAnswer) : -1
-          }));
+          const questionsWithTopic = generatedBatch.slice(0, batchSize).map(q => {
+            const correctAnswerIndex = q.options && Array.isArray(q.options) ? q.options.indexOf(q.correctAnswer) : -1;
+            return {
+              ...q,
+              topic: kw.keyword,  // Use separate topic field
+              correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : undefined
+            };
+          });
 
           questionsForKeyword = [...questionsForKeyword, ...questionsWithTopic];
           remaining -= batchSize;
@@ -388,12 +443,13 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
                       <th className="col-select"></th>
                       <th className="col-keyword">Keyword</th>
                       <th className="col-complexity">Complexity</th>
-                      <th className="col-count">Questions</th>
+                      <th className="col-types">Question Types</th>
+                      <th className="col-count">Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {keywords.map((kw, index) => (
-                      <tr key={index} className={kw.selected ? 'selected' : ''}>
+                      <tr key={index} className={kw.selected ? 'selected' : 'unselected'}>
                         <td className="col-select">
                           <input type="checkbox" checked={kw.selected} onChange={() => toggleKeyword(index)} />
                         </td>
@@ -410,12 +466,56 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
                             <option value="expert">Expert</option>
                           </select>
                         </td>
-                        <td className="col-count">
-                          <div className="question-count-input">
-                            <button className="count-btn" onClick={() => updateQuestionCount(index, kw.questionCount - 1)} disabled={!kw.selected}>-</button>
-                            <input type="number" value={kw.questionCount} onChange={(e) => updateQuestionCount(index, e.target.value)} min="1" max="20" disabled={!kw.selected} />
-                            <button className="count-btn" onClick={() => updateQuestionCount(index, kw.questionCount + 1)} disabled={!kw.selected}>+</button>
+                        <td className="col-types">
+                          <div className="question-types-grid">
+                            <div className="type-input-group">
+                              <label>MCQ</label>
+                              <input
+                                type="number"
+                                value={kw.questionTypes.mcq}
+                                onChange={(e) => updateQuestionTypeCount(index, 'mcq', e.target.value)}
+                                min="0"
+                                max="20"
+                                disabled={!kw.selected}
+                              />
+                            </div>
+                            <div className="type-input-group">
+                              <label>Range</label>
+                              <input
+                                type="number"
+                                value={kw.questionTypes.range}
+                                onChange={(e) => updateQuestionTypeCount(index, 'range', e.target.value)}
+                                min="0"
+                                max="20"
+                                disabled={!kw.selected}
+                              />
+                            </div>
+                            <div className="type-input-group">
+                              <label>Elaborate</label>
+                              <input
+                                type="number"
+                                value={kw.questionTypes.elaborate}
+                                onChange={(e) => updateQuestionTypeCount(index, 'elaborate', e.target.value)}
+                                min="0"
+                                max="20"
+                                disabled={!kw.selected}
+                              />
+                            </div>
+                            <div className="type-input-group">
+                              <label>Code</label>
+                              <input
+                                type="number"
+                                value={kw.questionTypes.code}
+                                onChange={(e) => updateQuestionTypeCount(index, 'code', e.target.value)}
+                                min="0"
+                                max="20"
+                                disabled={!kw.selected}
+                              />
+                            </div>
                           </div>
+                        </td>
+                        <td className="col-count">
+                          <strong>{kw.questionCount}</strong>
                         </td>
                       </tr>
                     ))}
@@ -483,11 +583,42 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
                       <div key={index} className="qcard">
                         {topic && topic !== '__NO_TOPIC__' && <span className="question-topic-tag">{topic}</span>}
                         <h4>{index + 1}. {q.question}</h4>
-                        <ul>
-                          {q.options.map((opt, optIndex) => (
-                            <li key={optIndex} className={optIndex === q.correctAnswerIndex ? 'correct-answer' : ''}>{opt}</li>
-                          ))}
-                        </ul>
+                        {q.type === "range" ? (
+                          <div className="range-display">
+                            <p><strong>Range:</strong> {q.rangeMin} to {q.rangeMax}</p>
+                            <p><strong>Correct Answer:</strong> {q.anyAnswerCorrect ? "Any selection is correct" : q.correctAnswer}</p>
+                          </div>
+                        ) : q.type === "elaborate" ? (
+                          <div className="elaborate-display">
+                            <p><strong>Type:</strong> Elaborate Answer</p>
+                            {q.correctAnswer && (
+                              <div style={{ marginTop: '8px' }}>
+                                <strong>Expected Answer:</strong>
+                                <p style={{ whiteSpace: 'pre-wrap', marginTop: '4px', padding: '8px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
+                                  {q.correctAnswer}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        ) : q.type === "code" ? (
+                          <div className="code-display">
+                            <p><strong>Type:</strong> Code Solution</p>
+                            {q.correctAnswer && (
+                              <div style={{ marginTop: '8px' }}>
+                                <strong>Expected Solution:</strong>
+                                <pre style={{ whiteSpace: 'pre-wrap', marginTop: '4px', padding: '8px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', fontFamily: 'monospace', fontSize: '0.9em' }}>
+                                  {q.correctAnswer}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        ) : q.options && Array.isArray(q.options) && (
+                          <ul>
+                            {q.options.map((opt, optIndex) => (
+                              <li key={optIndex} className={optIndex === q.correctAnswerIndex ? 'correct-answer' : ''}>{opt}</li>
+                            ))}
+                          </ul>
+                        )}
                         <div className="qcard-actions">
                           <button className="btn-danger" onClick={() => deleteQuestion(index)}>
                             Remove
