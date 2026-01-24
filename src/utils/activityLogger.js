@@ -75,3 +75,52 @@ export const logProfilerPageActivity = (email, action, details, token) => {
 export const logCandidateTestActivity = (email, action, details, token) => {
   return logActivity(email, 'CandidateSpecificTest', action, details, token);
 };
+
+/**
+ * Log Login activity
+ */
+export const logLoginActivity = (email, action, details, token) => {
+  return logActivity(email, 'Login', action, details, token);
+};
+
+/**
+ * Log Report activity
+ */
+export const logReportActivity = (email, action, details, token) => {
+  return logActivity(email, 'Report', action, details, token);
+};
+
+/**
+ * Log Logout activity
+ */
+export const logLogoutActivity = (email, action, details, token) => {
+  return logActivity(email, 'Logout', action, details, token);
+};
+
+/**
+ * Log Configuration activity
+ */
+export const logConfigurationActivity = (email, action, details, token) => {
+  return logActivity(email, 'Configuration', action, details, token);
+};
+
+/**
+ * Log Edit Template activity
+ */
+export const logEditTemplateActivity = (email, action, details, token) => {
+  return logActivity(email, 'EditTemplate', action, details, token);
+};
+
+/**
+ * Log Assign to Recruiter/Reviewer activity
+ */
+export const logAssignActivity = (email, action, details, token) => {
+  return logActivity(email, 'Assign', action, details, token);
+};
+
+/**
+ * Log Generate Test Link activity
+ */
+export const logGenerateTestLinkActivity = (email, action, details, token) => {
+  return logActivity(email, 'GenerateTestLink', action, details, token);
+};

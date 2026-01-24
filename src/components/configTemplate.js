@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
+import { logConfigurationActivity } from '../utils/activityLogger';
 import '../confirmationBox.css';
 
 const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {

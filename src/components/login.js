@@ -3,6 +3,7 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import "../login.css";
 import { useNavigate } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
+import { logLoginActivity } from '../utils/activityLogger';
 
 // Storage key for failed attempts
 const FAILED_ATTEMPTS_KEY = "loginFailedAttempts";
@@ -112,6 +113,12 @@ const LoginPage = () => {
                 setGlobalValue(email);
                 setJWTValue(bodyData.token);
                 
+                // Log successful login
+                logLoginActivity(email, 'login_success', {
+                    status: 'success',
+                    timestamp: new Date().toISOString()
+                }, bodyData.token);
+                
                 // Reset failed attempts on successful login
                 setFailedAttempts(0);
                 sessionStorage.removeItem(FAILED_ATTEMPTS_KEY);
@@ -123,15 +130,40 @@ const LoginPage = () => {
                 const bodyData = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
                 setMessageType("error");
                 setMessage(bodyData?.message || "Please verify your email before logging in.");
+                
+                // Log failed login - not verified
+                logLoginActivity(email, 'login_failed', {
+                    status: 'error',
+                    reason: 'email_not_verified',
+                    timestamp: new Date().toISOString()
+                }, null);
             } else {
                 setMessageType("error");
                 const bodyData = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
                 setMessage(bodyData?.message || data.message || "Login failed! Email or password is incorrect.");
+                
+                // Log failed login - invalid credentials
+                logLoginActivity(email, 'login_failed', {
+                    status: 'error',
+                    reason: 'invalid_credentials',
+                    attemptNumber: failedAttempts + 1,
+                    timestamp: new Date().toISOString()
+                }, null);
+                
                 setFailedAttempts(prev => prev + 1);
             }
         } catch (error) {
             setMessageType("error");
             setMessage("An error occurred. Please try again later.");
+            
+            // Log login error
+            logLoginActivity(email, 'login_failed', {
+                status: 'error',
+                reason: 'network_error',
+                errorMessage: error.message,
+                timestamp: new Date().toISOString()
+            }, null);
+            
             setFailedAttempts(prev => prev + 1);
         } finally {
             setLoading(false);

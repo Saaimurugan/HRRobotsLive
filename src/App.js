@@ -7,6 +7,7 @@ import AdminProtectedRoute from './components/AdminProtectedRoute';
 import { TourProvider } from './components/TourProvider';
 import modelPreloader from './services/modelPreloader';
 import performanceMonitor from './utils/performanceMonitor';
+import { logLogoutActivity } from './utils/activityLogger';
 
 // Lazy load components for better performance
 const TestPage = lazy(() => import('./components/testPage'));
@@ -68,13 +69,19 @@ const RECAPTCHA_SITE_KEY = "6Lcb8jYsAAAAAGX87VEDrxMu8TZzAUL7jOwh9pqZ";
 
 // Logout component that clears session and redirects
 const LogoutHandler = () => {
-  const { logout } = useGlobalContext();
+  const { logout, globalValue, JWTValue } = useGlobalContext();
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Log logout activity
+    logLogoutActivity(globalValue, 'logout_success', {
+      status: 'success',
+      timestamp: new Date().toISOString()
+    }, JWTValue);
+    
     logout();
     navigate('/login', { replace: true });
-  }, [logout, navigate]);
+  }, [logout, navigate, globalValue, JWTValue]);
 
   return null;
 };

@@ -10,6 +10,7 @@ import AssignTemplate from "./assignTemplate";
 import ConfigTemplate from "./configTemplate";
 import CandidateSpecificTestModal from "./CandidateSpecificTestModal";
 import EmailModal from "./EmailModal";
+import { logConfigurationActivity, logAssignActivity, logGenerateTestLinkActivity } from '../utils/activityLogger';
 
 // Toast Component
 const Toast = ({ toasts, removeToast }) => {
@@ -152,9 +153,8 @@ const handleConfirm = () => {
 
 const handleConfigTemplate = (d) => {
   setLoadingTemplate(true);
+  const startTime = Date.now();
   try {
-    //console.log("Configuration Data:", d);
-    //console.log("Template ID Selected to Assign:", templateIDSelectedToAssign);
     const response = fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
         method: "POST",
         headers: {
@@ -166,6 +166,17 @@ const handleConfigTemplate = (d) => {
       .then(data => {
         if (checkUnauthorized(data)) return;
         if (data.statusCode === 200) {
+          // Log successful configuration
+          logConfigurationActivity(globalValue, 'config_saved', {
+            templateID: templateIDSelectedToAssign,
+            numberOfQuestions: d.numberOfQuestions,
+            testDuration: d.testDuration,
+            sensitivityLevel: d.sensitivityLevel,
+            allowedDefaults: d.allowedDefaults,
+            status: 'success',
+            duration: Date.now() - startTime
+          }, JWTValue);
+          
           // Update local template state immediately with new numberOfQuestions
           setTemplates(prevTemplates => 
             prevTemplates.map(template => 
@@ -176,14 +187,32 @@ const handleConfigTemplate = (d) => {
           );
           fetchTemplates();
         } else {
-          //console.error("Error configuring template:", data);
+          // Log failed configuration
+          logConfigurationActivity(globalValue, 'config_saved', {
+            templateID: templateIDSelectedToAssign,
+            status: 'error',
+            duration: Date.now() - startTime,
+            errorMessage: 'Failed to save configuration'
+          }, JWTValue);
         }
       })
       .catch(error => {
-        //console.error("Error configuring template:", error);
+        // Log configuration error
+        logConfigurationActivity(globalValue, 'config_saved', {
+          templateID: templateIDSelectedToAssign,
+          status: 'error',
+          duration: Date.now() - startTime,
+          errorMessage: error.message
+        }, JWTValue);
       });
   } catch (error) { 
-    //console.error("Error configuring template:", error);
+    // Log configuration error
+    logConfigurationActivity(globalValue, 'config_saved', {
+      templateID: templateIDSelectedToAssign,
+      status: 'error',
+      duration: Date.now() - startTime,
+      errorMessage: error.message
+    }, JWTValue);
   } finally {
     setLoadingTemplate(false);
   }
@@ -297,8 +326,8 @@ const handleCreateTest = async (templateID) => {
   setTemplateStates({}); // Clear all messages
   setLoading(true);
   setClicked(templateID);
-  // console.log("templateID: ", templateID);
   setMessage("");
+  const startTime = Date.now();
 
 try {
   const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createTest", {
@@ -317,12 +346,29 @@ try {
     const parsedBody = JSON.parse(data.body);
     setUuid(parsedBody.message);
     setMessage("Test link generated successfully!");
+    
+    // Log successful test link generation
+    logGenerateTestLinkActivity(globalValue, 'test_link_generated', {
+      templateID: templateID,
+      testLink: parsedBody.message,
+      status: 'success',
+      duration: Date.now() - startTime
+    }, JWTValue);
+    
     const newTemplateStates = {
       ...templateStates,
       [templateID]: { uuid: parsedBody.message, message: "Test link generated successfully!" },
     };
     setTemplateStates(newTemplateStates);
   } else {
+    // Log failed test link generation
+    logGenerateTestLinkActivity(globalValue, 'test_link_generated', {
+      templateID: templateID,
+      status: 'error',
+      duration: Date.now() - startTime,
+      errorMessage: 'Test link generation failed'
+    }, JWTValue);
+    
     const newTemplateStates = {
       ...templateStates,
       [templateID]: { uuid: null, message: "Test link generation failed." },
@@ -331,7 +377,14 @@ try {
     setMessage("Test link generation failed.");
   }
 } catch (error) {
-  //console.error("Fetch error: ", error);
+  // Log test link generation error
+  logGenerateTestLinkActivity(globalValue, 'test_link_generated', {
+    templateID: templateID,
+    status: 'error',
+    duration: Date.now() - startTime,
+    errorMessage: error.message
+  }, JWTValue);
+  
   const newTemplateStates = {
     ...templateStates,
     [templateID]: { uuid: null, message: "An error occurred. Please try again later." },
@@ -349,10 +402,23 @@ const handleCopyToClipboard = (templateID) => {
     navigator.clipboard
       .writeText(url)
       .then(() => {
+        // Log successful test link copy
+        logGenerateTestLinkActivity(globalValue, 'test_link_copied', {
+          templateID: templateID,
+          testLink: uuid,
+          status: 'success'
+        }, JWTValue);
+        
         showToast('info', 'Copied to Clipboard', `The test URL has been copied. Paste it into an email and send it to the candidate. ${url}`);
       })
       .catch((err) => {
-        //console.error("Clipboard write failed: ", err);
+        // Log failed test link copy
+        logGenerateTestLinkActivity(globalValue, 'test_link_copied', {
+          templateID: templateID,
+          status: 'error',
+          errorMessage: 'Failed to copy to clipboard'
+        }, JWTValue);
+        
         showToast('error', 'Copy Failed', 'Failed to copy the URL to the clipboard. Please try again.');
       }).finally(() => { 
         setClicked(""); 
@@ -363,6 +429,7 @@ const handleCopyToClipboard = (templateID) => {
 
 const handleAssignTemplate = async (email, role = 'recruiter') => {
   setLoading(true);
+  const startTime = Date.now();
   try {
     // If email is empty, this is a revoke operation
     if (!email) {
@@ -382,6 +449,13 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
       const data = await response.json();
       if (checkUnauthorized(data)) return;
       if (data.statusCode === 200) {
+        // Log successful revoke
+        logAssignActivity(globalValue, 'assignment_revoked', {
+          templateID: templateIDSelectedToAssign,
+          status: 'success',
+          duration: Date.now() - startTime
+        }, JWTValue);
+        
         fetchTemplates();
         showToast('success', 'Assignment Revoked', 'The assignment has been successfully revoked.');
       }
@@ -418,6 +492,15 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
      const data = await response.json();
      if (checkUnauthorized(data)) return;
      if (data.statusCode === 200) {
+       // Log successful assignment
+       logAssignActivity(globalValue, 'template_assigned', {
+         templateID: templateIDSelectedToAssign,
+         assignedEmail: email,
+         assignedRole: role,
+         status: 'success',
+         duration: Date.now() - startTime
+       }, JWTValue);
+       
        fetchTemplates();
        
        // If user is not registered, send an invite email
