@@ -19,7 +19,13 @@ const AdminDashboard = () => {
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState(null);
   const [selectedActivityFilter, setSelectedActivityFilter] = useState('all');
+  const [selectedActionFilter, setSelectedActionFilter] = useState('all');
+  const [selectedUserFilter, setSelectedUserFilter] = useState('all');
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
   const [logsDays, setLogsDays] = useState(7);
+  const [uniqueUsers, setUniqueUsers] = useState([]);
+  const [uniqueActions, setUniqueActions] = useState([]);
+  const [uniqueActivities, setUniqueActivities] = useState([]);
 
   // Log component mount
   useEffect(() => {
@@ -108,8 +114,7 @@ const AdminDashboard = () => {
         },
         body: JSON.stringify({
           days: logsDays,
-          limit: 100,
-          activity: selectedActivityFilter !== 'all' ? selectedActivityFilter : undefined
+          limit: 1000
         })
       });
 
@@ -122,6 +127,18 @@ const AdminDashboard = () => {
       
       console.log('[AdminDashboard] Activity logs loaded:', parsedData.logs?.length);
       setActivityLogs(parsedData.logs || []);
+      
+      // Extract unique values for filters
+      if (parsedData.logs && parsedData.logs.length > 0) {
+        const users = [...new Set(parsedData.logs.map(log => log.email))].sort();
+        const actions = [...new Set(parsedData.logs.map(log => log.action))].sort();
+        const activities = [...new Set(parsedData.logs.map(log => log.activity))].sort();
+        
+        setUniqueUsers(users);
+        setUniqueActions(actions);
+        setUniqueActivities(activities);
+      }
+      
       setLogsError(null);
     } catch (err) {
       console.error('[AdminDashboard] Error fetching activity logs:', err);
@@ -129,6 +146,18 @@ const AdminDashboard = () => {
     } finally {
       setLogsLoading(false);
     }
+  };
+
+  // Filter logs based on selected filters
+  const getFilteredLogs = () => {
+    return activityLogs.filter(log => {
+      const matchesActivity = selectedActivityFilter === 'all' || log.activity === selectedActivityFilter;
+      const matchesAction = selectedActionFilter === 'all' || log.action === selectedActionFilter;
+      const matchesUser = selectedUserFilter === 'all' || log.email === selectedUserFilter;
+      const matchesStatus = selectedStatusFilter === 'all' || log.details?.status === selectedStatusFilter;
+      
+      return matchesActivity && matchesAction && matchesUser && matchesStatus;
+    });
   };
 
   if (loading) {
@@ -202,35 +231,184 @@ const AdminDashboard = () => {
       <div className="admin-section">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <h2>Activity Logs</h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={fetchActivityLogs}
+            style={{ padding: '8px 16px', borderRadius: '4px', background: '#2563eb', color: 'white', border: 'none', cursor: 'pointer' }}
+          >
+            Refresh
+          </button>
+        </div>
+
+        {/* Filters */}
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
+          gap: '12px', 
+          marginBottom: '20px',
+          padding: '16px',
+          background: '#f8fafc',
+          borderRadius: '8px',
+          border: '1px solid #e2e8f0'
+        }}>
+          {/* User Filter */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#4b5563' }}>
+              User
+            </label>
+            <select 
+              value={selectedUserFilter} 
+              onChange={(e) => setSelectedUserFilter(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                backgroundColor: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">All Users</option>
+              {uniqueUsers.map(user => (
+                <option key={user} value={user}>{user}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Activity Filter */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#4b5563' }}>
+              Activity
+            </label>
             <select 
               value={selectedActivityFilter} 
-              onChange={(e) => {
-                setSelectedActivityFilter(e.target.value);
+              onChange={(e) => setSelectedActivityFilter(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                backgroundColor: 'white',
+                cursor: 'pointer'
               }}
-              style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #e2e8f0' }}
             >
               <option value="all">All Activities</option>
               <option value="CreateJD">Create JD</option>
               <option value="ProfilerPage">Profiler Page</option>
               <option value="CandidateSpecificTest">Candidate Test</option>
+              <option value="Login">Login</option>
+              <option value="Logout">Logout</option>
+              <option value="Configuration">Configuration</option>
+              <option value="Assign">Assign</option>
+              <option value="GenerateTestLink">Generate Test Link</option>
+              <option value="EditTemplate">Edit Template</option>
+              <option value="Report">Report</option>
+              {uniqueActivities.map(activity => (
+                !['CreateJD', 'ProfilerPage', 'CandidateSpecificTest', 'Login', 'Logout', 'Configuration', 'Assign', 'GenerateTestLink', 'EditTemplate', 'Report'].includes(activity) && (
+                  <option key={activity} value={activity}>{activity}</option>
+                )
+              ))}
             </select>
+          </div>
+
+          {/* Action Filter */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#4b5563' }}>
+              Action
+            </label>
+            <select 
+              value={selectedActionFilter} 
+              onChange={(e) => setSelectedActionFilter(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                backgroundColor: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">All Actions</option>
+              {uniqueActions.map(action => (
+                <option key={action} value={action}>{action}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Status Filter */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#4b5563' }}>
+              Status
+            </label>
+            <select 
+              value={selectedStatusFilter} 
+              onChange={(e) => setSelectedStatusFilter(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                backgroundColor: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="all">All Status</option>
+              <option value="success">Success</option>
+              <option value="error">Error</option>
+              <option value="warning">Warning</option>
+            </select>
+          </div>
+
+          {/* Time Period Filter */}
+          <div>
+            <label style={{ display: 'block', marginBottom: '6px', fontWeight: '600', fontSize: '12px', color: '#4b5563' }}>
+              Time Period
+            </label>
             <select 
               value={logsDays} 
-              onChange={(e) => {
-                setLogsDays(parseInt(e.target.value));
+              onChange={(e) => setLogsDays(parseInt(e.target.value))}
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                border: '1px solid #cbd5e1',
+                fontSize: '14px',
+                backgroundColor: 'white',
+                cursor: 'pointer'
               }}
-              style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid #e2e8f0' }}
             >
               <option value={1}>Last 24 hours</option>
               <option value={7}>Last 7 days</option>
               <option value={30}>Last 30 days</option>
+              <option value={90}>Last 90 days</option>
             </select>
+          </div>
+
+          {/* Clear Filters Button */}
+          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
             <button 
-              onClick={fetchActivityLogs}
-              style={{ padding: '8px 16px', borderRadius: '4px', background: '#2563eb', color: 'white', border: 'none', cursor: 'pointer' }}
+              onClick={() => {
+                setSelectedUserFilter('all');
+                setSelectedActivityFilter('all');
+                setSelectedActionFilter('all');
+                setSelectedStatusFilter('all');
+                setLogsDays(7);
+              }}
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                borderRadius: '4px', 
+                background: '#e2e8f0', 
+                color: '#2d3748', 
+                border: 'none', 
+                cursor: 'pointer',
+                fontWeight: '500'
+              }}
             >
-              Refresh
+              Clear Filters
             </button>
           </div>
         </div>
@@ -238,54 +416,101 @@ const AdminDashboard = () => {
         {logsLoading && <p>Loading activity logs...</p>}
         {logsError && <p style={{ color: 'red' }}>Error: {logsError}</p>}
 
-        {activityLogs.length > 0 ? (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>User</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Activity</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Action</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Status</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Duration (ms)</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Timestamp</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600' }}>Details</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activityLogs.map((log) => (
-                  <tr key={log.logId} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '12px' }}>{log.email}</td>
-                    <td style={{ padding: '12px' }}>{log.activity}</td>
-                    <td style={{ padding: '12px' }}>{log.action}</td>
-                    <td style={{ padding: '12px' }}>
-                      <span style={{
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        background: log.details?.status === 'success' ? '#d1fae5' : log.details?.status === 'error' ? '#fee2e2' : '#fef3c7',
-                        color: log.details?.status === 'success' ? '#065f46' : log.details?.status === 'error' ? '#7f1d1d' : '#92400e'
-                      }}>
-                        {log.details?.status || 'unknown'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px' }}>{log.details?.duration || '-'}</td>
-                    <td style={{ padding: '12px', fontSize: '12px' }}>
-                      {new Date(log.timestamp).toLocaleString()}
-                    </td>
-                    <td style={{ padding: '12px', fontSize: '12px' }}>
-                      {log.details?.errorMessage && <span style={{ color: 'red' }}>Error: {log.details.errorMessage}</span>}
-                      {log.details?.roleName && <span>Role: {log.details.roleName}</span>}
-                      {log.details?.candidateName && <span>Candidate: {log.details.candidateName}</span>}
-                      {log.details?.suitability && <span>Suitability: {log.details.suitability}</span>}
-                    </td>
+        {(() => {
+          const filteredLogs = getFilteredLogs();
+          return filteredLogs.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <p style={{ marginBottom: '12px', color: '#666', fontSize: '14px' }}>
+                Showing {filteredLogs.length} of {activityLogs.length} logs
+              </p>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0' }}>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', fontSize: '13px' }}>User</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', fontSize: '13px' }}>Activity</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', fontSize: '13px' }}>Action</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', fontSize: '13px' }}>Status</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', fontSize: '13px' }}>Duration (ms)</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', fontSize: '13px' }}>Timestamp</th>
+                    <th style={{ padding: '12px', textAlign: 'left', fontWeight: '600', fontSize: '13px' }}>Details</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p>No activity logs found</p>
-        )}
+                </thead>
+                <tbody>
+                  {filteredLogs.map((log) => (
+                    <tr key={log.logId} style={{ borderBottom: '1px solid #e2e8f0', hover: { background: '#f9fafb' } }}>
+                      <td style={{ padding: '12px', fontSize: '13px' }}>
+                        <span style={{ 
+                          padding: '4px 8px', 
+                          background: '#e0e7ff', 
+                          color: '#3730a3',
+                          borderRadius: '4px',
+                          fontSize: '12px'
+                        }}>
+                          {log.email}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', fontSize: '13px' }}>
+                        <span style={{ 
+                          padding: '4px 8px', 
+                          background: '#dbeafe', 
+                          color: '#1e40af',
+                          borderRadius: '4px',
+                          fontSize: '12px'
+                        }}>
+                          {log.activity}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', fontSize: '13px' }}>
+                        <span style={{ 
+                          padding: '4px 8px', 
+                          background: '#f3e8ff', 
+                          color: '#6b21a8',
+                          borderRadius: '4px',
+                          fontSize: '12px'
+                        }}>
+                          {log.action}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px' }}>
+                        <span style={{
+                          padding: '4px 8px',
+                          borderRadius: '4px',
+                          background: log.details?.status === 'success' ? '#d1fae5' : log.details?.status === 'error' ? '#fee2e2' : '#fef3c7',
+                          color: log.details?.status === 'success' ? '#065f46' : log.details?.status === 'error' ? '#7f1d1d' : '#92400e',
+                          fontSize: '12px',
+                          fontWeight: '500'
+                        }}>
+                          {log.details?.status || 'unknown'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px', fontSize: '13px', color: '#666' }}>
+                        {log.details?.duration || '-'}
+                      </td>
+                      <td style={{ padding: '12px', fontSize: '12px', color: '#666' }}>
+                        {new Date(log.timestamp).toLocaleString()}
+                      </td>
+                      <td style={{ padding: '12px', fontSize: '12px', maxWidth: '300px', wordBreak: 'break-word' }}>
+                        {log.details?.errorMessage && (
+                          <span style={{ color: '#dc2626', fontWeight: '500' }}>
+                            Error: {log.details.errorMessage}
+                          </span>
+                        )}
+                        {log.details?.roleName && <div>Role: {log.details.roleName}</div>}
+                        {log.details?.candidateName && <div>Candidate: {log.details.candidateName}</div>}
+                        {log.details?.suitability && <div>Suitability: {log.details.suitability}</div>}
+                        {log.details?.templateName && <div>Template: {log.details.templateName}</div>}
+                        {log.details?.assignedEmail && <div>Assigned to: {log.details.assignedEmail}</div>}
+                        {log.details?.assignedRole && <div>Role: {log.details.assignedRole}</div>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p style={{ textAlign: 'center', color: '#999', padding: '20px' }}>No activity logs found matching the selected filters</p>
+          );
+        })()}
       </div>
 
       {/* Users Section */}
