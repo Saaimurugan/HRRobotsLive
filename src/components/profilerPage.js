@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { useGlobalContext } from "../globalContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import { logProfilerPageActivity } from '../utils/activityLogger';
 import CandidateSpecificTestModal from './CandidateSpecificTestModal';
 import "../profilerPage.css";
 import "../CreateTemplate.css";
@@ -49,6 +50,11 @@ const ProfilerPage = () => {
   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Log component mount
+  useEffect(() => {
+    return () => {};
+  }, []);
 
   // Toast functions
   const showToast = useCallback((type, title, message) => {
@@ -106,13 +112,31 @@ const ProfilerPage = () => {
     const file = e.target.files[0];
     if (file && file.type === 'application/pdf') {
       if (type === 'jobDescription') {
+        logProfilerPageActivity(globalValue, 'file_uploaded', {
+          fileType: 'jobDescription',
+          fileName: file.name,
+          fileSize: file.size,
+          status: 'success'
+        }, JWTValue);
         setJobDescriptionFile(file);
         extractTextFromPDF(file, setJobDescriptionText);
       } else if (type === 'resume') {
+        logProfilerPageActivity(globalValue, 'file_uploaded', {
+          fileType: 'resume',
+          fileName: file.name,
+          fileSize: file.size,
+          status: 'success'
+        }, JWTValue);
         setResumeFile(file);
         extractTextFromPDF(file, setResumeText);
       }
     } else {
+      logProfilerPageActivity(globalValue, 'file_uploaded', {
+        fileType: type,
+        fileName: file?.name,
+        status: 'error',
+        errorMessage: 'Invalid file type'
+      }, JWTValue);
       showToast('error', 'Invalid File', 'Please upload a valid PDF file.');
     }
   };
@@ -133,6 +157,11 @@ const ProfilerPage = () => {
   };
 
   const handlePrint = () => {
+    logProfilerPageActivity(globalValue, 'print_clicked', {
+      candidateName: report?.CandidateName,
+      suitability: report?.Suitability,
+      status: 'success'
+    }, JWTValue);
     const printableContent = document.getElementById("printableContent");
     const printWindow = window.open("", "_blank");
     const styles = `
@@ -245,6 +274,7 @@ const ProfilerPage = () => {
     }
 
     setIsGenerating(true);
+    const startTime = Date.now();
     try {
       const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/matchJDResume", {
         method: "POST",
@@ -258,11 +288,28 @@ const ProfilerPage = () => {
       }
       const parsedBody = JSON.parse(data.body);
       const responseContent = parsedBody.data;
+      
+      // Log the activity
+      const duration = Date.now() - startTime;
+      await logProfilerPageActivity(globalValue, 'report_generated', {
+        candidateName: responseContent.CandidateName,
+        suitability: responseContent.Suitability,
+        status: 'success',
+        duration: duration
+      }, JWTValue);
+      
       setReport(responseContent);
       setShowForm(false);
       setShowReportPopup(true);
     } catch (error) {
-      //console.error(error);
+      // Log the error
+      const duration = Date.now() - startTime;
+      await logProfilerPageActivity(globalValue, 'report_generated', {
+        status: 'error',
+        duration: duration,
+        errorMessage: error.message
+      }, JWTValue);
+      
       showToast('error', 'Error', 'Error generating suitability report.');
     } finally {
       setIsGenerating(false);

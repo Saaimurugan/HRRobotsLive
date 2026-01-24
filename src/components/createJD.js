@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useGlobalContext } from "../globalContext";
+import { logCreateJDActivity } from '../utils/activityLogger';
 import '../createJD.css';
 
 // Toast Component
@@ -42,6 +43,11 @@ const CreateJD = () => {
       languages: '',
       additionalSkills: '',
    });
+
+   // Log component mount
+   useEffect(() => {
+      return () => {};
+   }, []);
 
    // Toast functions
    const showToast = useCallback((type, title, message) => {
@@ -106,6 +112,7 @@ const CreateJD = () => {
 
    const handleSubmit = async (e) => {
       e.preventDefault();
+      const startTime = Date.now();
       setLoading(true);
       try {
          const response = await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/generatejd', {
@@ -152,10 +159,30 @@ const CreateJD = () => {
             .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, '') // Remove title tags
             .trim();
          
+         // Log the activity
+         const duration = Date.now() - startTime;
+         await logCreateJDActivity(globalValue, 'form_submitted', {
+            roleName: formData.roleName,
+            yearsOfExperience: formData.yearsOfExperience,
+            languages: formData.languages,
+            additionalSkills: formData.additionalSkills,
+            status: 'success',
+            duration: duration,
+            jdLength: htmlContent.length
+         }, JWTValue);
+         
          setJobDescription(htmlContent);
          setShowForm(false);
       } catch (error) {
-         //console.error('Error generating job description:', error);
+         // Log the error
+         const duration = Date.now() - startTime;
+         await logCreateJDActivity(globalValue, 'form_submitted', {
+            roleName: formData.roleName,
+            status: 'error',
+            duration: duration,
+            errorMessage: error.message
+         }, JWTValue);
+         
          alert('Failed to generate job description. Please try again.');
       } finally {
          setLoading(false);
@@ -163,6 +190,10 @@ const CreateJD = () => {
    };
 
    const handlePrint = () => {
+      logCreateJDActivity(globalValue, 'print_clicked', {
+         roleName: formData.roleName,
+         status: 'success'
+      }, JWTValue);
       const printableContent = document.getElementById("printableContent");
       const printWindow = window.open("", "_blank");
       const styles = `
