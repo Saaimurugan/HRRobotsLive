@@ -109,48 +109,99 @@ def lambda_handler(event, context):
         topic = event.get('topic', '')
         level = event.get('level', '')
         formattedQuestions = event.get('formattedQuestions', '')
+        questionTypes = event.get('questionTypes', {'mcq': 20, 'range': 0, 'elaborate': 0, 'code': 0})
+        
+        # Calculate total questions to generate
+        totalQuestions = sum(questionTypes.values())
+        if totalQuestions == 0:
+            totalQuestions = 20
+            questionTypes = {'mcq': 20, 'range': 0, 'elaborate': 0, 'code': 0}
 
-        # Define system prompt with stricter JSON instructions and topic field
+        # Build question type instructions
+        typeInstructions = []
+        if questionTypes.get('mcq', 0) > 0:
+            typeInstructions.append(f"{questionTypes['mcq']} Multiple Choice Questions (MCQ) with 4 options")
+        if questionTypes.get('range', 0) > 0:
+            typeInstructions.append(f"{questionTypes['range']} Range questions (with rangeMin and rangeMax values)")
+        if questionTypes.get('elaborate', 0) > 0:
+            typeInstructions.append(f"{questionTypes['elaborate']} Elaborate answer questions (open-ended)")
+        if questionTypes.get('code', 0) > 0:
+            typeInstructions.append(f"{questionTypes['code']} Code/Programming questions")
+        
+        typeInstructionsStr = "\n- ".join(typeInstructions)
+
+        # Define system prompt with stricter JSON instructions and support for multiple question types
         message_list = [
             {
                 "role": "user",
                 "content": [{
-                    "text": f"""Generate 20 MCQs with answers related to the topic: "{topic}".
+                    "text": f"""Generate {totalQuestions} questions related to the topic: "{topic}".
 
 Level: {level}
+
+Question Types to Generate:
+- {typeInstructionsStr}
 
 Don't generate the questions below:
 {formattedQuestions}
 
 IMPORTANT: Return ONLY valid JSON. Every string value MUST be enclosed in double quotes.
 
-Return the response in this exact JSON format with topic field:
-[
-    {{
-        "type": "mcq",
-        "topic": "{topic}",
-        "question": "Your question here?",
-        "options": [
-            "Option A",
-            "Option B", 
-            "Option C",
-            "Option D"
-        ],
-        "correctAnswer": "Option A"
-    }}
-]
+Return the response in this exact JSON format with different question types:
+
+For MCQ questions:
+{{
+    "type": "mcq",
+    "topic": "{topic}",
+    "question": "Your question here?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "Option A"
+}}
+
+For Range questions:
+{{
+    "type": "range",
+    "topic": "{topic}",
+    "question": "Rate or select a value for this question?",
+    "options": "Range",
+    "rangeMin": 0,
+    "rangeMax": 10,
+    "correctAnswer": "5",
+    "anyAnswerCorrect": false
+}}
+
+For Elaborate questions:
+{{
+    "type": "elaborate",
+    "topic": "{topic}",
+    "question": "Explain or elaborate on this topic?",
+    "options": "",
+    "correctAnswer": "Expected detailed answer here (optional)"
+}}
+
+For Code questions:
+{{
+    "type": "code",
+    "topic": "{topic}",
+    "question": "Write code to solve this problem?",
+    "options": "",
+    "correctAnswer": "Expected code solution here (optional)"
+}}
 
 Rules:
 - All string values must be in double quotes
 - Include the topic field with the exact topic provided: "{topic}"
+- Generate exactly the number of each question type requested
 - No trailing commas after the last item in arrays or objects
 - Escape special characters properly (use \\" for quotes inside strings)
+- For range questions, set appropriate min/max values based on the question
+- For elaborate and code questions, correctAnswer can be empty or contain a reference answer
 - Return ONLY the JSON array, no additional text"""
                 }]
             }
         ]
 
-        system_list = [{"text": "You are a JSON generator. You ONLY output valid, parseable JSON arrays. Every string value must be enclosed in double quotes. Never output malformed JSON."}]
+        system_list = [{"text": "You are a JSON generator. You ONLY output valid, parseable JSON arrays. Every string value must be enclosed in double quotes. Never output malformed JSON. You can generate different types of questions: MCQ, Range, Elaborate, and Code questions."}]
 
         # Configure inference parameters
         inf_params = {
