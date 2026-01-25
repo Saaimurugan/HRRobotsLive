@@ -1,0 +1,267 @@
+/* ===================================
+   Mobile-First Responsive Design Fixes
+   =================================== */
+
+/* Base mobile viewport settings */
+@media (max-width: 768px) {
+    /* Global container adjustments */
+    .container {
+        padding: 0 12px !important;
+        margin-top: 30px !important;
+        gap: 16px !important;
+    }
+    
+    /* Card responsive adjustments */
+    .card {
+        padding: 20px 16px !important;
+    }
+    
+    .card h2 {
+        font-size: var(--font-size-lg) !important;
+    }
+    
+    .card p {
+        font-size: var(--font-size-xs) !important;
+    }
+    
+    .card-icon {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    .card-icon svg {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    
+    /* Page headers */
+    .page-header h1 {
+        font-size: var(--font-size-2xl) !important;
+    }
+    
+    .section-header {
+        margin-top: 32px !important;
+        padding: 20px 16px !important;
+    }
+    
+    .section-header h2 {
+        font-size: var(--font-size-xl) !important;
+    }
+    
+    /* Banner popup */
+    .banner-popup {
+        min-width: 250px !important;
+        max-width: 90% !important;
+        padding: var(--spacing-sm) var(--spacing-md) !important;
+        font-size: var(--font-size-xs) !important;
+    }
+    
+    /* Buttons */
+    button {
+        padding: 12px 20px !important;
+        font-size: var(--font-size-sm) !important;
+    }
+    
+    /* Login containers */
+    .login-container,
+    .jd-container {
+        padding: 1.5rem !important;
+        max-width: 100% !important;
+    }
+    
+    /* Form groups */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 10px 12px !important;
+        font-size: var(--font-size-sm) !important;
+    }
+    
+    /* Modal overlays */
+    .progress-modal-overlay {
+        padding: 12px !important;
+    }
+    
+    .progress-modal {
+        max-height: 85% !important;
+        padding: 16px !important;
+        border-radius: 12px !important;
+    }
+    
+    .progress-modal-header h3 {
+        font-size: 16px !important;
+    }
+    
+    .progress-modal-grid {
+        gap: 12px !important;
+    }
+    
+    .progress-modal-grid .question-dot {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    /* Submit confirmation modal */
+    .submit-confirm-modal {
+        width: 95% !important;
+        margin: 20px !important;
+    }
+    
+    .submit-confirm-stats {
+        gap: 20px !important;
+        padding: 16px !important;
+    }
+    
+    .confirm-stat-number {
+        font-size: 24px !important;
+    }
+    
+    .submit-confirm-actions {
+        flex-direction: column !important;
+    }
+    
+    .submit-confirm-cancel,
+    .submit-confirm-submit {
+        width: 100% !important;
+    }
+
+    /* Force vertical stacking of upload and text sections on mobile */
+    .jd-input-row {
+        flex-direction: column !important;
+        gap: 0 !important;
+    }
+
+    .jd-input-row .upload-section-jd,
+    .jd-input-row .jd-text-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
+
+    .jd-divider {
+        padding: 12px 0 !important;
+        width: 100% !important;
+    }
+
+    .jd-divider span {
+        padding: 6px 10px !important;
+        font-size: 11px !important;
+    }
+
+    /* Modal specific stacking */
+    .jd-modal-content .jd-input-row {
+        flex-direction: column !important;
+        gap: 0 !important;
+    }
+
+    .jd-modal-content .jd-input-row .upload-section-jd,
+    .jd-modal-content .jd-input-row .jd-text-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        flex: none !important;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    /* Container adjustments */
+    .container {
+        padding: 0 8px !important;
+        margin-top: 20px !important;
+        gap: 12px !important;
+    }
+    
+    /* Card adjustments */
+    .card {
+        padding: 16px 12px !important;
+    }
+    
+    .card h2 {
+        font-size: var(--font-size-base) !important;
+    }
+    
+    .card-icon {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .card-icon svg {
+        width: 20px !important;
+        height: 20px !important;
+    }
+    
+    /* Buttons */
+    button {
+        padding: 10px 16px !important;
+        font-size: var(--font-size-xs) !important;
+    }
+    
+    /* Page headers */
+    .page-header h1 {
+        font-size: var(--font-size-xl) !important;
+    }
+    
+    .section-header {
+        padding: 16px 12px !important;
+    }
+    
+    .section-header h2 {
+        font-size: var(--font-size-lg) !important;
+    }
+    
+    /* Login containers */
+    .login-container,
+    .jd-container {
+        padding: 1rem !important;
+    }
+    
+    /* Form groups */
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 8px 10px !important;
+        font-size: var(--font-size-xs) !important;
+    }
+    
+    /* Modal adjustments */
+    .progress-modal {
+        max-height: 90% !important;
+        padding: 12px !important;
+    }
+    
+    .submit-confirm-modal {
+        width: 98% !important;
+        margin: 10px !important;
+    }
+}
+
+/* Ensure touch-friendly interactions */
+@media (max-width: 768px) {
+    /* Ensure all clickable elements have minimum touch target size */
+    button,
+    a,
+    input[type="radio"],
+    input[type="checkbox"],
+    .option-item,
+    .question-dot,
+    .nav-button {
+        min-width: 44px !important;
+        min-height: 44px !important;
+    }
+    
+    /* Improve tap highlight */
+    * {
+        -webkit-tap-highlight-color: rgba(0, 123, 255, 0.2);
+    }
+    
+    /* Prevent text selection on interactive elements */
+    button,
+    .option-item,
+    .question-dot,
+    .nav-button {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+}

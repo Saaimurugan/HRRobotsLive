@@ -168,17 +168,23 @@
   min-width: 0;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 768px) {
   .jd-input-row {
-    flex-direction: column;
+    flex-direction: column !important;
   }
   
   .jd-divider {
-    padding: 10px 0;
+    padding: 10px 0 !important;
   }
   
   .jd-input-row .jd-text-section textarea {
-    min-height: 150px;
+    min-height: 150px !important;
+  }
+  
+  .jd-input-row .upload-section-jd,
+  .jd-input-row .jd-text-section {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 
@@ -1250,6 +1256,29 @@
 
   .jd-modal-body {
     padding: 15px;
+  }
+
+  /* Force vertical stacking of upload and text sections on mobile */
+  .jd-modal-content .jd-input-row {
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .jd-modal-content .jd-input-row .upload-section-jd,
+  .jd-modal-content .jd-input-row .jd-text-section {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: none !important;
+  }
+
+  .jd-modal-content .jd-divider {
+    padding: 12px 0 !important;
+    width: 100% !important;
+  }
+
+  .jd-modal-content .jd-divider span {
+    padding: 6px 10px !important;
+    font-size: 11px !important;
   }
 
   .jd-modal-content .step-indicator {
