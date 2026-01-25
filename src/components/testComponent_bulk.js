@@ -366,7 +366,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
       // Submit test - answers are already saved by saveAnswerSubmitted
       // Just trigger score calculation
       const response = await fetch(
-        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore____",
+        "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/doSubmitAndCalculateScore___",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
