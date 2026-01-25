@@ -16,6 +16,9 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [loadingError, setLoadingError] = useState('');
   
+  // State for rangeWithTwoQuestions - track which question user selected
+  const [selectedQuestionForRange, setSelectedQuestionForRange] = useState({}); // { questionIndex: 0 or 1 }
+  
   // Topic pagination state
   const [currentTopicIndex, setCurrentTopicIndex] = useState(0);
   const [currentQuestionInTopic, setCurrentQuestionInTopic] = useState(0);
@@ -737,6 +740,105 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                           <span>{currentQuestion.rangeMin || 0}</span>
                           <span>{currentQuestion.rangeMax || 100}</span>
                         </div>
+                      </div>
+                    )}
+
+                    {/* Range with Two Questions */}
+                    {currentQuestion.type === 'rangeWithTwoQuestions' && (
+                      <div className="range-question-container">
+                        <div className="two-questions-container" style={{ marginBottom: '20px' }}>
+                          <p style={{ fontSize: '0.95em', fontWeight: '600', marginBottom: '15px', color: 'var(--color-text)' }}>
+                            Select which question you want to answer:
+                          </p>
+                          
+                          <div 
+                            className="question-option" 
+                            style={{ 
+                              padding: '15px', 
+                              border: selectedQuestionForRange[currentQuestionIndex] === 0 ? '2px solid var(--color-primary)' : '2px solid var(--color-border)', 
+                              borderRadius: 'var(--radius-md)', 
+                              marginBottom: '10px',
+                              backgroundColor: selectedQuestionForRange[currentQuestionIndex] === 0 ? 'var(--color-bg-secondary)' : 'transparent',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onClick={() => setSelectedQuestionForRange({ ...selectedQuestionForRange, [currentQuestionIndex]: 0 })}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                              <input
+                                type="radio"
+                                name={`question-choice-${currentQuestionIndex}`}
+                                checked={selectedQuestionForRange[currentQuestionIndex] === 0}
+                                onChange={() => setSelectedQuestionForRange({ ...selectedQuestionForRange, [currentQuestionIndex]: 0 })}
+                                style={{ marginTop: '3px' }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <strong>Question 1:</strong>
+                                <p style={{ marginTop: '8px', marginBottom: 0 }}>{currentQuestion.question}</p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div 
+                            className="question-option" 
+                            style={{ 
+                              padding: '15px', 
+                              border: selectedQuestionForRange[currentQuestionIndex] === 1 ? '2px solid var(--color-primary)' : '2px solid var(--color-border)', 
+                              borderRadius: 'var(--radius-md)',
+                              backgroundColor: selectedQuestionForRange[currentQuestionIndex] === 1 ? 'var(--color-bg-secondary)' : 'transparent',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onClick={() => setSelectedQuestionForRange({ ...selectedQuestionForRange, [currentQuestionIndex]: 1 })}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                              <input
+                                type="radio"
+                                name={`question-choice-${currentQuestionIndex}`}
+                                checked={selectedQuestionForRange[currentQuestionIndex] === 1}
+                                onChange={() => setSelectedQuestionForRange({ ...selectedQuestionForRange, [currentQuestionIndex]: 1 })}
+                                style={{ marginTop: '3px' }}
+                              />
+                              <div style={{ flex: 1 }}>
+                                <strong>Question 2:</strong>
+                                <p style={{ marginTop: '8px', marginBottom: 0 }}>{currentQuestion.question2}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {selectedQuestionForRange[currentQuestionIndex] !== undefined ? (
+                          <>
+                            <div className="range-info">
+                              <span>Min: {currentQuestion.rangeMin || 0}</span>
+                              <span>Max: {currentQuestion.rangeMax || 100}</span>
+                              <span>Selected: {answers[currentQuestionIndex] || 'Not selected'}</span>
+                            </div>
+                            <input
+                              type="range"
+                              min={currentQuestion.rangeMin || 0}
+                              max={currentQuestion.rangeMax || 100}
+                              value={answers[currentQuestionIndex] || currentQuestion.rangeMin || 0}
+                              onChange={(e) => saveAnswer(e.target.value)}
+                              className="range-slider"
+                              aria-label={`Select value between ${currentQuestion.rangeMin || 0} and ${currentQuestion.rangeMax || 100}`}
+                            />
+                            <div className="range-labels">
+                              <span>{currentQuestion.rangeMin || 0}</span>
+                              <span>{currentQuestion.rangeMax || 100}</span>
+                            </div>
+                          </>
+                        ) : (
+                          <div style={{ 
+                            padding: '20px', 
+                            textAlign: 'center', 
+                            backgroundColor: 'var(--color-bg-secondary)', 
+                            borderRadius: 'var(--radius-md)',
+                            color: 'var(--color-text-muted)'
+                          }}>
+                            <p>Please select a question above to enable the range slider</p>
+                          </div>
+                        )}
                       </div>
                     )}
                     

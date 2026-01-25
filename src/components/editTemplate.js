@@ -121,6 +121,7 @@ const EditTemplate = () => {
     rangeMin: 0,
     rangeMax: 10,
     anyAnswerCorrect: false,
+    question2: "", // Second question for rangeWithTwoQuestions type
   });
   const [topic, setTopic] = useState("");
   const [manualTopic, setManualTopic] = useState(""); // Topic for manual question entry
@@ -350,6 +351,21 @@ const EditTemplate = () => {
       newQuestion.rangeMax = formData.rangeMax;
       newQuestion.correctAnswer = formData.anyAnswerCorrect ? "All" : formData.correctAnswer;
       newQuestion.anyAnswerCorrect = formData.anyAnswerCorrect;
+    } else if (formData.type === "rangeWithTwoQuestions") {
+      if (!formData.question2 || !formData.question2.trim()) {
+        showToast('warning', 'Missing Second Question', 'Please enter the second question.');
+        return;
+      }
+      if (formData.rangeMin >= formData.rangeMax) {
+        showToast('warning', 'Invalid Range', 'Minimum value must be less than maximum value.');
+        return;
+      }
+      newQuestion.options = "RangeWithTwoQuestions";
+      newQuestion.question2 = formData.question2;
+      newQuestion.rangeMin = formData.rangeMin;
+      newQuestion.rangeMax = formData.rangeMax;
+      newQuestion.correctAnswer = ""; // Optional for this type
+      newQuestion.anyAnswerCorrect = true; // Range is controlled by checkbox
     } else {
       if (!formData.correctAnswer) {
         showToast('warning', 'Missing Answer', 'Answer cannot be empty for a descriptive question.');
@@ -365,7 +381,7 @@ const EditTemplate = () => {
   };
 
   const clearForm = () => {
-    setFormData({ type: "mcq", question: "", options: [], correctAnswer: "", correctAnswerIndex: -1, rangeMin: 0, rangeMax: 10, anyAnswerCorrect: false });
+    setFormData({ type: "mcq", question: "", options: [], correctAnswer: "", correctAnswerIndex: -1, rangeMin: 0, rangeMax: 10, anyAnswerCorrect: false, question2: "" });
     setManualTopic("");
     setIsEditing(false);
     setEditingOriginalIndex(null);
@@ -390,6 +406,7 @@ const EditTemplate = () => {
       rangeMin: questionToEdit.rangeMin || 0,
       rangeMax: questionToEdit.rangeMax || 10,
       anyAnswerCorrect: questionToEdit.anyAnswerCorrect || false,
+      question2: questionToEdit.question2 || "",
     });
     setManualTopic(topic === '__NO_TOPIC__' ? '' : topic);
     setIsEditing(true);
@@ -407,6 +424,9 @@ const EditTemplate = () => {
     } else if (formData.type === "range") {
       correctAnswer = formData.anyAnswerCorrect ? "All" : formData.correctAnswer;
       options = "Range";
+    } else if (formData.type === "rangeWithTwoQuestions") {
+      correctAnswer = "";
+      options = "RangeWithTwoQuestions";
     } else if (formData.type === "elaborate" || formData.type === "code") {
       correctAnswer = formData.correctAnswer || "";
       options = "";
@@ -419,6 +439,7 @@ const EditTemplate = () => {
       correctAnswer: correctAnswer,
       correctAnswerIndex: formData.correctAnswerIndex >= 0 ? formData.correctAnswerIndex : undefined,
       options: options,
+      question2: formData.type === "rangeWithTwoQuestions" ? formData.question2 : undefined,
     };
     setQuestionSet(updatedQuestions);
     clearForm();
@@ -724,6 +745,16 @@ const EditTemplate = () => {
                               <p><strong>Range:</strong> {q.rangeMin} to {q.rangeMax}</p>
                               <p><strong>Correct Answer:</strong> {q.anyAnswerCorrect ? "Any selection is correct" : q.correctAnswer}</p>
                             </div>
+                          ) : q.type === "rangeWithTwoQuestions" ? (
+                            <div className="range-display">
+                              <p><strong>Type:</strong> Range with Two Questions</p>
+                              <p><strong>Question 1:</strong> {q.question}</p>
+                              <p><strong>Question 2:</strong> {q.question2}</p>
+                              <p><strong>Range:</strong> {q.rangeMin} to {q.rangeMax}</p>
+                              <p style={{ fontSize: '0.85em', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+                                User will select which question to answer during the test
+                              </p>
+                            </div>
                           ) : q.type === "elaborate" ? (
                             <div className="elaborate-display">
                               <p><strong>Type:</strong> Elaborate Answer</p>
@@ -778,6 +809,7 @@ const EditTemplate = () => {
                   <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
                     <option value="mcq">MCQ</option>
                     <option value="range">Range</option>
+                    <option value="rangeWithTwoQuestions">Range with Two Questions</option>
                     <option value="elaborate">Elaborate</option>
                     <option value="code">Code</option>
                   </select>
@@ -879,6 +911,42 @@ const EditTemplate = () => {
                         />
                       </div>
                     )}
+                  </div>
+                )}
+
+                {formData.type === "rangeWithTwoQuestions" && (
+                  <div className="form-group">
+                    <label>Second Question</label>
+                    <textarea
+                      value={formData.question2}
+                      onChange={(e) => setFormData({ ...formData, question2: e.target.value })}
+                      placeholder="Enter the second question here..."
+                    />
+                    
+                    <label style={{ marginTop: '15px' }}>Range Settings</label>
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>Minimum</label>
+                        <input
+                          type="number"
+                          value={formData.rangeMin}
+                          onChange={(e) => setFormData({ ...formData, rangeMin: Number(e.target.value) })}
+                          placeholder="Min value"
+                        />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: '0.9em', color: 'var(--color-text-muted)' }}>Maximum</label>
+                        <input
+                          type="number"
+                          value={formData.rangeMax}
+                          onChange={(e) => setFormData({ ...formData, rangeMax: Number(e.target.value) })}
+                          placeholder="Max value"
+                        />
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.85em', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+                      During the test, the user will select which question to answer before using the range slider.
+                    </p>
                   </div>
                 )}
 
