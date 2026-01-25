@@ -5,6 +5,17 @@ import DisplayMessage from "./displayMessage.js";
 import FeedbackForm from "./FeedbackForm.js";
 import html2canvas from 'html2canvas';
 import answerQueue from '../services/answerQueue.js';
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-python';
+import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-c';
+import 'prismjs/components/prism-cpp';
+import 'prismjs/components/prism-csharp';
+import 'prismjs/components/prism-sql';
+import 'prismjs/themes/prism.css';
 
 const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, onSubmitComplete, submitTestRef }) => {
   // State for questions and answers
@@ -702,15 +713,28 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                     {/* Code Questions */}
                     {currentQuestion.type === 'code' && (
                       <div className="code-question-container">
-                        <textarea
+                        <Editor
                           value={answers[currentQuestionIndex] || ''}
-                          onChange={(e) => saveAnswer(e.target.value)}
+                          onValueChange={(code) => saveAnswer(code)}
+                          highlight={(code) => {
+                            // Detect language from question or default to javascript
+                            const lang = currentQuestion.language?.toLowerCase() || 'javascript';
+                            const prismLang = languages[lang] || languages.javascript;
+                            return highlight(code, prismLang, lang);
+                          }}
+                          padding={10}
                           placeholder="Write your code solution here..."
-                          className="code-textarea"
-                          rows="15"
-                          spellCheck="false"
-                          aria-label="Enter your code solution"
-                          style={{ fontFamily: 'monospace', fontSize: '14px' }}
+                          className="code-editor"
+                          style={{
+                            fontFamily: '"Fira code", "Fira Mono", monospace',
+                            fontSize: 14,
+                            minHeight: '300px',
+                            border: '1px solid #ddd',
+                            borderRadius: '4px',
+                            backgroundColor: '#f5f5f5'
+                          }}
+                          textareaClassName="code-textarea-input"
+                          preClassName="code-pre"
                         />
                         <div className="character-count">
                           {(answers[currentQuestionIndex] || '').length} characters

@@ -2045,6 +2045,36 @@ fieldset {
   margin-top: 16px;
 }
 
+.code-editor {
+  width: 100%;
+  min-height: 300px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: auto;
+  transition: border-color var(--transition-normal);
+  box-sizing: border-box;
+}
+
+.code-editor:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
+}
+
+.code-textarea-input {
+  outline: none !important;
+  font-family: 'Fira code', 'Fira Mono', 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  tab-size: 4 !important;
+}
+
+.code-pre {
+  font-family: 'Fira code', 'Fira Mono', 'Consolas', 'Monaco', 'Courier New', monospace !important;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  tab-size: 4 !important;
+}
+
 .code-textarea {
   width: 100%;
   min-height: 300px;
