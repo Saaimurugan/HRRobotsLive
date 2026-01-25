@@ -477,12 +477,14 @@ const EditTemplate = () => {
       return;
     }
 
-    // Check for duplicate template name
-    const isDuplicate = await checkTemplateDuplicate(ttname);
-    if (isDuplicate) {
-      showToast('error', 'Duplicate Template Name', `A template with the name "${ttname}" already exists. Please use a different name.`);
-      setLoading(false);
-      return;
+    // Check for duplicate template name only if the name has changed
+    if (ttname.trim() !== originalTemplateName.trim()) {
+      const isDuplicate = await checkTemplateDuplicate(ttname);
+      if (isDuplicate) {
+        showToast('error', 'Duplicate Template Name', `A template with the name "${ttname}" already exists. Please use a different name.`);
+        setLoading(false);
+        return;
+      }
     }
 
     try {
