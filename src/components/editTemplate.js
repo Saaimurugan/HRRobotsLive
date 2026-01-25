@@ -3,6 +3,7 @@ import "../CreateTemplate.css";
 import { useGlobalContext } from "../globalContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
+import CodeEditor from './CodeEditor.js';
 
 // REMOVED: Topic parsing functions are no longer needed
 // Frontend now handles topics as separate entities throughout
@@ -881,19 +882,33 @@ const EditTemplate = () => {
                   </div>
                 )}
 
-                {(formData.type === "elaborate" || formData.type === "code") && (
+                {formData.type === "elaborate" && (
                   <div className="form-group">
-                    <label>{formData.type === "elaborate" ? "Expected Answer (Optional)" : "Expected Code Solution (Optional)"}</label>
+                    <label>Expected Answer (Optional)</label>
                     <textarea
                       value={formData.correctAnswer}
                       onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
-                      placeholder={formData.type === "elaborate" ? "Enter the expected elaborate answer or leave empty for manual evaluation..." : "Enter the expected code solution or leave empty for manual evaluation..."}
-                      style={{ minHeight: '150px', fontFamily: formData.type === "code" ? 'monospace' : 'inherit' }}
+                      placeholder="Enter the expected elaborate answer or leave empty for manual evaluation..."
+                      style={{ minHeight: '150px' }}
                     />
                     <p style={{ fontSize: '0.85em', color: 'var(--color-text-muted)', marginTop: '8px' }}>
-                      {formData.type === "elaborate" 
-                        ? "This will be used as a reference answer for evaluation. Candidates will provide their own elaborate response."
-                        : "This will be used as a reference solution for evaluation. Candidates will write their own code."}
+                      This will be used as a reference answer for evaluation. Candidates will provide their own elaborate response.
+                    </p>
+                  </div>
+                )}
+
+                {formData.type === "code" && (
+                  <div className="form-group">
+                    <label>Expected Code Solution (Optional)</label>
+                    <CodeEditor
+                      value={formData.correctAnswer}
+                      onChange={(code) => setFormData({ ...formData, correctAnswer: code })}
+                      language="javascript"
+                      placeholder="Enter the expected code solution or leave empty for manual evaluation..."
+                      minHeight="200px"
+                    />
+                    <p style={{ fontSize: '0.85em', color: 'var(--color-text-muted)', marginTop: '8px' }}>
+                      This will be used as a reference solution for evaluation. Candidates will write their own code.
                     </p>
                   </div>
                 )}
