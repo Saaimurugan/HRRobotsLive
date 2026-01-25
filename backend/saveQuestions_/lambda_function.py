@@ -154,7 +154,6 @@ def lambda_handler(event, context):
             # Add rangeWithTwoQuestions-specific fields if present
             if question.get('type') == 'rangeWithTwoQuestions':
                 question_item['question2'] = question.get('question2', '')
-                question_item['selectedQuestionIndex'] = question.get('selectedQuestionIndex', 0)
                 question_item['rangeMin'] = question.get('rangeMin', 0)
                 question_item['rangeMax'] = question.get('rangeMax', 100)
             
