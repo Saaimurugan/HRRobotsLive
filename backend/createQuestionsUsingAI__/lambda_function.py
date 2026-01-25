@@ -96,6 +96,9 @@ def generate_questions_by_type(client, model_id, topic, level, question_type, co
 
 Each question MUST have 4 options and one correct answer.
 
+CRITICAL REQUIREMENT: The "correctAnswer" field MUST be an EXACT copy of one of the options from the "options" array. 
+Do NOT paraphrase or modify the text - copy it character-by-character.
+
 Return ONLY a JSON array with {count} objects:
 [
     {{
@@ -107,7 +110,9 @@ Return ONLY a JSON array with {count} objects:
     }}
 ]
 
-CRITICAL: Generate EXACTLY {count} MCQ questions. No more, no less.""",
+CRITICAL: 
+1. Generate EXACTLY {count} MCQ questions. No more, no less.
+2. The correctAnswer MUST exactly match one option from the options array.""",
 
         "range": f"""Generate EXACTLY {count} Range-based questions about "{topic}" at {level} level.
 
@@ -210,6 +215,57 @@ CRITICAL: Generate EXACTLY {count} Code questions. No more, no less."""
     return response_data
 
 
+def validate_and_fix_mcq_answers(questions):
+    """
+    Validates that MCQ correct answers exactly match one of the options.
+    If not, finds the closest match or defaults to the first option.
+    """
+    fixed_questions = []
+    
+    for q in questions:
+        if q.get('type') == 'mcq':
+            options = q.get('options', [])
+            correct_answer = q.get('correctAnswer', '')
+            
+            # Check if correct answer exactly matches an option
+            if correct_answer in options:
+                fixed_questions.append(q)
+                continue
+            
+            # Try to find a close match (case-insensitive, trimmed)
+            correct_answer_normalized = correct_answer.strip().lower()
+            matched = False
+            
+            for option in options:
+                if option.strip().lower() == correct_answer_normalized:
+                    # Found a match - update to exact option text
+                    q['correctAnswer'] = option
+                    matched = True
+                    print(f"Fixed MCQ answer: '{correct_answer}' -> '{option}'")
+                    break
+            
+            # If still no match, try partial matching
+            if not matched:
+                for option in options:
+                    if correct_answer_normalized in option.strip().lower() or option.strip().lower() in correct_answer_normalized:
+                        q['correctAnswer'] = option
+                        matched = True
+                        print(f"Fixed MCQ answer (partial match): '{correct_answer}' -> '{option}'")
+                        break
+            
+            # Last resort: default to first option
+            if not matched and options:
+                print(f"WARNING: Could not match '{correct_answer}' to any option. Defaulting to first option: '{options[0]}'")
+                q['correctAnswer'] = options[0]
+            
+            fixed_questions.append(q)
+        else:
+            # Non-MCQ questions don't need validation
+            fixed_questions.append(q)
+    
+    return fixed_questions
+
+
 def lambda_handler(event, context):
     try:
         client = boto3.client("bedrock-runtime", region_name="us-east-1")
@@ -261,6 +317,9 @@ def lambda_handler(event, context):
                     'details': 'All question type generations failed'
                 })
             }
+        
+        # Validate and fix MCQ answers to ensure they match options exactly
+        all_questions = validate_and_fix_mcq_answers(all_questions)
         
         validated_json_str = json.dumps(all_questions, ensure_ascii=False)
         
