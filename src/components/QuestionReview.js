@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
 import "../QuestionReview.css";
 
-const QuestionReview = ({ testID, showToast, onClose }) => {
+const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClose }) => {
   const { JWTValue, setRedirectPath, logout } = useGlobalContext();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +78,7 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
   const getOptionLabel = (index) => String.fromCharCode(65 + index);
 
   const correctCount = questions.filter(q => q.isCorrect).length;
-  const incorrectCount = questions.filter(q => !q.isCorrect && q.submittedAnswer).length;
+  const incorrectCount = questions.filter(q => !q.isCorrect && q.submittedAnswer && q.correctAnswer).length;
   const unansweredCount = questions.filter(q => !q.submittedAnswer).length;
 
   if (loading) {
@@ -134,14 +134,18 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
           <span className="summary-stat-value">{questions.length}</span>
           <span className="summary-stat-label">Total</span>
         </div>
-        <div className="summary-stat">
-          <span className="summary-stat-value summary-stat-value--correct">{correctCount}</span>
-          <span className="summary-stat-label">Correct</span>
-        </div>
-        <div className="summary-stat">
-          <span className="summary-stat-value summary-stat-value--incorrect">{incorrectCount}</span>
-          <span className="summary-stat-label">Incorrect</span>
-        </div>
+        {!isPsychometricReport && (
+          <>
+            <div className="summary-stat">
+              <span className="summary-stat-value summary-stat-value--correct">{correctCount}</span>
+              <span className="summary-stat-label">Correct</span>
+            </div>
+            <div className="summary-stat">
+              <span className="summary-stat-value summary-stat-value--incorrect">{incorrectCount}</span>
+              <span className="summary-stat-label">Incorrect</span>
+            </div>
+          </>
+        )}
         <div className="summary-stat">
           <span className="summary-stat-value summary-stat-value--unanswered">{unansweredCount}</span>
           <span className="summary-stat-label">Skipped</span>
@@ -151,22 +155,32 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
       <div className="question-review-list">
         {questions.map((q, index) => {
           const isExpanded = expandedQuestions[index];
-          const statusClass = q.isCorrect ? 'correct' : q.submittedAnswer ? 'incorrect' : 'unanswered';
+          // For psychometric reports, don't show incorrect status if there's no correct answer
+          const hasCorrectAnswer = q.correctAnswer && q.correctAnswer.trim() !== '';
+          const statusClass = isPsychometricReport && !hasCorrectAnswer 
+            ? (q.submittedAnswer ? 'answered' : 'unanswered')
+            : (q.isCorrect ? 'correct' : q.submittedAnswer ? 'incorrect' : 'unanswered');
           
           return (
             <div key={q.questionID || index} className={`question-card question-card--${statusClass}`}>
               <div className="question-card-header" onClick={() => toggleQuestion(index)}>
                 <div className="question-info">
-                  <div className="question-number-badge">{index + 1}</div>
+                  <div className={`question-number-badge ${isPsychometricReport ? 'question-number-badge--psychometric' : ''}`}>{index + 1}</div>
                   <div className="question-meta">
                     <div className="question-preview">{q.question}</div>
                     {q.topic && <div className="question-topic-label">{q.topic}</div>}
                   </div>
                 </div>
                 <div className="question-status-area">
-                  <span className={`status-indicator status-indicator--${statusClass}`}>
-                    {q.isCorrect ? 'Correct' : q.submittedAnswer ? 'Incorrect' : 'Skipped'}
-                  </span>
+                  {!isPsychometricReport || hasCorrectAnswer ? (
+                    <span className={`status-indicator status-indicator--${statusClass}`}>
+                      {q.isCorrect ? 'Correct' : q.submittedAnswer ? 'Incorrect' : 'Skipped'}
+                    </span>
+                  ) : (
+                    <span className={`status-indicator status-indicator--${statusClass}`}>
+                      {q.submittedAnswer ? 'Answered' : 'Skipped'}
+                    </span>
+                  )}
                   <svg 
                     className={`expand-chevron ${isExpanded ? 'expanded' : ''}`}
                     width="20" height="20" viewBox="0 0 24 24" 
@@ -216,10 +230,12 @@ const QuestionReview = ({ testID, showToast, onClose }) => {
                           {q.submittedAnswer || "Not answered"}
                         </span>
                       </div>
-                      <div className="comparison-item">
-                        <span className="comparison-label">Correct Answer</span>
-                        <span className="comparison-value comparison-value--correct">{q.correctAnswer}</span>
-                      </div>
+                      {(!isPsychometricReport || (q.correctAnswer && q.correctAnswer.trim() !== '')) && (
+                        <div className="comparison-item">
+                          <span className="comparison-label">Correct Answer</span>
+                          <span className="comparison-value comparison-value--correct">{q.correctAnswer}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

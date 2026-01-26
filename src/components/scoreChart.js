@@ -43,7 +43,10 @@ const ScoreChart = ({ message, showToast }) => {
   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
 
   const parsedBody = message;
-  const { testID, candidateName, templateName, submittedAt, totalQuestions: configTotalQuestions } = parsedBody || {};
+  const { testID, candidateName, templateName, submittedAt, totalQuestions: configTotalQuestions, isPsychometricReport } = parsedBody || {};
+  
+  // Ensure isPsychometricReport is always a boolean
+  const isPsychometric = Boolean(isPsychometricReport);
   
   // Always prioritize the totalQuestions from the backend response
   // This should be the configured numberOfQuestions value (e.g., 10)
@@ -159,41 +162,45 @@ const ScoreChart = ({ message, showToast }) => {
               <span className="detail-label">Attempted:</span>
               <span className="detail-value">{submittedAnswers}</span>
             </div>
-            <div className="detail-row">
-              <span className="detail-label">Correct Answers:</span>
-              <span className="detail-value">{correctAnswers}</span>
-            </div>
+            {!isPsychometric && (
+              <div className="detail-row">
+                <span className="detail-label">Correct Answers:</span>
+                <span className="detail-value">{correctAnswers}</span>
+              </div>
+            )}
           </div>
         </div>
 
       {/* Topic Score Table + Photos */}
       <div className="topic-photos-column">
-        <div className="topic-table-section">
-          {loadingTopics ? (
-            <p>Loading topic scores...</p>
-          ) : topicScores.length > 0 ? (
-            <table className="topic-score-table">
-              <thead>
-                <tr>
-                  <th>Topic</th>
-                  <th>Attempted</th>
-                  <th>Correct</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topicScores.map((topic, index) => (
-                  <tr key={index}>
-                    <td>{topic.topic}</td>
-                    <td>{topic.attempted}</td>
-                    <td>{topic.correct}</td>
-                    <td>{topic.attempted > 0 ? ((topic.correct / topic.attempted) * 100).toFixed(0) : 0}%</td>
+        {!isPsychometric && (
+          <div className="topic-table-section">
+            {loadingTopics ? (
+              <p>Loading topic scores...</p>
+            ) : topicScores.length > 0 ? (
+              <table className="topic-score-table">
+                <thead>
+                  <tr>
+                    <th>Topic</th>
+                    <th>Attempted</th>
+                    <th>Correct</th>
+                    <th>Percentage</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : null}
-        </div>
+                </thead>
+                <tbody>
+                  {topicScores.map((topic, index) => (
+                    <tr key={index}>
+                      <td>{topic.topic}</td>
+                      <td>{topic.attempted}</td>
+                      <td>{topic.correct}</td>
+                      <td>{topic.attempted > 0 ? ((topic.correct / topic.attempted) * 100).toFixed(0) : 0}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : null}
+          </div>
+        )}
 
         <div className="photo-section-inline">
           <div className="photo-section-title">Candidate Photographs</div>

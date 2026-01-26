@@ -841,6 +841,7 @@ function SearchResult() {
                     <QuestionReview
                       ref={questionReviewRef}
                       testID={fileContent?.testID}
+                      isPsychometricReport={fileContent?.isPsychometricReport || false}
                       showToast={showToast}
                       onClose={handleCloseQuestionReview}
                     />

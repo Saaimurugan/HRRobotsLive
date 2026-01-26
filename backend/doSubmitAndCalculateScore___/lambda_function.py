@@ -293,17 +293,26 @@ def get_test_configuration(template_id):
         'allowedDefaults': 10
     }
 
-def count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions=10):
+def count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions=10, template_id=None):
     submitted_answers = sum(1 for entry in report if entry.get("submittedAnswer"))
     correct_answers = sum(1 for entry in report if entry.get("isCorrect") is True)
 
-    return {
+    result = {
         "testID": test_id,
         "candidateName": candidate_Name,
         "totalQuestions": total_questions,
         "submittedAnswers": submitted_answers,
-        "correctAnswers": correct_answers
+        "correctAnswers": correct_answers,
+        "isPsychometricReport": False  # Default to False
     }
+    
+    # Add template information if template_id is provided
+    if template_id:
+        template_data = get_template_name(template_id)
+        result["isPsychometricReport"] = template_data.get("isPsychometricReport", False)
+        result["templateName"] = template_data.get("templateName", "Unknown Template")
+    
+    return result
 
 def save_result_to_dynamodb(test_id, report, result_summary):
     # Check if record already exists for this testID
@@ -336,22 +345,29 @@ def save_result_to_dynamodb(test_id, report, result_summary):
     return
 
 def get_template_name(template_id):
-    """Get the template name from the template table"""
+    """Get the template name and isPsychometricReport flag from the template table"""
     try:
         response = template_table.get_item(Key={"templateID": template_id})
-        return response.get("Item", {}).get("templateName", "Unknown Template")
+        item = response.get("Item", {})
+        return {
+            "templateName": item.get("templateName", "Unknown Template"),
+            "isPsychometricReport": item.get("isPsychometricReport", False)
+        }
     except Exception:
-        return "Unknown Template"
+        return {
+            "templateName": "Unknown Template",
+            "isPsychometricReport": False
+        }
 
 def send_recruiter_notification(test_data, status_type):
     """Send notification to recruiter about test completion/termination"""
     try:
-        template_name = get_template_name(test_data.get('templateID', ''))
+        template_data = get_template_name(test_data.get('templateID', ''))
         
         notification_payload = {
             "testID": test_data.get('testID'),
             "candidateName": test_data.get('candidateName'),
-            "templateName": template_name,
+            "templateName": template_data.get("templateName", "Unknown Template"),
             "status": status_type,
             "recruiterEmail": test_data.get('email'),
             "datetime": str(datetime.datetime.now())
@@ -451,7 +467,7 @@ def handle_direct_submission(test_id, answers):
 
         # Calculate score and save results
         report = calculate_score(test_id, template_ID)
-        result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions)
+        result_summary = count_submitted_and_correct_answers(report, candidate_Name, test_id, total_questions, template_ID)
         save_result_to_dynamodb(test_id, report, result_summary)
         
         # Send email notification to recruiter

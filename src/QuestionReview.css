@@ -168,6 +168,16 @@
   color: #d97706;
 }
 
+.question-number-badge--psychometric {
+  background: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+.question-card--answered .question-number-badge {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
 .question-meta {
   display: flex;
   flex-direction: column;
