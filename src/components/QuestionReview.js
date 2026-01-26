@@ -12,6 +12,9 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Ensure isPsychometricReport is always a boolean
+  const isPsychometric = Boolean(isPsychometricReport);
+
   const checkUnauthorized = useCallback((data) => {
     if (data?.message === "Unauthorized" || 
         data?.body === '{"message": "Unauthorized"}' ||
@@ -61,7 +64,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
     };
 
     fetchQuestionDetails();
-  }, [testID, JWTValue, checkUnauthorized]);
+  }, [testID, JWTValue]); // Removed checkUnauthorized from dependencies
 
   const toggleQuestion = (index) => {
     setExpandedQuestions(prev => ({ ...prev, [index]: !prev[index] }));
@@ -134,7 +137,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
           <span className="summary-stat-value">{questions.length}</span>
           <span className="summary-stat-label">Total</span>
         </div>
-        {!isPsychometricReport && (
+        {!isPsychometric && (
           <>
             <div className="summary-stat">
               <span className="summary-stat-value summary-stat-value--correct">{correctCount}</span>
@@ -157,7 +160,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
           const isExpanded = expandedQuestions[index];
           // For psychometric reports, don't show incorrect status if there's no correct answer
           const hasCorrectAnswer = q.correctAnswer && q.correctAnswer.trim() !== '';
-          const statusClass = isPsychometricReport && !hasCorrectAnswer 
+          const statusClass = isPsychometric && !hasCorrectAnswer 
             ? (q.submittedAnswer ? 'answered' : 'unanswered')
             : (q.isCorrect ? 'correct' : q.submittedAnswer ? 'incorrect' : 'unanswered');
           
@@ -165,14 +168,14 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
             <div key={q.questionID || index} className={`question-card question-card--${statusClass}`}>
               <div className="question-card-header" onClick={() => toggleQuestion(index)}>
                 <div className="question-info">
-                  <div className={`question-number-badge ${isPsychometricReport ? 'question-number-badge--psychometric' : ''}`}>{index + 1}</div>
+                  <div className={`question-number-badge ${isPsychometric ? 'question-number-badge--psychometric' : ''}`}>{index + 1}</div>
                   <div className="question-meta">
                     <div className="question-preview">{q.question}</div>
                     {q.topic && <div className="question-topic-label">{q.topic}</div>}
                   </div>
                 </div>
                 <div className="question-status-area">
-                  {!isPsychometricReport || hasCorrectAnswer ? (
+                  {!isPsychometric || hasCorrectAnswer ? (
                     <span className={`status-indicator status-indicator--${statusClass}`}>
                       {q.isCorrect ? 'Correct' : q.submittedAnswer ? 'Incorrect' : 'Skipped'}
                     </span>
@@ -230,7 +233,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
                           {q.submittedAnswer || "Not answered"}
                         </span>
                       </div>
-                      {(!isPsychometricReport || (q.correctAnswer && q.correctAnswer.trim() !== '')) && (
+                      {(!isPsychometric || (q.correctAnswer && q.correctAnswer.trim() !== '')) && (
                         <div className="comparison-item">
                           <span className="comparison-label">Correct Answer</span>
                           <span className="comparison-value comparison-value--correct">{q.correctAnswer}</span>

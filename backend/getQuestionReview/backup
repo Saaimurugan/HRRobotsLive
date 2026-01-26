@@ -104,8 +104,7 @@ def lambda_handler(event, context):
         answers = get_all_answers(test_id)
         answer_dict = {a['questionID']: a.get('answer', '') for a in answers}
         
-        # Build the question review data - only include questions that were part of this test
-        # (i.e., questions that have an answer record, even if the answer is empty)
+        # Build the question review data
         review_questions = []
         for answer in answers:
             question_id = answer['questionID']
@@ -117,32 +116,20 @@ def lambda_handler(event, context):
             submitted_answer = answer.get('answer', '')
             correct_answer = question.get('correctAnswer', '')
             
-            # Handle both old format (option1, option2, etc.) and new format (options array)
+            # Parse options from the question
             options = []
-            if 'options' in question and isinstance(question['options'], list):
-                # New format: options is an array
-                options = question['options']
-            elif 'options' in question and question['options'] == 'Range':
-                # Range type question
-                options = []
-            elif 'options' in question and question['options'] == 'RangeWithTwoQuestions':
-                # Range with two questions type
-                options = []
-            else:
-                # Old format: option1, option2, option3, option4
-                for key in ['option1', 'option2', 'option3', 'option4']:
-                    if key in question and question[key]:
-                        options.append(question[key])
+            for key in ['option1', 'option2', 'option3', 'option4']:
+                if key in question and question[key]:
+                    options.append(question[key])
             
             review_questions.append({
                 'questionID': question_id,
                 'question': question.get('question', ''),
                 'topic': question.get('topic', ''),
-                'type': question.get('type', 'mcq'),
                 'options': options,
                 'correctAnswer': correct_answer,
                 'submittedAnswer': submitted_answer,
-                'isCorrect': submitted_answer == correct_answer and submitted_answer != '' and correct_answer != ''
+                'isCorrect': submitted_answer == correct_answer and submitted_answer != ''
             })
         
         # Sort by question order if available, otherwise by questionID

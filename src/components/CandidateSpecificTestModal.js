@@ -1246,12 +1246,9 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
                               style={{ cursor: 'pointer', width: '16px', height: '16px' }}
                             />
                             <span style={{ color: 'var(--color-text-primary)', fontWeight: '500' }}>
-                              Analyze Projects from Resume
+                              Extract projects and work experience to generate scenario-based questions
                             </span>
                           </label>
-                          <p style={{ fontSize: '12px', color: 'var(--color-text-muted)', margin: '8px 0 0 26px' }}>
-                            Extract projects and work experience to generate scenario-based questions
-                          </p>
                         </div>
                       )}
                     </div>
