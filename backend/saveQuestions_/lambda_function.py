@@ -62,6 +62,9 @@ def lambda_handler(event, context):
                 'message': 'Missing globalValue (email) in the request.'
             }
         
+        # Get the isPsychometricReport flag (default to False if not provided)
+        is_psychometric_report = event.get('isPsychometricReport', False)
+        
         # email = "sangeeta.mandal@mpslimited.com"
 
         # Check if the template already exists
@@ -75,6 +78,7 @@ def lambda_handler(event, context):
                     "templateID": template_ID,
                     "templateName": template_Name,
                     "email": email,
+                    "isPsychometricReport": is_psychometric_report,
                     "datetime": str(datetime.datetime.now())
                 }
             )
@@ -82,11 +86,12 @@ def lambda_handler(event, context):
             # Update the existing template item on DynamoDB
             template_table.update_item(
                 Key={"templateID": template_ID},
-                UpdateExpression="SET templateName = :name, email = :email, #dt = :dt",
+                UpdateExpression="SET templateName = :name, email = :email, isPsychometricReport = :isPsycho, #dt = :dt",
                 ExpressionAttributeNames={"#dt": "datetime"},  # 'datetime' is a reserved keyword in DynamoDB
                 ExpressionAttributeValues={
                     ":name": template_Name,
                     ":email": email,
+                    ":isPsycho": is_psychometric_report,
                     ":dt": str(datetime.datetime.now())
                 }
             )

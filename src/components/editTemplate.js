@@ -112,6 +112,7 @@ const EditTemplate = () => {
   const [ttname, setTtname] = useState("");
   const [toasts, setToasts] = useState([]);
   const [showMobileWarning, setShowMobileWarning] = useState(false);
+  const [isPsychometricReport, setIsPsychometricReport] = useState(false);
   const [formData, setFormData] = useState({
     type: "mcq",
     question: "",
@@ -513,7 +514,14 @@ const EditTemplate = () => {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ templateID: passedTemplateID, templateName: ttname, globalValue: globalValue, questions: questionSet, token: JWTValue }),
+        body: JSON.stringify({ 
+          templateID: passedTemplateID, 
+          templateName: ttname, 
+          globalValue: globalValue, 
+          questions: questionSet, 
+          isPsychometricReport: isPsychometricReport,
+          token: JWTValue 
+        }),
       });
 
       const data = await response.json();
@@ -555,6 +563,7 @@ const EditTemplate = () => {
             setQuestionSet(parsedBody.questions);
             setTtname(parsedBody.templateName);
             setOriginalTemplateName(parsedBody.templateName);
+            setIsPsychometricReport(parsedBody.isPsychometricReport || false);
             // Show sample placeholder if no questions exist
             setShowSamplePlaceholder(parsedBody.questions.length === 0);
           } else {
@@ -716,6 +725,18 @@ const EditTemplate = () => {
                     onChange={(e) => setTtname(e.target.value)}
                     required
                   />
+                </div>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
+                  <input
+                    type="checkbox"
+                    id="psychometric-checkbox"
+                    checked={isPsychometricReport}
+                    onChange={(e) => setIsPsychometricReport(e.target.checked)}
+                    style={{ width: 'auto', cursor: 'pointer' }}
+                  />
+                  <label htmlFor="psychometric-checkbox" style={{ margin: 0, cursor: 'pointer' }}>
+                    Psychometric test-based report
+                  </label>
                 </div>
                 <button className="btn-primary" onClick={saveQuestions} disabled={loading}>
                   {loading ? "Saving..." : "Save Questions"}

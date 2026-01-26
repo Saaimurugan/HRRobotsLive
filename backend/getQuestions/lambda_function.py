@@ -18,13 +18,17 @@ mcq_questions_table = dynamodb.Table('MCQQuestions')
 template_table = dynamodb.Table('template')
 
 def get_template_name(template_id):
-    """Fetch the template name from the template table using templateID."""
+    """Fetch the template name and isPsychometricReport flag from the template table using templateID."""
     try:
         response = template_table.get_item(Key={"templateID": template_id})
-        return response.get("Item", {}).get("templateName")
+        item = response.get("Item", {})
+        return {
+            "templateName": item.get("templateName"),
+            "isPsychometricReport": item.get("isPsychometricReport", False)
+        }
     except Exception as e:
-        print(f"Error fetching template name for ID {template_id}: {e}")
-        return None
+        print(f"Error fetching template data for ID {template_id}: {e}")
+        return {"templateName": None, "isPsychometricReport": False}
         
 def getAllQuestions(template_ID):
     questions = []
@@ -69,12 +73,16 @@ def lambda_handler(event, context):
         #)
         
         items = getAllQuestions(passed_TemplateID)
-        templateName = get_template_name(passed_TemplateID)
+        template_data = get_template_name(passed_TemplateID)
         # items = response.get('Items', [])
 
         return {
             'statusCode': 200,
-            'body': json.dumps({'templateName': templateName, 'questions': items}, cls=DecimalEncoder)
+            'body': json.dumps({
+                'templateName': template_data.get('templateName'), 
+                'isPsychometricReport': template_data.get('isPsychometricReport', False),
+                'questions': items
+            }, cls=DecimalEncoder)
         }
     except Exception as e:
         return {
