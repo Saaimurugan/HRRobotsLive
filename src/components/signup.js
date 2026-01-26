@@ -37,7 +37,8 @@ const SignUp = () => {
     };
 
     const validatePassword = (password) => {
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/;
+        // Allow all printable ASCII special characters
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~])[A-Za-z\d!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]{8,}$/;
         return passwordRegex.test(password);
     };
 
@@ -101,7 +102,7 @@ const SignUp = () => {
         }
 
         if (!validatePassword(password)) {
-            setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+            setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and at least one special character.");
             setLoading(false);
             return;
         }
@@ -140,7 +141,7 @@ const SignUp = () => {
         const value = e.target.value;
         setPassword(value);
         if (!validatePassword(value)) {
-            setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+            setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and at least one special character.");
         } else if (confirmPassword && value !== confirmPassword) {
             setPasswordError("Passwords do not match");
         } else {
@@ -154,7 +155,7 @@ const SignUp = () => {
         if (password && value !== password) {
             setPasswordError("Passwords do not match");
         } else if (!validatePassword(value)) {
-            setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
+            setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and at least one special character.");
         } else {
             setPasswordError("");
         }
