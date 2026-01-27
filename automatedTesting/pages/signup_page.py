@@ -18,7 +18,7 @@ class SignupPage(BasePage):
     EMAIL_ERROR = (By.CSS_SELECTOR, "span.field-error")
     PASSWORD_STRENGTH_BARS = (By.CSS_SELECTOR, "div.strength-bars")
     STRENGTH_LABEL = (By.CSS_SELECTOR, "span.strength-label")
-    LOGIN_LINK = (By.CSS_SELECTOR, "a[href='/login']")
+    LOGIN_LINK = (By.XPATH, "//a[contains(text(), 'Sign in')]")
     SUCCESS_STATE = (By.CSS_SELECTOR, "div.success-state")
     
     def __init__(self, driver):

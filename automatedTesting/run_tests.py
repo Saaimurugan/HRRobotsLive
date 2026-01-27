@@ -38,6 +38,13 @@ def run_tests(test_suite=None, browser="chrome", headless=False, parallel=False,
             "edit_test": "tests/test_07_edit_screening_test.py",
             "report": "tests/test_08_report.py",
             "profile": "tests/test_09_profile.py",
+            "eula": "tests/test_10_eula.py",
+            "jd_template": "tests/test_11_jd_template_creation.py",
+            "performance": "tests/test_12_performance.py",
+            "load_testing": "tests/test_13_load_testing.py",
+            "admin_dashboard": "tests/test_14_admin_dashboard.py",
+            "ai_interview": "tests/test_15_ai_interview.py",
+            "test_setup_wizard": "tests/test_16_test_setup_wizard.py",
         }
         
         if test_suite in test_file_map:
@@ -80,7 +87,9 @@ def main():
     parser.add_argument(
         "--suite", "-s",
         choices=["signup", "login", "forgot_password", "jd", "profiling", 
-                 "screening", "edit_test", "report", "profile", "all"],
+                 "screening", "edit_test", "report", "profile", "eula",
+                 "jd_template", "performance", "load_testing", "admin_dashboard",
+                 "ai_interview", "test_setup_wizard", "all"],
         default="all",
         help="Test suite to run"
     )

@@ -15,6 +15,13 @@ Comprehensive Selenium-based test suite for HR Robots application covering all m
 | Edit Screening Test | `test_07_edit_screening_test.py` | Template editing, configuration |
 | Reports | `test_08_report.py` | Test results viewing |
 | Profile | `test_09_profile.py` | Password change, user invitation |
+| EULA | `test_10_eula.py` | EULA page functionality |
+| JD Template Creation | `test_11_jd_template_creation.py` | JD template creation from templates |
+| Performance | `test_12_performance.py` | Performance testing |
+| Load Testing | `test_13_load_testing.py` | Load testing scenarios |
+| Admin Dashboard | `test_14_admin_dashboard.py` | Admin dashboard, analytics, user management |
+| AI Interview | `test_15_ai_interview.py` | AI-powered interview generation, PDF processing |
+| Test Setup Wizard | `test_16_test_setup_wizard.py` | System checks, identity verification, permissions |
 
 ## Setup
 
@@ -56,6 +63,9 @@ python run_tests.py --suite signup
 python run_tests.py --suite jd
 python run_tests.py --suite screening
 python run_tests.py --suite profile
+python run_tests.py --suite admin_dashboard
+python run_tests.py --suite ai_interview
+python run_tests.py --suite test_setup_wizard
 ```
 
 ### Run with Options
