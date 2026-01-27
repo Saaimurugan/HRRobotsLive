@@ -111,9 +111,9 @@ Return ONLY a JSON array with {count} objects:
     {{
         "type": "mcq",
         "topic": "{topic}",
-        "question": "Your question here?",
-        "options": ["Option A", "Option B", "Option C", "Option D"],
-        "correctAnswer": "Option A"
+        "question": "Clear, specific question about {topic}?",
+        "options": ["Correct answer", "Plausible distractor 1", "Plausible distractor 2", "Plausible distractor 3"],
+        "correctAnswer": "Correct answer"
     }}
 ]
 
