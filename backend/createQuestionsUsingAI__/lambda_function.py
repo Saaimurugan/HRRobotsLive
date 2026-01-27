@@ -66,19 +66,34 @@ def extract_questions_manually(response_data):
     """
     questions = []
     
-    # Pattern to match question blocks
-    pattern = r'"type"\s*:\s*"([^"]+)"[^}]*"topic"\s*:\s*"([^"]+)"[^}]*"question"\s*:\s*"([^"]+)"'
+    # Pattern to match complete question blocks including options
+    pattern = r'"type"\s*:\s*"([^"]+)"[^}]*"topic"\s*:\s*"([^"]+)"[^}]*"question"\s*:\s*"([^"]+)"[^}]*"options"\s*:\s*(\[[^\]]*\]|"[^"]*")[^}]*"correctAnswer"\s*:\s*"([^"]*)"'
     
     matches = re.finditer(pattern, response_data, re.DOTALL)
     
     for match in matches:
-        q_type, topic, question = match.groups()
+        q_type, topic, question, options_str, correct_answer = match.groups()
+        
+        # Parse options
+        options = []
+        if options_str.startswith('['):
+            # Try to parse as array
+            try:
+                options = json.loads(options_str)
+            except:
+                # Extract quoted strings from array
+                option_matches = re.findall(r'"([^"]+)"', options_str)
+                options = option_matches
+        else:
+            # Single string option (for range/elaborate/code types)
+            options = options_str.strip('"')
+        
         questions.append({
             "type": q_type,
             "topic": topic,
             "question": question,
-            "options": [],
-            "correctAnswer": ""
+            "options": options,
+            "correctAnswer": correct_answer
         })
     
     if not questions:
@@ -312,6 +327,7 @@ def validate_and_fix_mcq_answers(questions):
     """
     Validates that MCQ correct answers exactly match one of the options.
     If not, finds the closest match or defaults to the first option.
+    Also ensures MCQ questions have valid options arrays.
     """
     fixed_questions = []
     
@@ -319,6 +335,13 @@ def validate_and_fix_mcq_answers(questions):
         if q.get('type') == 'mcq':
             options = q.get('options', [])
             correct_answer = q.get('correctAnswer', '')
+            
+            # CRITICAL: Validate that MCQ has options
+            if not options or not isinstance(options, list) or len(options) < 2:
+                print(f"ERROR: MCQ question has invalid or missing options: {q.get('question', 'Unknown')[:100]}")
+                print(f"Options received: {options}")
+                # Skip this question - it's invalid
+                continue
             
             # Check if correct answer exactly matches an option
             if correct_answer in options:
@@ -390,6 +413,16 @@ def lambda_handler(event, context):
                     print(f"Raw response for {q_type}: {response_data[:500]}")
                     
                     questions = sanitize_and_parse_json(response_data)
+                    
+                    # Validate MCQ questions have options
+                    if q_type == 'mcq':
+                        valid_questions = []
+                        for q in questions:
+                            if q.get('options') and isinstance(q.get('options'), list) and len(q.get('options')) >= 2:
+                                valid_questions.append(q)
+                            else:
+                                print(f"WARNING: Skipping MCQ without valid options: {q.get('question', 'Unknown')[:100]}")
+                        questions = valid_questions
                     
                     # Ensure we got the right number
                     if len(questions) > count:
