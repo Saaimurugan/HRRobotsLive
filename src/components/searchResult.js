@@ -162,6 +162,10 @@ function SearchResult() {
   };
 
   const handleGenerateAnalytics = () => {
+    // Prevent layout shift by ensuring consistent container width (desktop only)
+    if (window.innerWidth > 768) {
+      document.body.style.overflowY = 'scroll';
+    }
     setShowAnalytics(true);
     // Trigger the analytics generation in the child component
     if (analyticsRef.current && analyticsRef.current.fetchAnalytics) {
@@ -177,6 +181,10 @@ function SearchResult() {
   };
 
   const handleViewQuestions = () => {
+    // Prevent layout shift by ensuring consistent container width (desktop only)
+    if (window.innerWidth > 768) {
+      document.body.style.overflowY = 'scroll';
+    }
     setShowQuestionReview(true);
     // Scroll to question review section after a short delay to allow rendering
     setTimeout(() => {

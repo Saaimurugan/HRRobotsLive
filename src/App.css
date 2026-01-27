@@ -1,3 +1,22 @@
+/* Global Layout Stability - Prevent scrollbar layout shifts */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+/* Mobile-first approach - smaller screens get full width */
+@media (max-width: 768px) {
+  html {
+    /* On mobile, scrollbar behavior is different, so we can be less aggressive */
+    overflow-y: auto;
+    scrollbar-gutter: auto;
+  }
+}
+
 .container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -8,11 +8,16 @@
 /* Analytics Container */
 .analytics-container {
   width: 100%;
-  max-width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  /* Prevent layout shift during content loading */
+  min-height: 200px;
 }
 
 .analytics-content {
   width: 100%;
+  box-sizing: border-box;
 }
 
 .printable-content {
@@ -20,6 +25,9 @@
   padding: 20px;
   border-radius: var(--radius-md);
   margin-top: 16px;
+  /* Ensure consistent width */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .printable-content--hidden {
@@ -60,6 +68,9 @@
   background: var(--color-bg-gradient);
   padding: 20px;
   padding-top: 80px;
+  /* Prevent layout shift from scrollbar */
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
 }
 
 .result-container {
@@ -85,7 +96,7 @@
 .search-header-section {
   margin-bottom: 20px;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
   padding: 0 16px;
@@ -590,7 +601,8 @@
 .desktop-results {
   display: block;
   width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
+  margin: 0 auto;
   padding: 0 16px;
   box-sizing: border-box;
 }
@@ -814,7 +826,7 @@
   gap: 8px;
   margin-top: 24px;
   padding: 16px;
-  max-width: 1200px;
+  max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
   box-sizing: border-box;
@@ -867,6 +879,18 @@
   .modern-result-page {
     padding: 0;
     padding-top: 60px;
+    /* Maintain scrollbar stability on mobile */
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+
+  /* Override large screen max-widths for mobile */
+  .analytics-container,
+  .result-container,
+  .search-header-section,
+  .desktop-results {
+    max-width: 100%;
+    padding: 0 12px;
   }
 
   .mobile-search-panel {
@@ -1240,6 +1264,18 @@
 @media (max-width: 400px) {
   .modern-result-page {
     padding-top: 56px;
+    /* Maintain scrollbar stability on very small screens */
+    overflow-y: scroll;
+    scrollbar-gutter: stable;
+  }
+
+  /* Ensure all containers use full width on very small screens */
+  .analytics-container,
+  .result-container,
+  .search-header-section,
+  .desktop-results {
+    max-width: 100%;
+    padding: 0 8px;
   }
 
   .test-report-card {
