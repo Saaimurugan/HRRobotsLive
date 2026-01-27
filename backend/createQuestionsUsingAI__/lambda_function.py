@@ -87,14 +87,21 @@ def extract_questions_manually(response_data):
     return questions
 
 
-def generate_questions_by_type(client, model_id, topic, level, question_type, count, existing_questions):
+def generate_mcq_questions(client, model_id, topic, level, count, existing_questions):
     """
-    Generate questions of a specific type.
+    Generate Multiple Choice Questions (MCQ).
     """
-    type_prompts = {
-        "mcq": f"""Generate EXACTLY {count} Multiple Choice Questions (MCQ) about "{topic}" at {level} level.
+    level_guidance = "Focus on fundamental concepts and basic understanding" if level.lower() in ["beginner", "basic", "entry"] else "Include advanced concepts and detailed technical knowledge" if level.lower() in ["advanced", "expert", "senior"] else "Balance theoretical knowledge with practical application"
+    
+    prompt = f"""Generate EXACTLY {count} Multiple Choice Questions (MCQ) about "{topic}" at {level} level.
 
-Each question MUST have 4 options and one correct answer.
+REQUIREMENTS FOR MCQ QUESTIONS:
+- Each question must test specific knowledge or understanding of {topic}
+- Create 4 distinct, plausible options
+- Only ONE option should be clearly correct
+- Distractors should be reasonable but incorrect
+- Questions should be clear, concise, and unambiguous
+- For {level} level: {level_guidance}
 
 CRITICAL REQUIREMENT: The "correctAnswer" field MUST be an EXACT copy of one of the options from the "options" array. 
 Do NOT paraphrase or modify the text - copy it character-by-character.
@@ -112,69 +119,137 @@ Return ONLY a JSON array with {count} objects:
 
 CRITICAL: 
 1. Generate EXACTLY {count} MCQ questions. No more, no less.
-2. The correctAnswer MUST exactly match one option from the options array.""",
+2. The correctAnswer MUST exactly match one option from the options array.
+3. Make questions challenging but fair for {level} level."""
+    
+    if existing_questions:
+        prompt += f"\n\nDon't generate questions similar to these:\n{existing_questions}"
+    
+    prompt += f"\n\nReturn ONLY valid JSON array with EXACTLY {count} question objects. No additional text."
+    
+    return _invoke_bedrock_model(client, model_id, prompt, count)
 
-        "range": f"""Generate EXACTLY {count} Range-based questions about "{topic}" at {level} level.
 
-Each question should ask the user to select a value from a range.
+def generate_range_questions(client, model_id, topic, level, count, existing_questions):
+    """
+    Generate Range-based questions.
+    """
+    level_guidance = "Focus on basic self-assessment and simple metrics" if level.lower() in ["beginner", "basic", "entry"] else "Include complex performance metrics and detailed evaluations" if level.lower() in ["advanced", "expert", "senior"] else "Balance subjective ratings with objective measurements"
+    
+    prompt = f"""Generate EXACTLY {count} Range-based questions about "{topic}" at {level} level.
+
+REQUIREMENTS FOR RANGE QUESTIONS:
+- Questions should ask for ratings, scales, or numeric values related to {topic}
+- Use appropriate ranges based on the context (e.g., 1-5 for ratings, 0-100 for percentages)
+- Questions can assess experience levels, confidence, or quantitative aspects
+- For {level} level: {level_guidance}
+- Set realistic min/max values and appropriate default answers
+- Consider whether any answer should be marked as correct or if it's purely subjective
 
 Return ONLY a JSON array with {count} objects:
 [
     {{
         "type": "range",
         "topic": "{topic}",
-        "question": "Rate or select a value for this question?",
+        "question": "Rate your experience/confidence/knowledge in this aspect of {topic}?",
         "options": "Range",
-        "rangeMin": 0,
+        "rangeMin": 1,
         "rangeMax": 10,
         "correctAnswer": "5",
-        "anyAnswerCorrect": false
+        "anyAnswerCorrect": true
     }}
 ]
 
-CRITICAL: Generate EXACTLY {count} Range questions. No more, no less.""",
+CRITICAL: Generate EXACTLY {count} Range questions. No more, no less."""
+    
+    if existing_questions:
+        prompt += f"\n\nDon't generate questions similar to these:\n{existing_questions}"
+    
+    prompt += f"\n\nReturn ONLY valid JSON array with EXACTLY {count} question objects. No additional text."
+    
+    return _invoke_bedrock_model(client, model_id, prompt, count)
 
-        "elaborate": f"""Generate EXACTLY {count} Elaborate/Open-ended questions about "{topic}" at {level} level.
 
-These questions should require detailed text answers.
+def generate_elaborate_questions(client, model_id, topic, level, count, existing_questions):
+    """
+    Generate Elaborate/Open-ended questions.
+    """
+    level_guidance = "Focus on basic explanations and simple examples" if level.lower() in ["beginner", "basic", "entry"] else "Require complex analysis, system design, and advanced problem-solving" if level.lower() in ["advanced", "expert", "senior"] else "Balance conceptual understanding with practical implementation details"
+    
+    prompt = f"""Generate EXACTLY {count} Elaborate/Open-ended questions about "{topic}" at {level} level.
+
+REQUIREMENTS FOR ELABORATE QUESTIONS:
+- Questions should require detailed, thoughtful responses (2-5 sentences minimum)
+- Test deep understanding, critical thinking, and practical application
+- Encourage candidates to demonstrate their knowledge through explanation
+- Questions should be specific enough to guide the response but open enough for creativity
+- For {level} level: {level_guidance}
+- Include scenario-based questions when appropriate
+- Ask for examples, comparisons, or step-by-step explanations
 
 Return ONLY a JSON array with {count} objects:
 [
     {{
         "type": "elaborate",
         "topic": "{topic}",
-        "question": "Explain or describe this concept in detail?",
+        "question": "Explain in detail how you would approach/implement/solve this {topic}-related scenario. Provide specific examples and reasoning.",
         "options": "",
-        "correctAnswer": "Expected detailed answer (optional)"
+        "correctAnswer": "Sample comprehensive answer demonstrating expected depth and key points"
     }}
 ]
 
-CRITICAL: Generate EXACTLY {count} Elaborate questions. No more, no less.""",
+CRITICAL: Generate EXACTLY {count} Elaborate questions. No more, no less."""
+    
+    if existing_questions:
+        prompt += f"\n\nDon't generate questions similar to these:\n{existing_questions}"
+    
+    prompt += f"\n\nReturn ONLY valid JSON array with EXACTLY {count} question objects. No additional text."
+    
+    return _invoke_bedrock_model(client, model_id, prompt, count)
 
-        "code": f"""Generate EXACTLY {count} Code/Programming questions about "{topic}" at {level} level.
 
-These questions should require writing code as the answer.
+def generate_code_questions(client, model_id, topic, level, count, existing_questions):
+    """
+    Generate Code/Programming questions.
+    """
+    level_guidance = "Focus on basic syntax, simple algorithms, and fundamental programming concepts" if level.lower() in ["beginner", "basic", "entry"] else "Include complex algorithms, system design, optimization, and advanced patterns" if level.lower() in ["advanced", "expert", "senior"] else "Balance problem-solving skills with clean, efficient code implementation"
+    
+    prompt = f"""Generate EXACTLY {count} Code/Programming questions about "{topic}" at {level} level.
+
+REQUIREMENTS FOR CODE QUESTIONS:
+- Questions should require writing actual code as the solution
+- Specify the programming language when relevant to {topic}
+- Include clear problem statements with input/output examples when applicable
+- Test practical coding skills, not just theoretical knowledge
+- For {level} level: {level_guidance}
+- Questions can include: algorithm implementation, debugging, code completion, or system design
+- Provide context about constraints, expected complexity, or specific requirements
 
 Return ONLY a JSON array with {count} objects:
 [
     {{
         "type": "code",
         "topic": "{topic}",
-        "question": "Write code to solve this problem?",
+        "question": "Write code to solve this {topic}-related problem: [Clear problem description with examples]",
         "options": "",
-        "correctAnswer": "Expected code solution (optional)"
+        "correctAnswer": "// Sample solution with comments explaining the approach\\nfunction sampleSolution() {{\\n    // Implementation here\\n    return result;\\n}}"
     }}
 ]
 
 CRITICAL: Generate EXACTLY {count} Code questions. No more, no less."""
-    }
     
-    prompt = type_prompts.get(question_type, "")
     if existing_questions:
         prompt += f"\n\nDon't generate questions similar to these:\n{existing_questions}"
     
     prompt += f"\n\nReturn ONLY valid JSON array with EXACTLY {count} question objects. No additional text."
     
+    return _invoke_bedrock_model(client, model_id, prompt, count)
+
+
+def _invoke_bedrock_model(client, model_id, prompt, count):
+    """
+    Helper function to invoke the Bedrock model with the given prompt.
+    """
     message_list = [
         {
             "role": "user",
@@ -213,6 +288,24 @@ CRITICAL: Generate EXACTLY {count} Code questions. No more, no less."""
             response_data += content_block_delta
     
     return response_data
+
+
+def generate_questions_by_type(client, model_id, topic, level, question_type, count, existing_questions):
+    """
+    Generate questions of a specific type by calling the appropriate specialized function.
+    """
+    type_functions = {
+        "mcq": generate_mcq_questions,
+        "range": generate_range_questions,
+        "elaborate": generate_elaborate_questions,
+        "code": generate_code_questions
+    }
+    
+    generator_function = type_functions.get(question_type)
+    if not generator_function:
+        raise ValueError(f"Unknown question type: {question_type}")
+    
+    return generator_function(client, model_id, topic, level, count, existing_questions)
 
 
 def validate_and_fix_mcq_answers(questions):
