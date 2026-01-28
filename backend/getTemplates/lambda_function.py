@@ -126,6 +126,7 @@ def lambda_handler(event, context):
 
         # Fetch templates
         fetched_items = getAllTemplates(e_mail)
+        print(f"Templates owned by {e_mail}: {len(fetched_items)}")
 
         # If fetched_items is not empty, update items
         if fetched_items:
@@ -133,8 +134,11 @@ def lambda_handler(event, context):
        
         if assignedEmail:
             assignedItems = getAllAssignedTemplates(assignedEmail)
+            print(f"Templates assigned to {assignedEmail}: {len(assignedItems)}")
             #Merge the two lists
             items.extend(assignedItems)
+
+        print(f"Total templates for {e_mail}: {len(items)}")
 
         if not items:
             return {

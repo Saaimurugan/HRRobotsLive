@@ -39,10 +39,11 @@ def lambda_handler(event, context):
 
         # Handle APPROVE action
         if action == "approve":
-            # Get current template to retrieve history
+            # Get current template to retrieve history and current assignment
             get_response = table.get_item(Key={'templateID': template_id})
             current_item = get_response.get('Item', {})
             history = current_item.get('AssignmentHistory', [])
+            current_assigned_role = current_item.get('AssignedRole', 'recruiter')
             
             # Add approval to history
             history.append({
@@ -50,25 +51,49 @@ def lambda_handler(event, context):
                 "by": actor_email,
                 "byName": actor_name,
                 "date": current_time,
-                "role": assigned_role
+                "role": current_assigned_role
             })
             
             # After approval, clear AssignedTo so it no longer shows in reviewer's list
             # The template will only show to the original owner
-            response = table.update_item(
-                Key={
-                    'templateID': template_id
-                },
-                UpdateExpression="SET ApprovedBy = :approver, ApprovedByName = :approverName, ApprovedDate = :date, ApprovalStatus = :status, AssignmentHistory = :history REMOVE AssignedTo, AssignedRole",
-                ExpressionAttributeValues={
-                    ':approver': actor_email,
-                    ':approverName': actor_name,
-                    ':date': current_time,
-                    ':status': 'approved',
-                    ':history': history
-                },
-                ReturnValues="UPDATED_NEW"
-            )
+            try:
+                response = table.update_item(
+                    Key={
+                        'templateID': template_id
+                    },
+                    UpdateExpression="SET ApprovedBy = :approver, ApprovedByName = :approverName, ApprovedDate = :date, ApprovalStatus = :status, AssignmentHistory = :history REMOVE AssignedTo, AssignedRole",
+                    ExpressionAttributeValues={
+                        ':approver': actor_email,
+                        ':approverName': actor_name,
+                        ':date': current_time,
+                        ':status': 'approved',
+                        ':history': history
+                    },
+                    ReturnValues="ALL_NEW"  # Changed from UPDATED_NEW to ALL_NEW to see all attributes
+                )
+            except ClientError as e:
+                # If AssignedTo or AssignedRole don't exist, that's okay
+                if e.response['Error']['Code'] == 'ValidationException':
+                    # Try without REMOVE if fields don't exist
+                    response = table.update_item(
+                        Key={
+                            'templateID': template_id
+                        },
+                        UpdateExpression="SET ApprovedBy = :approver, ApprovedByName = :approverName, ApprovedDate = :date, ApprovalStatus = :status, AssignmentHistory = :history",
+                        ExpressionAttributeValues={
+                            ':approver': actor_email,
+                            ':approverName': actor_name,
+                            ':date': current_time,
+                            ':status': 'approved',
+                            ':history': history
+                        },
+                        ReturnValues="ALL_NEW"
+                    )
+                else:
+                    raise
+            
+            # Log the updated item for debugging
+            print(f"Template after approval: {json.dumps(response.get('Attributes'))}")
             
             return {
                 "statusCode": 200,
