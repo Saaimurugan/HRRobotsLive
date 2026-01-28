@@ -43,16 +43,16 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'templateID, action, and performedBy are required'})
             }
         
+        # Use ISO format with microseconds for better uniqueness
         timestamp = datetime.utcnow().isoformat()
-        history_id = f"{template_id}#{timestamp}"
         
+        # Composite key: templateID (partition) + timestamp (sort)
         item = {
-            'historyID': history_id,
             'templateID': template_id,
+            'timestamp': timestamp,
             'action': action,
             'performedBy': performed_by,
             'performedByName': performed_by_name,
-            'timestamp': timestamp,
             'details': details
         }
         
@@ -62,7 +62,8 @@ def lambda_handler(event, context):
             'statusCode': 200,
             'body': json.dumps({
                 'message': 'Template history logged successfully',
-                'historyID': history_id
+                'templateID': template_id,
+                'timestamp': timestamp
             }, cls=DecimalEncoder)
         }
         

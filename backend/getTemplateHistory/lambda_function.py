@@ -29,9 +29,9 @@ def lambda_handler(event, context):
                 'body': json.dumps({'error': 'templateID is required'})
             }
         
-        # Query all history records for this template
+        # Query directly using partition key (templateID)
+        # No GSI needed - templateID is the partition key
         response = table.query(
-            IndexName='templateID-timestamp-index',
             KeyConditionExpression=Key('templateID').eq(template_id),
             ScanIndexForward=True  # Sort by timestamp ascending (oldest first)
         )
