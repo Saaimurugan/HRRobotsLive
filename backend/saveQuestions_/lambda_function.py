@@ -84,13 +84,17 @@ def lambda_handler(event, context):
             )
         else:
             # Update the existing template item on DynamoDB
+            # IMPORTANT: Preserve ownership by using RequestedBy (person who assigned for review) if it exists
+            # This ensures that when a reviewer edits a template, it stays with the original requester
+            owner_email = existing_template.get('email')
+                        
             template_table.update_item(
                 Key={"templateID": template_ID},
                 UpdateExpression="SET templateName = :name, email = :email, isPsychometricReport = :isPsycho, #dt = :dt",
                 ExpressionAttributeNames={"#dt": "datetime"},  # 'datetime' is a reserved keyword in DynamoDB
                 ExpressionAttributeValues={
                     ":name": template_Name,
-                    ":email": email,
+                    ":email": owner_email,  # Use RequestedBy if exists, otherwise keep original email
                     ":isPsycho": is_psychometric_report,
                     ":dt": str(datetime.datetime.now())
                 }
