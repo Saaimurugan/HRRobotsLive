@@ -10,7 +10,9 @@ import AssignTemplate from "./assignTemplate";
 import ConfigTemplate from "./configTemplate";
 import CandidateSpecificTestModal from "./CandidateSpecificTestModal";
 import EmailModal from "./EmailModal";
+import TemplateHistoryModal from "./TemplateHistoryModal";
 import { logConfigurationActivity, logAssignActivity, logGenerateTestLinkActivity } from '../utils/activityLogger';
+import { logTemplateAssignmentForReview, logTemplateAssignmentToRecruiter, logTemplateApproval, logTemplateConfigurationChange } from '../utils/templateHistoryLogger';
 
 // Toast Component
 const Toast = ({ toasts, removeToast }) => {
@@ -74,6 +76,8 @@ const [sortOrder, setSortOrder] = useState("desc"); // asc, desc
 const [filterBy, setFilterBy] = useState("all"); // all, own, assigned, recruiter, reviewer
 const [showSortDropdown, setShowSortDropdown] = useState(false);
 const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+const [showHistoryModal, setShowHistoryModal] = useState(false);
+const [selectedTemplateForHistory, setSelectedTemplateForHistory] = useState(null);
 
 // Toast functions
 const showToast = (type, title, message) => {
@@ -151,61 +155,103 @@ const handleConfirm = () => {
   handleDeleteTemplate(); // Delete in background
 };
 
-const handleConfigTemplate = (d) => {
+const handleConfigTemplate = async (d) => {
   setLoadingTemplate(true);
   const startTime = Date.now();
+  
+  // Get current configuration to compare changes
+  let oldConfig = {};
   try {
-    const response = fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
+    const getConfigResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ templateID: templateIDSelectedToAssign, token: JWTValue }),
+    });
+    const getConfigData = await getConfigResponse.json();
+    if (getConfigData.statusCode === 200 && getConfigData.body) {
+      const body = JSON.parse(getConfigData.body);
+      const config = Array.isArray(body.configurations) && body.configurations.length > 0
+        ? body.configurations[0]
+        : {};
+      oldConfig = {
+        numberOfQuestions: Number(config.numberOfQuestions) || 10,
+        testDuration: Number(config.testDuration) || 30,
+        sensitivityLevel: Number(config.sensitivityLevel) || 3,
+        allowedDefaults: Number(config.allowedDefaults) || 0
+      };
+    }
+  } catch (error) {
+    console.error('Error fetching old config:', error);
+  }
+  
+  try {
+    const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ templateIDSelectedToAssign, d, token: JWTValue }),
       });
-    response.then(res => res.json())
-      .then(data => {
-        if (checkUnauthorized(data)) return;
-        if (data.statusCode === 200) {
-          // Log successful configuration
-          logConfigurationActivity(globalValue, 'config_saved', {
-            templateID: templateIDSelectedToAssign,
-            numberOfQuestions: d.numberOfQuestions,
-            testDuration: d.testDuration,
-            sensitivityLevel: d.sensitivityLevel,
-            allowedDefaults: d.allowedDefaults,
-            status: 'success',
-            duration: Date.now() - startTime
-          }, JWTValue);
-          
-          // Update local template state immediately with new numberOfQuestions
-          setTemplates(prevTemplates => 
-            prevTemplates.map(template => 
-              template.templateID === templateIDSelectedToAssign
-                ? { ...template, numberOfQuestions: d.numberOfQuestions }
-                : template
-            )
-          );
-          fetchTemplates();
-        } else {
-          // Log failed configuration
-          logConfigurationActivity(globalValue, 'config_saved', {
-            templateID: templateIDSelectedToAssign,
-            status: 'error',
-            duration: Date.now() - startTime,
-            errorMessage: 'Failed to save configuration'
-          }, JWTValue);
-        }
-      })
-      .catch(error => {
-        // Log configuration error
-        logConfigurationActivity(globalValue, 'config_saved', {
-          templateID: templateIDSelectedToAssign,
-          status: 'error',
-          duration: Date.now() - startTime,
-          errorMessage: error.message
-        }, JWTValue);
-      });
-  } catch (error) { 
+    const data = await response.json();
+    
+    if (checkUnauthorized(data)) return;
+    
+    if (data.statusCode === 200) {
+      // Build change details
+      const changes = [];
+      if (oldConfig.numberOfQuestions !== d.numberOfQuestions) {
+        changes.push(`Number of Questions: ${oldConfig.numberOfQuestions} → ${d.numberOfQuestions}`);
+      }
+      if (oldConfig.testDuration !== d.testDuration) {
+        changes.push(`Test Duration: ${oldConfig.testDuration} min → ${d.testDuration} min`);
+      }
+      if (oldConfig.sensitivityLevel !== d.sensitivityLevel) {
+        changes.push(`Sensitivity Level: ${oldConfig.sensitivityLevel} sec → ${d.sensitivityLevel} sec`);
+      }
+      if (oldConfig.allowedDefaults !== d.allowedDefaults) {
+        changes.push(`Allowed Defaults: ${oldConfig.allowedDefaults} → ${d.allowedDefaults}`);
+      }
+      
+      // Log configuration activity
+      logConfigurationActivity(globalValue, 'config_saved', {
+        templateID: templateIDSelectedToAssign,
+        numberOfQuestions: d.numberOfQuestions,
+        testDuration: d.testDuration,
+        sensitivityLevel: d.sensitivityLevel,
+        allowedDefaults: d.allowedDefaults,
+        status: 'success',
+        duration: Date.now() - startTime
+      }, JWTValue);
+      
+      // Log template history if there are changes
+      if (changes.length > 0) {
+        await logTemplateConfigurationChange(
+          templateIDSelectedToAssign,
+          globalValue,
+          globalValue,
+          changes.join('; ')
+        );
+      }
+      
+      // Update local template state immediately with new numberOfQuestions
+      setTemplates(prevTemplates => 
+        prevTemplates.map(template => 
+          template.templateID === templateIDSelectedToAssign
+            ? { ...template, numberOfQuestions: d.numberOfQuestions }
+            : template
+        )
+      );
+      fetchTemplates();
+    } else {
+      // Log failed configuration
+      logConfigurationActivity(globalValue, 'config_saved', {
+        templateID: templateIDSelectedToAssign,
+        status: 'error',
+        duration: Date.now() - startTime,
+        errorMessage: 'Failed to save configuration'
+      }, JWTValue);
+    }
+  } catch (error) {
     // Log configuration error
     logConfigurationActivity(globalValue, 'config_saved', {
       templateID: templateIDSelectedToAssign,
@@ -501,6 +547,26 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
          duration: Date.now() - startTime
        }, JWTValue);
        
+       // Log template history
+       if (role === 'hiring_manager') {
+         await logTemplateAssignmentForReview(
+           templateIDSelectedToAssign,
+           globalValue,
+           globalValue,
+           email,
+           email,
+           role
+         );
+       } else {
+         await logTemplateAssignmentToRecruiter(
+           templateIDSelectedToAssign,
+           globalValue,
+           globalValue,
+           email,
+           email
+         );
+       }
+       
        fetchTemplates();
        
        // If user is not registered, send an invite email
@@ -582,6 +648,14 @@ const handleApproveTemplate = async (templateID, ownerEmail) => {
     if (checkUnauthorized(data)) return;
     
     if (data.statusCode === 200) {
+      // Log template approval history
+      await logTemplateApproval(
+        templateID,
+        globalValue,
+        globalValue,
+        ''
+      );
+      
       // Refresh templates to show updated status
       fetchTemplates();
       
@@ -862,6 +936,16 @@ const getPageNumbers = () => {
           onEmailSent={() => {
             setTemplateStates({});
             setClicked("");
+          }}
+        />
+      )}
+      {showHistoryModal && selectedTemplateForHistory && (
+        <TemplateHistoryModal
+          templateID={selectedTemplateForHistory.templateID}
+          templateName={selectedTemplateForHistory.templateName}
+          onClose={() => {
+            setShowHistoryModal(false);
+            setSelectedTemplateForHistory(null);
           }}
         />
       )}
@@ -1337,6 +1421,12 @@ const getPageNumbers = () => {
                     <path d="M14 21C15.933 21 17.5 19.433 17.5 17.5C17.5 15.567 15.933 14 14 14C12.067 14 10.5 15.567 10.5 17.5C10.5 19.433 12.067 21 14 21Z" stroke="#292D32" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </button>
+                  <button onClick={() => { setSelectedTemplateForHistory(card); setShowHistoryModal(true); }} className="delete-button" title="View Template History" data-tour={index === 0 ? "history-template-btn" : undefined}>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
                 </div>
                 ) : (
                   <>
@@ -1540,8 +1630,7 @@ const getPageNumbers = () => {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: '24px 50px',
-            background: 'var(--color-bg-gradient)',
+            padding: '24px 50px'
           }}>
             <div style={{
               display: 'flex',

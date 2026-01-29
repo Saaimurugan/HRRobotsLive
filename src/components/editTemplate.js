@@ -4,6 +4,7 @@ import { useGlobalContext } from "../globalContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
 import CodeEditor from './CodeEditor.js';
+import { logTemplateModification } from '../utils/templateHistoryLogger';
 
 // REMOVED: Topic parsing functions are no longer needed
 // Frontend now handles topics as separate entities throughout
@@ -529,6 +530,14 @@ const EditTemplate = () => {
       if (checkUnauthorized(data)) return;
 
       if (data.statusCode === 200) {
+        // Log template modification history
+        await logTemplateModification(
+          passedTemplateID,
+          globalValue,
+          globalValue,
+          'Template questions updated'
+        );
+        
         showToast('success', 'Success', 'Questions saved successfully!');
         setTimeout(() => navigate("/list"), 2000);
       } else {

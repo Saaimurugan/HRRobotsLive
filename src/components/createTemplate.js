@@ -6,6 +6,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
 import CreateTemplateFromJDModal from "./CreateTemplateFromJDModal";
 import CodeEditor from './CodeEditor.js';
+import { logTemplateCreation } from '../utils/templateHistoryLogger';
 
 // REMOVED: Topic parsing functions are no longer needed
 // Frontend now handles topics as separate entities throughout
@@ -541,6 +542,13 @@ const CreateTemplate = () => {
             }
           } catch (configError) {
             //console.error('Error creating default configuration:', configError);
+          }
+
+          // Log template creation history
+          try {
+            await logTemplateCreation(templateID, globalValue, globalValue);
+          } catch (historyError) {
+            console.error('Error logging template history:', historyError);
           }
         }
         
