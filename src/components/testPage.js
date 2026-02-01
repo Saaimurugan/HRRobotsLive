@@ -770,29 +770,29 @@ if (userUniqueIDPresent && isQuizStarted && !isTerminated && !isSubmitted) {
     };
   }, []);
 
-  // Scroll detection for floating navigation
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-      const shouldFloat = scrollTop > 50;
-      setIsScrolled(shouldFloat);
-      
-      // Add/remove body class for content spacing
-      if (shouldFloat) {
-        document.body.classList.add('has-floating-nav');
-      } else {
-        document.body.classList.remove('has-floating-nav');
-      }
-    };
+  // Disabled scroll detection for floating navigation - keep static design
+  // useEffect(() => {
+  //   const handleScroll = () => {
+  //     const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  //     const shouldFloat = scrollTop > 50;
+  //     setIsScrolled(shouldFloat);
+  //     
+  //     // Add/remove body class for content spacing
+  //     if (shouldFloat) {
+  //       document.body.classList.add('has-floating-nav');
+  //     } else {
+  //       document.body.classList.remove('has-floating-nav');
+  //     }
+  //   };
 
-    window.addEventListener('scroll', handleScroll);
+  //   window.addEventListener('scroll', handleScroll);
     
-    // Cleanup function
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      document.body.classList.remove('has-floating-nav');
-    };
-  }, []);
+  //   // Cleanup function
+  //   return () => {
+  //     window.removeEventListener('scroll', handleScroll);
+  //     document.body.classList.remove('has-floating-nav');
+  //   };
+  // }, []);
 
   useEffect(() => {
     const disableContextMenu = (e) => e.preventDefault()
@@ -1332,7 +1332,7 @@ if (userUniqueID != '')
         />
         {/* Progress dots for larger screens - auto-scaling based on question count */}
         {configLoaded ? (
-        <nav className={`progress-dots-desktop ${isScrolled ? 'floating transparent' : ''}`} role="navigation" aria-label="Question navigation" style={{
+        <nav className="progress-dots-desktop" role="navigation" aria-label="Question navigation" style={{
           // Auto-scale: fewer questions = larger dots, more questions = smaller dots
           '--dot-size': numberOfQuestions <= 20 ? '28px' : numberOfQuestions <= 35 ? '24px' : numberOfQuestions <= 50 ? '20px' : '16px',
           '--dot-font': numberOfQuestions <= 20 ? '12px' : numberOfQuestions <= 35 ? '10px' : numberOfQuestions <= 50 ? '9px' : '8px',
@@ -1384,7 +1384,7 @@ if (userUniqueID != '')
           )}
         </nav>
         ) : (
-        <div className={`progress-dots-desktop ${isScrolled ? 'floating transparent' : ''}`} style={{ justifyContent: 'center' }} role="status" aria-live="polite">
+        <div className="progress-dots-desktop" style={{ justifyContent: 'center' }} role="status" aria-live="polite">
           <span style={{ fontSize: '12px', color: '#666' }}>Loading...</span>
         </div>
         )}
