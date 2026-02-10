@@ -81,49 +81,79 @@ def getAllAnswers(test_id):
 
 def evaluate_with_llm(question_text, submitted_answer, template_answer, question_type):
     """
-    Use AWS Bedrock LLM to evaluate elaborate and code answers
+    Use AWS Bedrock LLM to evaluate elaborate and code answers contextually.
+    This function performs semantic evaluation rather than keyword matching.
     """
     try:
         bedrock_client = boto3.client("bedrock-runtime", region_name="us-east-1")
         LITE_MODEL_ID = "amazon.nova-micro-v1:0"
         
-        # Build the evaluation prompt
+        # Build the evaluation prompt with enhanced contextual instructions
         if question_type == "elaborate":
-            prompt = f"""You are an expert evaluator. Evaluate the candidate's answer to the following question.
+            prompt = f"""You are an expert evaluator performing CONTEXTUAL EVALUATION of a candidate's answer. 
+
+IMPORTANT: Do NOT use keyword matching. Evaluate based on:
+1. Semantic understanding and meaning
+2. Conceptual accuracy and depth
+3. Relevance to the question
+4. Completeness of the explanation
+5. Logical coherence and structure
 
 Question: {question_text}
 
 Candidate's Answer: {submitted_answer}
 
-{f"Expected/Template Answer: {template_answer}" if template_answer else "Note: No template answer provided. Evaluate based on relevance, completeness, and accuracy."}
+{f"Reference Answer (for context): {template_answer}" if template_answer else "Note: No reference answer provided. Evaluate based on domain knowledge, relevance, completeness, and accuracy."}
+
+Evaluation Guidelines:
+- 90-100: Excellent understanding, comprehensive and accurate
+- 70-89: Good understanding, mostly accurate with minor gaps
+- 60-69: Adequate understanding, acceptable but incomplete
+- 40-59: Partial understanding, significant gaps or inaccuracies
+- 0-39: Poor understanding, mostly incorrect or irrelevant
 
 Provide your evaluation in JSON format with the following fields:
 - score: A number from 0 to 100 representing the quality of the answer
 - isCorrect: true if score >= 60, false otherwise
-- feedback: Brief feedback explaining the evaluation (max 200 words)
+- feedback: Brief constructive feedback explaining the evaluation (max 200 words)
 
 Return only valid JSON, no additional text."""
 
         elif question_type == "code":
-            prompt = f"""You are an expert code evaluator. Evaluate the candidate's code solution to the following question.
+            prompt = f"""You are an expert code evaluator performing CONTEXTUAL EVALUATION of a candidate's code solution.
+
+IMPORTANT: Do NOT use keyword matching or simple pattern matching. Evaluate based on:
+1. Correctness: Does the code solve the problem?
+2. Logic and Algorithm: Is the approach sound?
+3. Code Quality: Readability, structure, naming conventions
+4. Efficiency: Time and space complexity considerations
+5. Best Practices: Proper error handling, edge cases
 
 Question: {question_text}
 
-Candidate's Code: {submitted_answer}
+Candidate's Code:
+{submitted_answer}
 
-{f"Expected/Template Solution: {template_answer}" if template_answer else "Note: No template solution provided. Evaluate based on correctness, efficiency, and code quality."}
+{f"Reference Solution (for context):\n{template_answer}" if template_answer else "Note: No reference solution provided. Evaluate based on correctness, efficiency, code quality, and best practices."}
+
+Evaluation Guidelines:
+- 90-100: Excellent solution, correct, efficient, well-written
+- 70-89: Good solution, correct with minor improvements possible
+- 60-69: Acceptable solution, works but has notable issues
+- 40-59: Partial solution, significant logic errors or inefficiencies
+- 0-39: Poor solution, incorrect or doesn't address the problem
 
 Provide your evaluation in JSON format with the following fields:
 - score: A number from 0 to 100 representing the quality of the code
 - isCorrect: true if score >= 60, false otherwise
-- feedback: Brief feedback explaining the evaluation (max 200 words)
+- feedback: Brief constructive feedback explaining the evaluation (max 200 words)
 
 Return only valid JSON, no additional text."""
         else:
             return None
         
         message_list = [{"role": "user", "content": [{"text": prompt}]}]
-        system_list = [{"text": "You are an expert evaluator who provides fair and accurate assessments in JSON format."}]
+        system_list = [{"text": "You are an expert evaluator who provides fair, accurate, and contextual assessments. You evaluate based on understanding and meaning, not keyword matching. Always return valid JSON."}]
         inf_params = {"max_new_tokens": 1000, "top_p": 0.9, "top_k": 20, "temperature": 0.3}
         
         request_body = {
@@ -150,16 +180,39 @@ Return only valid JSON, no additional text."""
         
         if response_data:
             try:
-                evaluation = json.loads(response_data)
-                return evaluation
-            except json.JSONDecodeError:
-                print(f"Failed to parse LLM response: {response_data}")
+                # Try to extract JSON from the response (in case there's extra text)
+                json_start = response_data.find('{')
+                json_end = response_data.rfind('}') + 1
+                if json_start != -1 and json_end > json_start:
+                    json_str = response_data[json_start:json_end]
+                    evaluation = json.loads(json_str)
+                    
+                    # Validate the response structure
+                    if 'score' in evaluation and 'isCorrect' in evaluation and 'feedback' in evaluation:
+                        # Ensure score is within valid range
+                        evaluation['score'] = max(0, min(100, int(evaluation['score'])))
+                        # Ensure isCorrect matches the score threshold
+                        evaluation['isCorrect'] = evaluation['score'] >= 60
+                        return evaluation
+                    else:
+                        print(f"Invalid evaluation structure: {evaluation}")
+                        return None
+                else:
+                    print(f"No JSON found in response: {response_data}")
+                    return None
+                    
+            except json.JSONDecodeError as je:
+                print(f"Failed to parse LLM response as JSON: {response_data}")
+                print(f"JSON Error: {str(je)}")
                 return None
         
+        print("Empty response from LLM")
         return None
         
     except Exception as e:
         print(f"Error in LLM evaluation: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return None
 
 def calculate_score(test_id, template_ID):
