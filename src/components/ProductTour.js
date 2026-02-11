@@ -39,6 +39,52 @@ const TOUR_STEPS = [
     actionTarget: '/createTemplate'
   },
   {
+    id: 'clone-templates',
+    title: 'Clone Pre-built Templates',
+    content: 'Want to get started quickly? Browse our curated collection of pre-built templates for popular technologies and clone them to your account.',
+    target: '[data-tour="clone-templates"]',
+    page: '/list',
+    position: 'bottom',
+    action: 'navigate',
+    actionTarget: '/cloneTemplates'
+  },
+  {
+    id: 'browse-templates',
+    title: 'Browse Available Templates',
+    content: 'Here you can see all available templates. Use the search bar to find templates for specific technologies like JavaScript, Python, React, and more.',
+    target: '.search-container',
+    page: '/cloneTemplates',
+    position: 'bottom'
+  },
+  {
+    id: 'clone-action',
+    title: 'Clone a Template',
+    content: 'Click "Clone Template" on any card to add it to your account. The cloned template will appear in your template list where you can customize it further.',
+    target: '.template-card',
+    page: '/cloneTemplates',
+    position: 'right'
+  },
+  {
+    id: 'back-from-clone',
+    title: 'Return to Dashboard',
+    content: 'Let\'s head back to the dashboard to explore other ways to create templates.',
+    target: '.template-back-btn',
+    page: '/cloneTemplates',
+    position: 'right',
+    action: 'navigate',
+    actionTarget: '/list'
+  },
+  {
+    id: 'create-from-scratch',
+    title: 'Create from Scratch',
+    content: 'Prefer to build your own? Click "Screening Test" again to create a custom template from scratch.',
+    target: '[data-tour="screening-test"]',
+    page: '/list',
+    position: 'bottom',
+    action: 'navigate',
+    actionTarget: '/createTemplate'
+  },
+  {
     id: 'add-question-manual',
     title: 'Add Questions Manually',
     content: 'Use this form to add questions one by one. Enter the question, options, and select the correct answer.',
