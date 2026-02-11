@@ -35,6 +35,7 @@ const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
 const DataProtectionPolicy = lazy(() => import('./components/DataProtectionPolicy'));
 const EULA = lazy(() => import('./components/EULA'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
+const CloneTemplates = lazy(() => import('./components/cloneTemplates'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -389,6 +390,7 @@ const App = () => {
                 <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
                 <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
                 <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
+                <Route path="/cloneTemplates" element={<ProtectedRoute><CloneTemplates /></ProtectedRoute>} />
                 <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
                   </Routes>
                 </Suspense>

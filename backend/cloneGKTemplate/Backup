@@ -22,18 +22,11 @@ def lambda_handler(event, context):
 
         template_id = data.get('templateID')
         new_template_name = data.get('newTemplateName')
-        user_email = data.get('email')  # Email of the user cloning the template
         
         if not template_id:
             return {
                 'statusCode': 400,
                 'body': json.dumps({'message': 'Missing templateID in the request.'})
-            }
-        
-        if not user_email:
-            return {
-                'statusCode': 400,
-                'body': json.dumps({'message': 'Missing email in the request.'})
             }
 
         # Fetch the original template
@@ -52,12 +45,13 @@ def lambda_handler(event, context):
         # Generate new template ID
         new_template_id = str(uuid.uuid4())
         
-        # Create new template with same properties but assign to the cloning user
+        # Create new template with same properties
         new_template = {
             'templateID': new_template_id,
             'templateName': new_template_name or f"{original_template.get('templateName', 'Template')} - Copy",
-            'email': user_email,  # Assign to the user who is cloning
-            'datetime': datetime.now().isoformat()
+            'email': original_template.get('email'),
+            'datetime': datetime.now().isoformat(),
+            'AssignedTo': original_template.get('email')  # Assign to original owner
         }
         
         # Save new template
