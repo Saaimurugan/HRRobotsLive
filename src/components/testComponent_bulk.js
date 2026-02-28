@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "../testComponent.css";
+import "../RichTextEditor.css";
 import SubmittedMessage from "./submittedMessage.js";
 import DisplayMessage from "./displayMessage.js";
 import FeedbackForm from "./FeedbackForm.js";
@@ -653,7 +654,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                   <div className="question-header">
                     <span className="question-number">Q{getDisplayQuestionNumber()}</span>
                     <div className="question-title-container">
-                      <h3 className="question-text">{currentQuestion.question}</h3>
+                      <h3 className="question-text rendered-html-content" dangerouslySetInnerHTML={{ __html: currentQuestion.question }} />
                       <span className={`question-status ${
                         saveStatus[currentQuestion.questionID] === 'failed' ? 'save-failed' :
                         saveStatus[currentQuestion.questionID] === 'saving' ? 'saving' :
@@ -850,7 +851,7 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
                                 />
                                 <label htmlFor={`q${currentQuestionIndex}-option-${optionIndex}`} className="option-label">
                                   <span className="option-letter">{String.fromCharCode(65 + optionIndex)}</span>
-                                  <span className="option-text">{option}</span>
+                                  <span className="option-text rendered-html-content" dangerouslySetInnerHTML={{ __html: option }} />
                                 </label>
                               </li>
                             );

@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import "../CreateTemplate.css";
 import "../createTemplateFromJD.css";
+import "../RichTextEditor.css";
 import { useGlobalContext } from "../globalContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
 import CreateTemplateFromJDModal from "./CreateTemplateFromJDModal";
 import CodeEditor from './CodeEditor.js';
+import RichTextEditor from './RichTextEditor.js';
 import { logTemplateCreation } from '../utils/templateHistoryLogger';
 
 // REMOVED: Topic parsing functions are no longer needed
@@ -301,9 +303,16 @@ const CreateTemplate = () => {
     setFormData({ ...formData, options: newOptions, correctAnswerIndex: newCorrectIndex });
   };
 
+  // Helper function to strip HTML tags for validation
+  const stripHtml = (html) => {
+    const tmp = document.createElement("DIV");
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || "";
+  };
+
   const addQuestion = () => {
     // Validate question field is not empty
-    if (!formData.question || !formData.question.trim()) {
+    if (!formData.question || !stripHtml(formData.question).trim()) {
       showToast('warning', 'Missing Question', 'Question field cannot be empty.');
       return;
     }
@@ -321,7 +330,7 @@ const CreateTemplate = () => {
         return;
       }
       // Validate that all options are not empty
-      const hasEmptyOption = formData.options.some(opt => !opt || !opt.trim());
+      const hasEmptyOption = formData.options.some(opt => !opt || !stripHtml(opt).trim());
       if (hasEmptyOption) {
         showToast('warning', 'Empty Options', 'All options must have text. Please fill in or remove empty options.');
         return;
@@ -348,7 +357,7 @@ const CreateTemplate = () => {
       newQuestion.correctAnswer = formData.anyAnswerCorrect ? "All" : formData.correctAnswer;
       newQuestion.anyAnswerCorrect = formData.anyAnswerCorrect;
     } else if (formData.type === "rangeWithTwoQuestions") {
-      if (!formData.question2 || !formData.question2.trim()) {
+      if (!formData.question2 || !stripHtml(formData.question2).trim()) {
         showToast('warning', 'Missing Second Question', 'Please enter the second question.');
         return;
       }
@@ -734,7 +743,7 @@ const CreateTemplate = () => {
                       <div className={`qcard ${isSample ? 'sample-question-card' : ''}`}>
                         {isSample && <span className="sample-question-badge">Sample - Will be replaced when you add questions</span>}
                         {q.topic && !isSample && <span className="question-topic-tag">{q.topic}</span>}
-                        <h4>{index + 1}. {q.displayQuestion}</h4>
+                        <h4>{index + 1}. <span className="rendered-html-content" dangerouslySetInnerHTML={{ __html: q.displayQuestion }} /></h4>
                         {q.type === "range" ? (
                           <div className="range-display">
                             <p><strong>Range:</strong> {q.rangeMin} to {q.rangeMax}</p>
@@ -756,9 +765,7 @@ const CreateTemplate = () => {
                             {q.correctAnswer && (
                               <div style={{ marginTop: '8px' }}>
                                 <strong>Expected Answer:</strong>
-                                <p style={{ whiteSpace: 'pre-wrap', marginTop: '4px', padding: '8px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)' }}>
-                                  {q.correctAnswer}
-                                </p>
+                                <div className="rendered-html-content" style={{ marginTop: '4px', padding: '8px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)' }} dangerouslySetInnerHTML={{ __html: q.correctAnswer }} />
                               </div>
                             )}
                           </div>
@@ -775,7 +782,7 @@ const CreateTemplate = () => {
                             )}
                           </div>
                         ) : q.options && Array.isArray(q.options) && (
-                          <ul>{q.options.map((opt, i) => <li key={i} className={(q.correctAnswerIndex !== undefined ? i === q.correctAnswerIndex : opt === q.correctAnswer) ? 'correct-answer' : ''}>{opt}</li>)}</ul>
+                          <ul>{q.options.map((opt, i) => <li key={i} className={(q.correctAnswerIndex !== undefined ? i === q.correctAnswerIndex : opt === q.correctAnswer) ? 'correct-answer' : ''}><span className="rendered-html-content" dangerouslySetInnerHTML={{ __html: opt }} /></li>)}</ul>
                         )}
                         <div className="qcard-actions">
                           <button className="btn-edit" onClick={(e) => { e.preventDefault(); if (!isSample) editQuestion(q.originalIndex); }} disabled={isSample}>Edit</button>
@@ -822,10 +829,11 @@ const CreateTemplate = () => {
 
               <div className="form-group">
                 <label>Question</label>
-                <textarea
+                <RichTextEditor
                   value={formData.question}
-                  onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+                  onChange={(content) => setFormData({ ...formData, question: content })}
                   placeholder="Enter your question here..."
+                  minHeight="150px"
                 />
               </div>
 
@@ -833,20 +841,23 @@ const CreateTemplate = () => {
                 <div className="form-group">
                   <label>Options (select correct answer)</label>
                   {formData.options.map((opt, i) => (
-                    <div key={i} className="option-item">
+                    <div key={i} className="option-item" style={{ marginBottom: '15px', display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                       <input
                         type="radio"
                         name="correctAnswer"
                         checked={formData.correctAnswerIndex === i}
                         onChange={() => setCorrectAnswer(i)}
+                        style={{ marginTop: '10px', flexShrink: 0 }}
                       />
-                      <input
-                        type="text"
-                        value={opt}
-                        onChange={(e) => updateOption(i, e.target.value)}
-                        placeholder={`Option ${i + 1}`}
-                      />
-                      <button className="btn-danger" onClick={() => removeOption(i)} title="Delete option">
+                      <div style={{ flex: 1 }}>
+                        <RichTextEditor
+                          value={opt}
+                          onChange={(content) => updateOption(i, content)}
+                          placeholder={`Option ${i + 1}`}
+                          minHeight="80px"
+                        />
+                      </div>
+                      <button className="btn-danger" onClick={() => removeOption(i)} title="Delete option" style={{ marginTop: '10px', flexShrink: 0 }}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <polyline points="3 6 5 6 21 6"></polyline>
                           <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
@@ -912,10 +923,11 @@ const CreateTemplate = () => {
               {formData.type === "rangeWithTwoQuestions" && (
                 <div className="form-group">
                   <label>Second Question</label>
-                  <textarea
+                  <RichTextEditor
                     value={formData.question2}
-                    onChange={(e) => setFormData({ ...formData, question2: e.target.value })}
+                    onChange={(content) => setFormData({ ...formData, question2: content })}
                     placeholder="Enter the second question here..."
+                    minHeight="150px"
                   />
                   
                   <label style={{ marginTop: '15px' }}>Range Settings</label>
@@ -948,11 +960,11 @@ const CreateTemplate = () => {
               {formData.type === "elaborate" && (
                 <div className="form-group">
                   <label>Expected Answer (Optional)</label>
-                  <textarea
+                  <RichTextEditor
                     value={formData.correctAnswer}
-                    onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
+                    onChange={(content) => setFormData({ ...formData, correctAnswer: content })}
                     placeholder="Enter the expected elaborate answer or leave empty for manual evaluation..."
-                    style={{ minHeight: '150px' }}
+                    minHeight="150px"
                   />
                   <p style={{ fontSize: '0.85em', color: 'var(--color-text-muted)', marginTop: '8px' }}>
                     This will be used as a reference answer for evaluation. Candidates will provide their own elaborate response.

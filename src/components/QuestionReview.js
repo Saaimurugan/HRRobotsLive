@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
 import "../QuestionReview.css";
+import "../RichTextEditor.css";
 
 const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClose }) => {
   const { JWTValue, setRedirectPath, logout } = useGlobalContext();
@@ -197,7 +198,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
               {isExpanded && (
                 <div className="question-card-body">
                   <div className="question-content">
-                    <p className="question-full-text">{q.question}</p>
+                    <p className="question-full-text rendered-html-content" dangerouslySetInnerHTML={{ __html: q.question }} />
                     
                     <div className="options-container">
                       {q.options && q.options.map((option, optIndex) => {
@@ -212,7 +213,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
                         return (
                           <div key={optIndex} className={rowClass}>
                             <span className="option-letter">{getOptionLabel(optIndex)}</span>
-                            <span className="option-content">{option}</span>
+                            <span className="option-content rendered-html-content" dangerouslySetInnerHTML={{ __html: option }} />
                             <div className="option-badges">
                               {isCorrectOption && (
                                 <span className="option-badge option-badge--correct">Correct</span>
