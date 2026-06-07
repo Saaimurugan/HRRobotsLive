@@ -9,7 +9,8 @@ def lambda_handler(event, context):
         # Create a Bedrock Runtime client in the AWS Region of your choice.
         client = boto3.client("bedrock-runtime", region_name="us-east-1")
 
-        LITE_MODEL_ID = "amazon.nova-micro-v1:0"
+        # LITE_MODEL_ID = "amazon.nova-micro-v1:0"
+        LITE_MODEL_ID = "amazon.nova-lite-v1:0"
 
         resume = event.get('resume', '')
         job_description = event.get('jobDescription', '')

@@ -1,0 +1,1 @@
+$env:AWS_ACCESS_KEY_ID = (Get-Content aws-credentials.txt | Where-Object {$_ -match '^AWS_ACCESS_KEY_ID='}).Split('=')[1]; $env:AWS_SECRET_ACCESS_KEY = (Get-Content aws-credentials.txt | Where-Object {$_ -match '^AWS_SECRET_ACCESS_KEY='}).Split('=')[1]; $env:AWS_DEFAULT_REGION = 'us-east-1'; python compare-lambda-code.py

@@ -33,8 +33,11 @@ def decode_jwt_payload(token):
 
 
 def lambda_handler(event, context):
-    token = event.get('token', '')
-    
+
+    print(event)
+
+    token = event.get('authorizationToken', '')
+
     if not token:
         print('No token provided')
         raise Exception('Unauthorized')
@@ -122,4 +125,4 @@ def generatePolicy(principalId, effect, resource):
         "booleanKey": True
     }
     authResponse_JSON = json.dumps(authResponse)
-    return authResponse_JSON
+    return authResponse
