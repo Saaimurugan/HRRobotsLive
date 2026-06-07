@@ -1050,7 +1050,7 @@ const getPageNumbers = () => {
           <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px' }}>
             {/* Empty State Message */}
             <div className="empty-state" style={{ marginTop: '0' }}>
-              <p>No templates found. Create your first "Screening Assessment" above!</p>
+              <p>You don't have any templates yet. Create your first template using the Screening Assessment options above, or click Browse Templates below to clone one from the Template Library.</p>
             </div>
             {/* Clone Templates Card */}
             <div className="card template-card" style={{
