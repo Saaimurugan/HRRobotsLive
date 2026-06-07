@@ -1,0 +1,38 @@
+﻿{
+    "FunctionName": "extractKeywordsFromJD",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:extractKeywordsFromJD",
+    "Runtime": "python3.14",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 2017,
+    "Description": "",
+    "Timeout": 63,
+    "MemorySize": 128,
+    "LastModified": "2026-01-14T06:37:25.000+0000",
+    "CodeSha256": "bcNfQox8Ui03XARsRH3rOWx6lNWzNJzwhAckovo+Nt4=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "4b06f631-77a7-4aea-8e68-626a94123708",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:06dae9ab05ccfc05b6ef62a6c3f8c3976f2962ec872732763a914c0041151809"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/extractKeywordsFromJD"
+    }
+}

@@ -1,0 +1,44 @@
+﻿{
+    "FunctionName": "saveCandidatePhoto_",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:saveCandidatePhoto_",
+    "Runtime": "python3.12",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 8626,
+    "Description": "",
+    "Timeout": 63,
+    "MemorySize": 128,
+    "LastModified": "2026-01-15T17:14:35.000+0000",
+    "CodeSha256": "rvX08bFW3wBqJh7V/VhYpkzqmWiWzUoDJGBI3gcGKdk=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "74849ad4-6314-4d41-ae12-6900b8cc2293",
+    "Layers": [
+        {
+            "Arn": "arn:aws:lambda:us-east-1:850995535850:layer:OCV2:2",
+            "CodeSize": 81606653
+        }
+    ],
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:9d82790507d3d76171a861328feb75d0d417f7e48bb57504d17dde77cb899f77"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/saveCandidatePhoto_"
+    }
+}

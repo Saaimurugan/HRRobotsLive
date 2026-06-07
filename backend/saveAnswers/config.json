@@ -1,0 +1,38 @@
+﻿{
+    "FunctionName": "saveAnswers",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:saveAnswers",
+    "Runtime": "python3.13",
+    "Role": "arn:aws:iam::850995535850:role/service-role/saveAnswers-role-efwgxzqz",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 790,
+    "Description": "",
+    "Timeout": 60,
+    "MemorySize": 128,
+    "LastModified": "2025-12-24T11:19:08.000+0000",
+    "CodeSha256": "tlG+lAIoTm8PSo94pBbBuUTzgd/BbDQuNMK0ixPmhL8=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "e42e77ae-dafb-4aa8-8483-c23455bae0a5",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:56e5d40baed9b17e9a1012f98c2cdec3e35d0e94f29d4e345aaf41135da5d7ab"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/saveAnswers"
+    }
+}

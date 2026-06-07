@@ -1,0 +1,38 @@
+﻿{
+    "FunctionName": "delQuestionIfTemplateNotFound",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:delQuestionIfTemplateNotFound",
+    "Runtime": "python3.12",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 986,
+    "Description": "",
+    "Timeout": 600,
+    "MemorySize": 128,
+    "LastModified": "2026-01-02T07:13:15.000+0000",
+    "CodeSha256": "mzjdjJqCjMgXtKiZC3xduV3eRIapYc6bP9jUF02r7yM=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "ce6c9d0c-c74a-44e3-b8f4-d8d2ed6281e0",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:9d82790507d3d76171a861328feb75d0d417f7e48bb57504d17dde77cb899f77"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/delQuestionIfTemplateNotFound"
+    }
+}

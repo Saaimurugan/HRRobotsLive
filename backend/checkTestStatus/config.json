@@ -1,0 +1,38 @@
+﻿{
+    "FunctionName": "checkTestStatus",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:checkTestStatus",
+    "Runtime": "python3.14",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 1215,
+    "Description": "",
+    "Timeout": 63,
+    "MemorySize": 128,
+    "LastModified": "2026-01-03T15:44:08.000+0000",
+    "CodeSha256": "QtsW2D0dnVOkXkjzzccoC1XwE/4U3PWHNEUNVj/fgw4=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "2463cd6a-b2be-4745-8e1f-32b8dc5a4056",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:06dae9ab05ccfc05b6ef62a6c3f8c3976f2962ec872732763a914c0041151809"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/checkTestStatus"
+    }
+}

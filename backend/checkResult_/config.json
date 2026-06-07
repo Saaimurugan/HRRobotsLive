@@ -1,0 +1,38 @@
+﻿{
+    "FunctionName": "checkResult_",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:checkResult_",
+    "Runtime": "python3.14",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 1392,
+    "Description": "",
+    "Timeout": 63,
+    "MemorySize": 128,
+    "LastModified": "2025-12-29T21:44:28.000+0000",
+    "CodeSha256": "ombDfSHk4uwqV4lpjX/m/C22B4qEnB2w+vRecZFsOPA=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "46c17f83-9106-44c4-870e-67fd0cd67762",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:06dae9ab05ccfc05b6ef62a6c3f8c3976f2962ec872732763a914c0041151809"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/checkResult_"
+    }
+}

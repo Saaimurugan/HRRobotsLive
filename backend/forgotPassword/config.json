@@ -1,0 +1,38 @@
+﻿{
+    "FunctionName": "forgotPassword",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:forgotPassword",
+    "Runtime": "python3.12",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 1857,
+    "Description": "",
+    "Timeout": 60,
+    "MemorySize": 128,
+    "LastModified": "2026-01-15T08:04:28.000+0000",
+    "CodeSha256": "Kz3FboNEfxczc49pOYfrJRi6bGsSDmuPZ5KVDKgOJCE=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "7072cb45-56a6-4c5f-b26b-1453d869d637",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:9d82790507d3d76171a861328feb75d0d417f7e48bb57504d17dde77cb899f77"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/forgotPassword"
+    }
+}

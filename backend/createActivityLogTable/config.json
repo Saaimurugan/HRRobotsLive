@@ -1,0 +1,38 @@
+﻿{
+    "FunctionName": "createActivityLogTable",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:createActivityLogTable",
+    "Runtime": "python3.12",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 2145,
+    "Description": "",
+    "Timeout": 3,
+    "MemorySize": 128,
+    "LastModified": "2025-11-01T11:37:07.000+0000",
+    "CodeSha256": "vbCP4PvvBvD2KIzlU5KDUJ/OLr4OXaL5A3VjMiq1c44=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "f186f157-57f0-4498-b239-07810bf53f4e",
+    "State": "Active",
+    "LastUpdateStatus": "Successful",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:9d82790507d3d76171a861328feb75d0d417f7e48bb57504d17dde77cb899f77"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/createActivityLogTable"
+    }
+}
