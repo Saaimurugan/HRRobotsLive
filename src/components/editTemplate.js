@@ -650,16 +650,56 @@ const EditTemplate = () => {
 
       const data = await response.json();
       if (checkUnauthorized(data)) return;
+      
+      console.log('Raw response data:', data);
       const parsedBody = JSON.parse(data.body);
+      console.log('Parsed body:', parsedBody);
       const responseContent = parsedBody.data;
-      const generatedQuestions = JSON.parse(responseContent);
+      console.log('Response content (before parsing):', responseContent);
+      
+      // Handle escaped JSON strings from backend
+      let generatedQuestions;
+      try {
+        // responseContent is a stringified JSON with escaped quotes
+        if (typeof responseContent === 'string') {
+          // Parse the escaped JSON string
+          generatedQuestions = JSON.parse(responseContent);
+          console.log('Parsed questions:', generatedQuestions);
+        } else {
+          // If it's already an object/array, use it directly
+          generatedQuestions = responseContent;
+          console.log('Questions (already parsed):', generatedQuestions);
+        }
+        
+        // Ensure it's an array
+        if (!Array.isArray(generatedQuestions)) {
+          throw new Error('Generated questions is not an array');
+        }
+        
+        console.log('Final questions array:', generatedQuestions);
+      } catch (parseError) {
+        console.error('Error parsing generated questions:', parseError);
+        console.error('Response content:', responseContent);
+        throw new Error('Failed to parse generated questions');
+      }
 
       const questionsWithTopic = generatedQuestions.map(q => {
         // Calculate correctAnswerIndex from correctAnswer value for MCQ
         const correctAnswerIndex = q.options && Array.isArray(q.options) ? q.options.indexOf(q.correctAnswer) : -1;
+        
+        // Helper function to escape HTML entities
+        const escapeHtml = (text) => {
+          if (typeof text !== 'string') return text;
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML;
+        };
+        
         return {
           ...q,
-          question: q.question,  // Clean question text without topic
+          question: escapeHtml(q.question),
+          options: q.options ? q.options.map(opt => escapeHtml(opt)) : undefined,
+          correctAnswer: escapeHtml(q.correctAnswer),
           correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : undefined
         };
       });
