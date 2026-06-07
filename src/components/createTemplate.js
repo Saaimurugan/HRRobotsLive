@@ -710,16 +710,16 @@ const CreateTemplate = () => {
                 />
               </div>
               <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
-                <input
+                {/* <input
                   type="checkbox"
                   id="psychometric-checkbox"
                   checked={isPsychometricReport}
                   onChange={(e) => setIsPsychometricReport(e.target.checked)}
                   style={{ width: 'auto', cursor: 'pointer' }}
-                />
-                <label htmlFor="psychometric-checkbox" style={{ margin: 0, cursor: 'pointer' }}>
+                /> */}
+                {/* <label htmlFor="psychometric-checkbox" style={{ margin: 0, cursor: 'pointer' }}>
                   Psychometric test-based report
-                </label>
+                </label> */}
               </div>
               <button className="btn-primary" onClick={saveQuestions} disabled={loading}>
                 {loading ? "Saving..." : "Save Questions"}
