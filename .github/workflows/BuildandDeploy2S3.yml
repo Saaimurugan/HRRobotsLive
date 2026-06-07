@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install
+          npm install --legacy-peer-deps
 
       - name: Build project
         run: |
@@ -35,7 +35,7 @@ jobs:
 
       - name: Sync files to S3 bucket
         run: |
-          aws s3 sync ./build s3://dev.hrrobots.click --delete
+          aws s3 sync ./build s3://hrrobots.click --delete
 
       - name: Invalidate CloudFront cache
         run: |
