@@ -335,15 +335,39 @@ npm test
 
 ## 📝 License
 
-See EULA for end-user license agreement terms.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+You are free to use, modify, and distribute this software for personal or commercial purposes.
 
 ---
+
+## 🤝 Contributing
+
+We welcome contributions from the community! Here's how you can help:
+
+### Ways to Contribute
+- 🐛 **Report bugs** - Create an issue describing the problem
+- 💡 **Suggest features** - Share your ideas for improvements
+- 📝 **Improve documentation** - Help make our docs clearer
+- 🔧 **Submit pull requests** - Fix bugs or add features
+- ⭐ **Star the repo** - Show your support!
+
+### Getting Started
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add: amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please read our [Contributing Guide](CONTRIBUTING.md) and [Code of Conduct](CODE_OF_CONDUCT.md) before contributing.
 
 ## 🤝 Support
 
 For support and inquiries:
 - **Website**: [HRRobots.com](https://hrrobots.com)
 - **Demo Videos**: [YouTube Channel](https://www.youtube.com/@hrrobots)
+- **Issues**: [GitHub Issues](https://github.com/your-org/HRRobotsLive/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/HRRobotsLive/discussions)
 
 ---
 
