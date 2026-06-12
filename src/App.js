@@ -29,6 +29,7 @@ const EditTemplate = lazy(() => import('./components/editTemplate'));
 const Profile = lazy(() => import('./components/profile'));
 const CreateJD = lazy(() => import('./components/createJD'));
 const CreateTemplateFromJD = lazy(() => import('./components/createTemplateFromJD'));
+const AgenticHR = lazy(() => import('./components/agenticHR'));
 const VerifyEmail = lazy(() => import('./components/verifyEmail'));
 const SignupSuccess = lazy(() => import('./components/signupSuccess'));
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy'));
@@ -390,6 +391,7 @@ const App = () => {
                 <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
                 <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
                 <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
+                <Route path="/agenticHR" element={<ProtectedRoute><AgenticHR /></ProtectedRoute>} />
                 <Route path="/cloneTemplates" element={<ProtectedRoute><CloneTemplates /></ProtectedRoute>} />
                 <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
                   </Routes>
