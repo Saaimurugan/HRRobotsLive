@@ -86,7 +86,17 @@ def lambda_handler(event, context):
 
         if response_data:
             try:
-                parsed_response = json.loads(response_data)  # Ensure it returns valid JSON
+                # Strip markdown code blocks if present
+                cleaned_response = response_data.strip()
+                if cleaned_response.startswith("```json"):
+                    cleaned_response = cleaned_response[7:]  # Remove ```json
+                if cleaned_response.startswith("```"):
+                    cleaned_response = cleaned_response[3:]  # Remove ```
+                if cleaned_response.endswith("```"):
+                    cleaned_response = cleaned_response[:-3]  # Remove trailing ```
+                cleaned_response = cleaned_response.strip()
+                
+                parsed_response = json.loads(cleaned_response)  # Ensure it returns valid JSON
             except json.JSONDecodeError:
                 parsed_response = {"error": "Failed to parse model response as JSON", "raw_output": response_data}
         else:
