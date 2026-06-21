@@ -23,8 +23,6 @@ jobs:
           npm install --legacy-peer-deps
 
       - name: Build project
-        env:
-          CI: false
         run: |
           npm run build
 
