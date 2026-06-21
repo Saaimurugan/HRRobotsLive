@@ -23,6 +23,8 @@ jobs:
           npm install --legacy-peer-deps
 
       - name: Build project
+        env:
+          CI: false
         run: |
           npm run build
 
@@ -35,8 +37,8 @@ jobs:
 
       - name: Sync files to S3 bucket
         run: |
-          aws s3 sync ./build s3://hrrobots.click --delete
+          aws s3 sync ./build s3://dev.hrrobots.click --delete
 
-      - name: Invalidate CloudFront cache
-        run: |
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID }} --paths "/*"
+      #- name: Invalidate CloudFront cache
+      #  run: |
+      #    aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID }} --paths "/*"
