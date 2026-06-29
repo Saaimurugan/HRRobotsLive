@@ -10,6 +10,7 @@ import AssignTemplate from "./assignTemplate";
 import ConfigTemplate from "./configTemplate";
 import CandidateSpecificTestModal from "./CandidateSpecificTestModal";
 import EmailModal from "./EmailModal";
+import BulkUploadModal from "./BulkUploadModal";
 import TemplateHistoryModal from "./TemplateHistoryModal";
 import { logConfigurationActivity, logAssignActivity, logGenerateTestLinkActivity } from '../utils/activityLogger';
 import { logTemplateAssignmentForReview, logTemplateAssignmentToRecruiter, logTemplateApproval, logTemplateConfigurationChange } from '../utils/templateHistoryLogger';
@@ -68,6 +69,9 @@ const [showCandidateTestModal, setShowCandidateTestModal] = useState(false);
 const [selectedTemplateForCandidate, setSelectedTemplateForCandidate] = useState(null);
 const [showSendEmailModal, setShowSendEmailModal] = useState(false);
 const [selectedTemplateForEmail, setSelectedTemplateForEmail] = useState(null);
+const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
+const [selectedTemplateForBulk, setSelectedTemplateForBulk] = useState(null);
+const [existingTestCount, setExistingTestCount] = useState(0);
 const [searchQuery, setSearchQuery] = useState("");
 const [currentPage, setCurrentPage] = useState(1);
 const templatesPerPage = 8;
@@ -142,6 +146,14 @@ const openCandidateTestModal = (template) => {
 const openSendEmailModal = (template) => {
   setSelectedTemplateForEmail(template);
   setShowSendEmailModal(true);
+};
+
+const openBulkUploadModal = async (template) => {
+  // Fetch current test count before opening modal
+  const count = await checkExistingTestsCount();
+  setExistingTestCount(count || 0);
+  setSelectedTemplateForBulk(template);
+  setShowBulkUploadModal(true);
 };
 
 const handleSave = () => {
@@ -286,6 +298,8 @@ const handleCancel = () => {
   setSelectedTemplateForCandidate(null);
   setShowSendEmailModal(false);
   setSelectedTemplateForEmail(null);
+  setShowBulkUploadModal(false);
+  setSelectedTemplateForBulk(null);
 };
 
 useEffect(() => {
@@ -947,6 +961,17 @@ const getPageNumbers = () => {
             setShowHistoryModal(false);
             setSelectedTemplateForHistory(null);
           }}
+        />
+      )}
+      {showBulkUploadModal && selectedTemplateForBulk && (
+        <BulkUploadModal
+          isOpen={showBulkUploadModal}
+          onClose={handleCancel}
+          showToast={showToast}
+          templateId={selectedTemplateForBulk.templateID}
+          templateName={selectedTemplateForBulk.templateName}
+          existingTestCount={existingTestCount}
+          onBulkUploadSuccess={fetchTemplates}
         />
       )}
       {isOpenAPIModal && (
@@ -1971,6 +1996,19 @@ const getPageNumbers = () => {
                             <path d="M17 11L19 13L23 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                           Candidate-Specific
+                        </span>
+                      </button>
+                    </div>
+                    <div className="form-group" style={{marginTop: '-8px'}}>
+                      <button onClick={() => openBulkUploadModal(card)}>
+                        <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M14 2V8H20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 18V12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M9 15L12 12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Bulk Upload CSV
                         </span>
                       </button>
                     </div>

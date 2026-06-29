@@ -1,0 +1,11 @@
+{
+  "FunctionName": "createBulkTests",
+  "Handler": "lambda_function.lambda_handler",
+  "Runtime": "python3.9",
+  "Role": "arn:aws:iam::730335506343:role/HRrobot",
+  "Timeout": 300,
+  "MemorySize": 512,
+  "Environment": {
+    "Variables": {}
+  }
+}
