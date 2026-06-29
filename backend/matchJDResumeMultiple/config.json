@@ -1,0 +1,9 @@
+{
+  "name": "matchJDResumeMultiple",
+  "runtime": "python3.12",
+  "handler": "lambda_function.lambda_handler",
+  "description": "Batch process multiple resumes against a job description using Amazon Bedrock",
+  "timeout": 900,
+  "memory": 512,
+  "environment": {}
+}

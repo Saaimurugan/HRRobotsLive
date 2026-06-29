@@ -981,8 +981,9 @@ const getPageNumbers = () => {
           </div>
           <h2>Candidate Profiler</h2>
           <p>Upload a resume and job description to generate a comprehensive report highlighting skill matches and role suitability.</p>
-          <div className="form-group">
-            <button onClick={() => navigate("/ProfilerPage")}>Profile</button>
+          <div className="form-group" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+            <button onClick={() => navigate("/ProfilerPage")}>Single</button>
+            <button onClick={() => navigate("/profilerPageMultiple")}>Batch</button>
           </div>
         </div>
         <div className="card" data-tour="screening-test">

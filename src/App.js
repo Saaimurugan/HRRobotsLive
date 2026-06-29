@@ -20,6 +20,7 @@ const RedirectPage = lazy(() => import('./components/redirectPage'));
 const SearchResult = lazy(() => import('./components/searchResult'));
 const CreateTemplate = lazy(() => import('./components/createTemplate'));
 const ProfilerPage = lazy(() => import('./components/profilerPage'));
+const ProfilerPageMultiple = lazy(() => import('./components/ProfilerPageMultiple'));
 const AIInterview = lazy(() => import('./components/aiinterview'));
 const InterviewPage = lazy(() => import('./components/interviewPage'));
 const SpeechToText = lazy(() => import('./components/speechtotext'));
@@ -381,6 +382,7 @@ const App = () => {
                 <Route path="/result" element={<ProtectedRoute><SearchResult/></ProtectedRoute>} />
                 <Route path="/createTemplate" element={<ProtectedRoute><CreateTemplate/></ProtectedRoute>} />
                 <Route path="/profilerPage" element={<ProtectedRoute><ProfilerPage/></ProtectedRoute>} />
+                <Route path="/profilerPageMultiple" element={<ProtectedRoute><ProfilerPageMultiple/></ProtectedRoute>} />
                 <Route path="/aiinterview" element={<ProtectedRoute><AIInterview/></ProtectedRoute>} />
                 <Route path="/interviewPage" element={<ProtectedRoute><InterviewPage/></ProtectedRoute>} />
                 <Route path="/speechtotext" element={<ProtectedRoute><SpeechToText/></ProtectedRoute>} />
