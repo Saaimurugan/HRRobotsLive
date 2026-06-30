@@ -92,6 +92,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const [hoveredRowIndex, setHoveredRowIndex] = useState(null);
     const [confirmationRowIndex, setConfirmationRowIndex] = useState(null);
     const [toasts, setToasts] = useState([]);
+    const [allItemsForStats, setAllItemsForStats] = useState([]); // Store all items for statistics
+    const [statsLoading, setStatsLoading] = useState(false);
+    const [isSummaryExpanded, setIsSummaryExpanded] = useState(true); // Accordion state
 
     const pageSize = 10; // Number of items per page
 
@@ -131,6 +134,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         if (testGlobalValue && !initialized) {
             setInitialized(true);
             fetchData(true); // Fetch data when page loads (first call)
+            fetchAllItemsForStats(); // Fetch all items for statistics
         }
     }, [testGlobalValue, initialized]); // Only depend on testGlobalValue and initialized
 
@@ -151,9 +155,11 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 if (searchFilter && searchFilter.trim()) {
                     // Search with server-side filtering
                     fetchSearchDataWithTerm(searchFilter.trim());
+                    fetchAllItemsForStats(searchFilter.trim()); // Update stats for search
                 } else {
                     // Clear search - reload all data
                     fetchData(true);
+                    fetchAllItemsForStats(); // Reset stats to all data
                 }
             }, 300); // 300ms debounce
 
@@ -218,6 +224,66 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             if (testToDelete) {
                 setItems(prev => [...prev, testToDelete]);
             }
+        }
+    };
+
+    // Fetch all items for statistics across all pages
+    const fetchAllItemsForStats = async (searchTerm = null) => {
+        if (statsLoading) return;
+        
+        setStatsLoading(true);
+        let allFetchedItems = [];
+        let currentLastKey = null;
+        let currentHasMore = true;
+        
+        try {
+            // Fetch all items in batches
+            while (currentHasMore) {
+                const requestBody = {
+                    globalValue: testGlobalValue,
+                    pageSize: 100, // Larger page size for stats
+                    lastKey: currentLastKey,
+                    sortKey: sortConfig.key,
+                    sortDirection: sortConfig.direction,
+                    token: JWTValue
+                };
+
+                if (searchTerm) {
+                    requestBody.searchName = searchTerm;
+                }
+
+                const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                const data = await response.json();
+                if (checkUnauthorized(data)) {
+                    setStatsLoading(false);
+                    return;
+                }
+
+                const parsedBody = typeof data.body === "string" ? JSON.parse(data.body) : data.body;
+                const newItems = parsedBody.items || [];
+                
+                if (newItems.length === 0) break;
+                
+                allFetchedItems = [...allFetchedItems, ...newItems];
+                currentLastKey = parsedBody.last_key;
+                currentHasMore = parsedBody.has_more;
+
+                // Safety limit to prevent infinite loops
+                if (allFetchedItems.length > 10000) break;
+            }
+
+            setAllItemsForStats(allFetchedItems);
+        } catch (error) {
+            //console.error("Error fetching all items for stats:", error);
+        } finally {
+            setStatsLoading(false);
         }
     };
 
@@ -590,8 +656,153 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         }
     }
 
+    // Calculate assessment counts grouped by template name and status (from all items)
+    const getAssessmentCounts = () => {
+        const counts = {};
+        const statusTotals = {
+            'Completed': 0,
+            'Terminated': 0,
+            'Not Started': 0,
+            'In Progress': 0
+        };
+        
+        const itemsToCount = allItemsForStats.length > 0 ? allItemsForStats : items;
+        
+        itemsToCount.forEach(item => {
+            const templateName = item.templateName || 'Unknown Template';
+            let status = item.status || 'Unknown';
+            
+            // Normalize status
+            if (status === 'Complete') status = 'Completed';
+            
+            if (!counts[templateName]) {
+                counts[templateName] = {
+                    total: 0,
+                    byStatus: {
+                        'Completed': 0,
+                        'Terminated': 0,
+                        'Not Started': 0,
+                        'In Progress': 0
+                    }
+                };
+            }
+            
+            counts[templateName].total++;
+            
+            // Only count known statuses
+            if (counts[templateName].byStatus.hasOwnProperty(status)) {
+                counts[templateName].byStatus[status]++;
+            }
+            
+            // Count status totals
+            if (statusTotals.hasOwnProperty(status)) {
+                statusTotals[status]++;
+            }
+        });
+        
+        return { counts, statusTotals, total: itemsToCount.length };
+    };
+
+    const { counts: assessmentCounts, statusTotals, total: totalAssessments } = getAssessmentCounts();
+
     return (
         <div className="results-page">
+            
+            {/* Compact Assessment Summary - Accordion */}
+            {(allItemsForStats.length > 0 || items.length > 0) && (
+                <div className="compact-summary">
+                    <div 
+                        className="compact-summary__header" 
+                        onClick={() => setIsSummaryExpanded(!isSummaryExpanded)}
+                        role="button"
+                        aria-expanded={isSummaryExpanded}
+                        aria-controls="summary-content"
+                        tabIndex={0}
+                        onKeyPress={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                setIsSummaryExpanded(!isSummaryExpanded);
+                            }
+                        }}
+                    >
+                        <div className="header-left">
+                            <svg 
+                                className={`accordion-icon ${isSummaryExpanded ? 'expanded' : ''}`}
+                                width="16" 
+                                height="16" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2"
+                            >
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                            <h3>Assessment Summary</h3>
+                        </div>
+                        <div className="header-right">
+                            <div className="status-summary">
+                                <span 
+                                    className="status-count status-count--completed"
+                                    title={`Completed Assessments: ${statusTotals['Completed'] || 0}`}
+                                >
+                                    ✓ {statusTotals['Completed'] || 0}
+                                </span>
+                                <span 
+                                    className="status-count status-count--progress"
+                                    title={`In Progress Assessments: ${statusTotals['In Progress'] || 0}`}
+                                >
+                                    ⟳ {statusTotals['In Progress'] || 0}
+                                </span>
+                                <span 
+                                    className="status-count status-count--not-started"
+                                    title={`Not Started Assessments: ${statusTotals['Not Started'] || 0}`}
+                                >
+                                    ○ {statusTotals['Not Started'] || 0}
+                                </span>
+                                <span 
+                                    className="status-count status-count--terminated"
+                                    title={`Terminated Assessments: ${statusTotals['Terminated'] || 0}`}
+                                >
+                                    ✕ {statusTotals['Terminated'] || 0}
+                                </span>
+                            </div>
+                            <span className="total-badge" title={`Total Assessments: ${totalAssessments}`}>
+                                Total: {totalAssessments}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div 
+                        id="summary-content"
+                        className={`summary-content ${isSummaryExpanded ? 'expanded' : 'collapsed'}`}
+                        aria-hidden={!isSummaryExpanded}
+                    >
+                        {Object.entries(assessmentCounts).map(([templateName, data]) => (
+                            <div key={templateName} className="summary-row">
+                                <div className="summary-row__template">
+                                    <span className="template-icon">📄</span>
+                                    <span className="template-text">{templateName}</span>
+                                    <span className="template-count">({data.total})</span>
+                                </div>
+                                <div className="summary-row__statuses">
+                                    <span className="status-chip status-completed">
+                                        Completed: {data.byStatus['Completed'] || 0}
+                                    </span>
+                                    <span className="status-chip status-progress">
+                                        In Progress: {data.byStatus['In Progress'] || 0}
+                                    </span>
+                                    <span className="status-chip status-not-started">
+                                        Not Started: {data.byStatus['Not Started'] || 0}
+                                    </span>
+                                    <span className="status-chip status-terminated">
+                                        Terminated: {data.byStatus['Terminated'] || 0}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
             
             {/* Mobile Search Panel */}
             <div className="mobile-search-panel">
