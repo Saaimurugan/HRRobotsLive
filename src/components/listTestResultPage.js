@@ -95,6 +95,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const [allItemsForStats, setAllItemsForStats] = useState([]); // Store all items for statistics
     const [statsLoading, setStatsLoading] = useState(false);
     const [isSummaryExpanded, setIsSummaryExpanded] = useState(true); // Accordion state
+    const [statusFilter, setStatusFilter] = useState(null); // Filter for status
+    const [templateFilter, setTemplateFilter] = useState(null); // Filter for template
 
     const pageSize = 10; // Number of items per page
 
@@ -173,6 +175,16 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             }
         };
     }, [searchFilter, testGlobalValue, initialized]); // Added initialized dependency
+
+    // Reset page to 1 when filters change and current page exceeds total pages
+    useEffect(() => {
+        const filteredItemsCount = getFilteredItems().length;
+        const maxPages = Math.max(1, Math.ceil(filteredItemsCount / pageSize));
+        
+        if (currentPage > maxPages) {
+            setCurrentPage(1);
+        }
+    }, [statusFilter, templateFilter, items, allItemsForStats]);
 
     const handleDeleteTest = async (testID, testToDelete) => {
         // Delete in background without blocking UI
@@ -526,9 +538,63 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         }
     };
 
-    // Get items - filtering is now done server-side
+    // Get items - filtering is now done client-side on all loaded data
     const getFilteredItems = () => {
-        return items;
+        // Use allItemsForStats for filtering if available (contains all data)
+        // Otherwise fallback to items (current page data)
+        const sourceItems = allItemsForStats.length > 0 ? allItemsForStats : items;
+        let filtered = sourceItems;
+        
+        // Apply status filter if set
+        if (statusFilter) {
+            filtered = filtered.filter(item => {
+                const itemStatus = item.status === 'Complete' ? 'Completed' : item.status;
+                return itemStatus === statusFilter;
+            });
+        }
+        
+        // Apply template filter if set
+        if (templateFilter) {
+            filtered = filtered.filter(item => {
+                return item.templateName === templateFilter;
+            });
+        }
+        
+        return filtered;
+    };
+
+    // Handle status filter click from header (no template filter)
+    const handleStatusFilterClick = (status, e) => {
+        e.stopPropagation(); // Prevent accordion toggle
+        
+        // Toggle filter - if clicking same status, clear both filters
+        if (statusFilter === status && !templateFilter) {
+            setStatusFilter(null);
+            setTemplateFilter(null);
+        } else {
+            setStatusFilter(status);
+            setTemplateFilter(null); // Clear template filter when clicking header
+        }
+        
+        // Reset to first page when filter changes
+        setCurrentPage(1);
+    };
+
+    // Handle status filter click from body (with template filter)
+    const handleTemplateStatusFilterClick = (templateName, status, e) => {
+        e.stopPropagation(); // Prevent accordion toggle
+        
+        // Toggle filter - if clicking same combination, clear filters
+        if (statusFilter === status && templateFilter === templateName) {
+            setStatusFilter(null);
+            setTemplateFilter(null);
+        } else {
+            setStatusFilter(status);
+            setTemplateFilter(templateName);
+        }
+        
+        // Reset to first page when filter changes
+        setCurrentPage(1);
     };
 
     // Sorting function - triggers server-side sort
@@ -593,10 +659,8 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const filteredItems = getFilteredItems();
     const sortedItems = filteredItems;
 
-    // Update total pages based on server total or loaded items when no more data available
-    const filteredTotalPages = hasMore 
-        ? Math.max(1, totalPages)
-        : Math.max(1, Math.ceil(items.length / pageSize));
+    // Update total pages based on filtered items count
+    const filteredTotalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
 
     // Pagination logic
     const startIndex = (currentPage - 1) * pageSize;
@@ -606,15 +670,15 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         const nextPage = currentPage + 1;
         const requiredItems = nextPage * pageSize;
 
-        // Check if we need to fetch more data from server
-        if (requiredItems > items.length && hasMore && !loading) {
+        // Check if we need to fetch more data from server (only when not filtering)
+        if (!statusFilter && !templateFilter && requiredItems > items.length && hasMore && !loading) {
             const success = await fetchData(false);
             // Only move to next page after data is fetched
             if (success && nextPage <= filteredTotalPages) {
                 setCurrentPage(nextPage);
             }
         } else if (nextPage <= filteredTotalPages) {
-            // Data already loaded, just change page
+            // Data already loaded or filtering, just change page
             setCurrentPage(nextPage);
         }
     };
@@ -725,51 +789,75 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                             }
                         }}
                     >
-                        <div className="header-left">
-                            <svg 
-                                className={`accordion-icon ${isSummaryExpanded ? 'expanded' : ''}`}
-                                width="16" 
-                                height="16" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2"
-                            >
-                                <polyline points="6 9 12 15 18 9"/>
-                            </svg>
-                            <h3>Assessment Summary</h3>
-                        </div>
-                        <div className="header-right">
-                            <div className="status-summary">
-                                <span 
-                                    className="status-count status-count--completed"
-                                    title={`Completed Assessments: ${statusTotals['Completed'] || 0}`}
+                        <div className="header-row-1">
+                            <div className="header-left">
+                                <svg 
+                                    className={`accordion-icon ${isSummaryExpanded ? 'expanded' : ''}`}
+                                    width="16" 
+                                    height="16" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2"
                                 >
-                                    ✓ {statusTotals['Completed'] || 0}
-                                </span>
-                                <span 
-                                    className="status-count status-count--progress"
-                                    title={`In Progress Assessments: ${statusTotals['In Progress'] || 0}`}
-                                >
-                                    ⟳ {statusTotals['In Progress'] || 0}
-                                </span>
-                                <span 
-                                    className="status-count status-count--not-started"
-                                    title={`Not Started Assessments: ${statusTotals['Not Started'] || 0}`}
-                                >
-                                    ○ {statusTotals['Not Started'] || 0}
-                                </span>
-                                <span 
-                                    className="status-count status-count--terminated"
-                                    title={`Terminated Assessments: ${statusTotals['Terminated'] || 0}`}
-                                >
-                                    ✕ {statusTotals['Terminated'] || 0}
+                                    <polyline points="6 9 12 15 18 9"/>
+                                </svg>
+                                <h3>Assessment Summary</h3>
+                            </div>
+                            <div className="header-right">
+                                <div className="status-summary">
+                                    <span 
+                                        className={`status-count status-count--completed ${statusFilter === 'Completed' ? 'active' : ''}`}
+                                        title={`Completed Assessments: ${statusTotals['Completed'] || 0} - Click to filter`}
+                                        onClick={(e) => handleStatusFilterClick('Completed', e)}
+                                    >
+                                        ✓ {statusTotals['Completed'] || 0}
+                                    </span>
+                                    <span 
+                                        className={`status-count status-count--progress ${statusFilter === 'In Progress' ? 'active' : ''}`}
+                                        title={`In Progress Assessments: ${statusTotals['In Progress'] || 0} - Click to filter`}
+                                        onClick={(e) => handleStatusFilterClick('In Progress', e)}
+                                    >
+                                        ⟳ {statusTotals['In Progress'] || 0}
+                                    </span>
+                                    <span 
+                                        className={`status-count status-count--not-started ${statusFilter === 'Not Started' ? 'active' : ''}`}
+                                        title={`Not Started Assessments: ${statusTotals['Not Started'] || 0} - Click to filter`}
+                                        onClick={(e) => handleStatusFilterClick('Not Started', e)}
+                                    >
+                                        ○ {statusTotals['Not Started'] || 0}
+                                    </span>
+                                    <span 
+                                        className={`status-count status-count--terminated ${statusFilter === 'Terminated' ? 'active' : ''}`}
+                                        title={`Terminated Assessments: ${statusTotals['Terminated'] || 0} - Click to filter`}
+                                        onClick={(e) => handleStatusFilterClick('Terminated', e)}
+                                    >
+                                        ✕ {statusTotals['Terminated'] || 0}
+                                    </span>
+                                </div>
+                                <span className="total-badge" title={`Total Assessments: ${totalAssessments}`}>
+                                    Total: {totalAssessments}
                                 </span>
                             </div>
-                            <span className="total-badge" title={`Total Assessments: ${totalAssessments}`}>
-                                Total: {totalAssessments}
-                            </span>
                         </div>
+                        {(statusFilter || templateFilter) && (
+                            <div className="header-row-2">
+                                <span className="filter-indicator" title={templateFilter ? `Filtering by Template: ${templateFilter}, Status: ${statusFilter}` : `Filtering by Status: ${statusFilter}`}>
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                    </svg>
+                                    {templateFilter ? (
+                                        <>
+                                            {templateFilter} → {statusFilter}
+                                        </>
+                                    ) : (
+                                        <>
+                                            All Templates → {statusFilter}
+                                        </>
+                                    )}
+                                </span>
+                            </div>
+                        )}
                     </div>
                     
                     <div 
@@ -785,16 +873,32 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                                     <span className="template-count">({data.total})</span>
                                 </div>
                                 <div className="summary-row__statuses">
-                                    <span className="status-chip status-completed">
+                                    <span 
+                                        className={`status-chip status-completed ${statusFilter === 'Completed' && templateFilter === templateName ? 'active' : ''}`}
+                                        onClick={(e) => handleTemplateStatusFilterClick(templateName, 'Completed', e)}
+                                        title={`Click to filter ${templateName} - Completed`}
+                                    >
                                         Completed: {data.byStatus['Completed'] || 0}
                                     </span>
-                                    <span className="status-chip status-progress">
+                                    <span 
+                                        className={`status-chip status-progress ${statusFilter === 'In Progress' && templateFilter === templateName ? 'active' : ''}`}
+                                        onClick={(e) => handleTemplateStatusFilterClick(templateName, 'In Progress', e)}
+                                        title={`Click to filter ${templateName} - In Progress`}
+                                    >
                                         In Progress: {data.byStatus['In Progress'] || 0}
                                     </span>
-                                    <span className="status-chip status-not-started">
+                                    <span 
+                                        className={`status-chip status-not-started ${statusFilter === 'Not Started' && templateFilter === templateName ? 'active' : ''}`}
+                                        onClick={(e) => handleTemplateStatusFilterClick(templateName, 'Not Started', e)}
+                                        title={`Click to filter ${templateName} - Not Started`}
+                                    >
                                         Not Started: {data.byStatus['Not Started'] || 0}
                                     </span>
-                                    <span className="status-chip status-terminated">
+                                    <span 
+                                        className={`status-chip status-terminated ${statusFilter === 'Terminated' && templateFilter === templateName ? 'active' : ''}`}
+                                        onClick={(e) => handleTemplateStatusFilterClick(templateName, 'Terminated', e)}
+                                        title={`Click to filter ${templateName} - Terminated`}
+                                    >
                                         Terminated: {data.byStatus['Terminated'] || 0}
                                     </span>
                                 </div>

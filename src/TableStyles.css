@@ -284,14 +284,14 @@ td.status-not-started {
 
 .compact-summary__header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   padding: 10px 14px;
   border-bottom: 1px solid #e5e7eb;
   background: #f9fafb;
   cursor: pointer;
   user-select: none;
   transition: background-color 0.2s ease;
+  gap: 8px;
 }
 
 .compact-summary__header:hover {
@@ -303,10 +303,63 @@ td.status-not-started {
   outline-offset: -2px;
 }
 
+.header-row-1 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.header-row-2 {
+  display: flex;
+  align-items: center;
+  padding-left: 26px;
+}
+
 .header-left {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-shrink: 0;
+}
+
+.filter-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  animation: slideIn 0.3s ease;
+  flex-shrink: 0;
+}
+
+.filter-indicator svg {
+  flex-shrink: 0;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .header-right {
@@ -318,7 +371,7 @@ td.status-not-started {
 .status-summary {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .status-count {
@@ -331,13 +384,28 @@ td.status-not-started {
   font-weight: 600;
   line-height: 1;
   white-space: nowrap;
-  cursor: help;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+  position: relative;
 }
 
 .status-count:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.status-count.active {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+  transform: scale(1.05);
+}
+
+.status-count.active::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid currentColor;
+  border-radius: 12px;
+  pointer-events: none;
 }
 
 .status-count--completed {
@@ -473,11 +541,28 @@ td.status-not-started {
   white-space: nowrap;
   border: 1px solid transparent;
   transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
 }
 
 .status-chip:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-chip.active {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px currentColor;
+  transform: scale(1.05);
+  font-weight: 700;
+}
+
+.status-chip.active::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid currentColor;
+  border-radius: 12px;
+  pointer-events: none;
 }
 
 .status-completed {
@@ -513,32 +598,38 @@ td.status-not-started {
 
   .compact-summary__header {
     padding: 8px 12px;
+  }
+
+  .header-row-1 {
     flex-wrap: wrap;
     gap: 8px;
   }
 
+  .header-row-2 {
+    padding-left: 22px;
+  }
+
   .header-left {
     gap: 8px;
-    flex: 1;
-    min-width: 0;
   }
 
   .header-right {
     gap: 8px;
     flex-wrap: wrap;
-    justify-content: flex-end;
   }
 
   .status-summary {
-    gap: 6px;
-    order: 3;
-    width: 100%;
-    justify-content: flex-start;
+    gap: 5px;
   }
 
   .status-count {
     padding: 2px 6px;
     font-size: 10px;
+  }
+
+  .filter-indicator {
+    font-size: 10px;
+    padding: 3px 8px;
   }
 
   .accordion-icon {
@@ -553,7 +644,6 @@ td.status-not-started {
   .total-badge {
     font-size: 11px;
     padding: 2px 8px;
-    order: 2;
   }
 
   .summary-content.expanded {
@@ -588,13 +678,23 @@ td.status-not-started {
     font-size: 13px;
   }
 
+  .header-row-2 {
+    padding-left: 0;
+  }
+
   .status-summary {
     gap: 4px;
+    flex-wrap: wrap;
   }
 
   .status-count {
     padding: 2px 5px;
     font-size: 9px;
+  }
+
+  .filter-indicator {
+    font-size: 9px;
+    padding: 2px 6px;
   }
 
   .summary-row__statuses {
