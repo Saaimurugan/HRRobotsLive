@@ -905,6 +905,7 @@ const EditTemplate = () => {
                 <div className="form-group">
                   <label>Question</label>
                   <RichTextEditor
+                    key={`question-${isEditing ? editingOriginalIndex : 'new'}`}
                     value={formData.question}
                     onChange={(content) => setFormData({ ...formData, question: content })}
                     placeholder="Enter your question here..."
@@ -926,6 +927,7 @@ const EditTemplate = () => {
                         />
                         <div style={{ flex: 1 }}>
                           <RichTextEditor
+                            key={`option-${isEditing ? editingOriginalIndex : 'new'}-${i}`}
                             value={opt}
                             onChange={(content) => updateOption(i, content)}
                             placeholder={`Option ${i + 1}`}
@@ -999,6 +1001,7 @@ const EditTemplate = () => {
                   <div className="form-group">
                     <label>Second Question</label>
                     <RichTextEditor
+                      key={`question2-${isEditing ? editingOriginalIndex : 'new'}`}
                       value={formData.question2}
                       onChange={(content) => setFormData({ ...formData, question2: content })}
                       placeholder="Enter the second question here..."
@@ -1036,6 +1039,7 @@ const EditTemplate = () => {
                   <div className="form-group">
                     <label>Expected Answer (Optional)</label>
                     <RichTextEditor
+                      key={`elaborate-answer-${isEditing ? editingOriginalIndex : 'new'}`}
                       value={formData.correctAnswer}
                       onChange={(content) => setFormData({ ...formData, correctAnswer: content })}
                       placeholder="Enter the expected elaborate answer or leave empty for manual evaluation..."
