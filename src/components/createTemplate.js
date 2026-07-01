@@ -7,6 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
 import CreateTemplateFromJDModal from "./CreateTemplateFromJDModal";
 import CodeEditor from './CodeEditor.js';
+import CodeBlock from './CodeBlock.js';
 import RichTextEditor from './RichTextEditor.js';
 import { logTemplateCreation } from '../utils/templateHistoryLogger';
 
@@ -816,9 +817,9 @@ const CreateTemplate = () => {
                             {q.correctAnswer && (
                               <div style={{ marginTop: '8px' }}>
                                 <strong>Expected Solution:</strong>
-                                <pre style={{ whiteSpace: 'pre-wrap', marginTop: '4px', padding: '8px', background: 'var(--color-bg-secondary)', borderRadius: 'var(--radius-sm)', fontFamily: 'monospace', fontSize: '0.9em' }}>
-                                  {q.correctAnswer}
-                                </pre>
+                                <div style={{ marginTop: '4px' }}>
+                                  <CodeBlock code={q.correctAnswer} language="javascript" />
+                                </div>
                               </div>
                             )}
                           </div>
