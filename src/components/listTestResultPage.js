@@ -713,6 +713,123 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
         }, 500); // Small delay to ensure deletion is processed
     }
 
+    // Download report function
+    const handleDownloadReport = async () => {
+        try {
+            // Get filtered items for export
+            const dataToExport = getFilteredItems();
+            
+            if (dataToExport.length === 0) {
+                showToast('warning', 'No Data', 'No assessments to export.');
+                return;
+            }
+
+            showToast('info', 'Generating Report', 'Please wait while we prepare your report...');
+
+            // Fetch detailed results for each assessment
+            const detailedData = await Promise.all(
+                dataToExport.map(async (item) => {
+                    try {
+                        const searchUUID = item.testID.split('/').pop();
+                        const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult_", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
+                        });
+
+                        const data = await response.json();
+                        
+                        if (data.statusCode === 200) {
+                            const result = JSON.parse(data.body);
+                            const correctAnswers = result.correctAnswers || 0;
+                            const totalQuestions = result.totalQuestions || 0;
+                            
+                            // Calculate score as percentage
+                            let calculatedScore = 'N/A';
+                            if (totalQuestions > 0) {
+                                const percentage = (correctAnswers / totalQuestions) * 100;
+                                calculatedScore = `${percentage.toFixed(2)}%`;
+                            }
+                            
+                            return {
+                                ...item,
+                                score: calculatedScore,
+                                correctAnswers: correctAnswers,
+                                totalQuestions: totalQuestions,
+                                submittedAnswers: result.submittedAnswers || 0,
+                            };
+                        }
+                        return item;
+                    } catch (error) {
+                        return item;
+                    }
+                })
+            );
+
+            // Create CSV content
+            const headers = [
+                'Date & Time',
+                'Candidate Name',
+                'Template Name',
+                'Test ID',
+                'Status',
+                'Score (%)',
+                'Correct Answers',
+                'Total Questions',
+                'Submitted Answers',
+                'Termination Reason'
+            ];
+
+            const csvRows = [
+                headers.join(','),
+                ...detailedData.map(item => {
+                    const date = new Date(item.datetime).toLocaleString();
+                    const score = item.score !== undefined ? item.score : 'N/A';
+                    const correctAnswers = item.correctAnswers !== undefined ? item.correctAnswers : 'N/A';
+                    const totalQuestions = item.totalQuestions !== undefined ? item.totalQuestions : 'N/A';
+                    const submittedAnswers = item.submittedAnswers !== undefined ? item.submittedAnswers : 'N/A';
+                    const terminationReason = item.terminationReason || (item.status === 'Terminated' ? 'Unknown' : 'N/A');
+
+                    return [
+                        `"${date}"`,
+                        `"${item.candidateName || 'N/A'}"`,
+                        `"${item.templateName || 'N/A'}"`,
+                        `"${item.testID || 'N/A'}"`,
+                        `"${item.status || 'N/A'}"`,
+                        `"${score}"`,
+                        `"${correctAnswers}"`,
+                        `"${totalQuestions}"`,
+                        `"${submittedAnswers}"`,
+                        `"${terminationReason}"`
+                    ].join(',');
+                })
+            ];
+
+            const csvContent = csvRows.join('\n');
+
+            // Create and download file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            const filename = `Assessment_Report_${new Date().toISOString().split('T')[0]}_${Date.now()}.csv`;
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            showToast('success', 'Report Downloaded', `Successfully exported ${dataToExport.length} assessments.`);
+        } catch (error) {
+            console.error('Error downloading report:', error);
+            showToast('error', 'Download Failed', 'Failed to generate report. Please try again.');
+        }
+    };
+
     const handleConfirmationRowIndex = (index) => {
         if (!isDeleteClicked) {
             setConfirmationRowIndex(index);
@@ -803,6 +920,21 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                                     <polyline points="6 9 12 15 18 9"/>
                                 </svg>
                                 <h3>Assessment Summary</h3>
+                                <button
+                                    className="download-report-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDownloadReport();
+                                    }}
+                                    title="Download detailed report (CSV)"
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                        <polyline points="7 10 12 15 17 10"/>
+                                        <line x1="12" y1="15" x2="12" y2="3"/>
+                                    </svg>
+                                    Download Report
+                                </button>
                             </div>
                             <div className="header-right">
                                 <div className="status-summary">

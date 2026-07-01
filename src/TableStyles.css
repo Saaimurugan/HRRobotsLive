@@ -324,6 +324,36 @@ td.status-not-started {
   flex-shrink: 0;
 }
 
+.download-report-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.download-report-btn:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+}
+
+.download-report-btn:active {
+  transform: translateY(0);
+}
+
+.download-report-btn svg {
+  flex-shrink: 0;
+}
+
 .filter-indicator {
   display: inline-flex;
   align-items: center;
@@ -599,6 +629,17 @@ td.status-not-started {
 
   .header-left {
     gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .download-report-btn {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .download-report-btn svg {
+    width: 14px;
+    height: 14px;
   }
 
   .header-right {
@@ -668,6 +709,13 @@ td.status-not-started {
 
   .header-row-2 {
     padding-left: 0;
+  }
+
+  .download-report-btn {
+    font-size: 9px;
+    padding: 3px 6px;
+    width: 100%;
+    justify-content: center;
   }
 
   .status-summary {
