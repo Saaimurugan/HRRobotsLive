@@ -846,6 +846,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             'Not Started': 0,
             'In Progress': 0
         };
+        const templateTotals = {}; // Track total per template
         
         const itemsToCount = allItemsForStats.length > 0 ? allItemsForStats : items;
         
@@ -879,12 +880,32 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             if (statusTotals.hasOwnProperty(status)) {
                 statusTotals[status]++;
             }
+            
+            // Count template totals
+            templateTotals[templateName] = (templateTotals[templateName] || 0) + 1;
         });
         
-        return { counts, statusTotals, total: itemsToCount.length };
+        return { counts, statusTotals, templateTotals, total: itemsToCount.length };
     };
 
-    const { counts: assessmentCounts, statusTotals, total: totalAssessments } = getAssessmentCounts();
+    const { counts: assessmentCounts, statusTotals, templateTotals, total: totalAssessments } = getAssessmentCounts();
+
+    // Handle template filter click from header (no status filter)
+    const handleTemplateFilterClick = (templateName, e) => {
+        e.stopPropagation(); // Prevent accordion toggle
+        
+        // Toggle filter - if clicking same template, clear both filters
+        if (templateFilter === templateName && !statusFilter) {
+            setTemplateFilter(null);
+            setStatusFilter(null);
+        } else {
+            setTemplateFilter(templateName);
+            setStatusFilter(null); // Clear status filter when clicking header template
+        }
+        
+        // Reset to first page when filter changes
+        setCurrentPage(1);
+    };
 
     return (
         <div className="results-page">
@@ -939,28 +960,28 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                             <div className="header-right">
                                 <div className="status-summary">
                                     <span 
-                                        className={`status-count status-count--completed ${statusFilter === 'Completed' ? 'active' : ''}`}
+                                        className={`status-count status-count--completed ${statusFilter === 'Completed' && !templateFilter ? 'active' : ''}`}
                                         title={`Completed Assessments: ${statusTotals['Completed'] || 0} - Click to filter`}
                                         onClick={(e) => handleStatusFilterClick('Completed', e)}
                                     >
                                         ✓ {statusTotals['Completed'] || 0}
                                     </span>
                                     <span 
-                                        className={`status-count status-count--progress ${statusFilter === 'In Progress' ? 'active' : ''}`}
+                                        className={`status-count status-count--progress ${statusFilter === 'In Progress' && !templateFilter ? 'active' : ''}`}
                                         title={`In Progress Assessments: ${statusTotals['In Progress'] || 0} - Click to filter`}
                                         onClick={(e) => handleStatusFilterClick('In Progress', e)}
                                     >
                                         ⟳ {statusTotals['In Progress'] || 0}
                                     </span>
                                     <span 
-                                        className={`status-count status-count--not-started ${statusFilter === 'Not Started' ? 'active' : ''}`}
+                                        className={`status-count status-count--not-started ${statusFilter === 'Not Started' && !templateFilter ? 'active' : ''}`}
                                         title={`Not Started Assessments: ${statusTotals['Not Started'] || 0} - Click to filter`}
                                         onClick={(e) => handleStatusFilterClick('Not Started', e)}
                                     >
                                         ○ {statusTotals['Not Started'] || 0}
                                     </span>
                                     <span 
-                                        className={`status-count status-count--terminated ${statusFilter === 'Terminated' ? 'active' : ''}`}
+                                        className={`status-count status-count--terminated ${statusFilter === 'Terminated' && !templateFilter ? 'active' : ''}`}
                                         title={`Terminated Assessments: ${statusTotals['Terminated'] || 0} - Click to filter`}
                                         onClick={(e) => handleStatusFilterClick('Terminated', e)}
                                     >
@@ -974,20 +995,30 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                         </div>
                         {(statusFilter || templateFilter) && (
                             <div className="header-row-2">
-                                <span className="filter-indicator" title={templateFilter ? `Filtering by Template: ${templateFilter}, Status: ${statusFilter}` : `Filtering by Status: ${statusFilter}`}>
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
-                                    </svg>
-                                    {templateFilter ? (
-                                        <>
-                                            {templateFilter} → {statusFilter}
-                                        </>
-                                    ) : (
-                                        <>
-                                            All Templates → {statusFilter}
-                                        </>
-                                    )}
-                                </span>
+                                {(statusFilter && !templateFilter) && (
+                                    <span className="filter-indicator" title={`Filtering by Status: ${statusFilter}`}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                        </svg>
+                                        All Templates → {statusFilter}
+                                    </span>
+                                )}
+                                {(templateFilter && statusFilter) && (
+                                    <span className="filter-indicator" title={`Filtering by Template: ${templateFilter}, Status: ${statusFilter}`}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                        </svg>
+                                        {templateFilter} → {statusFilter}
+                                    </span>
+                                )}
+                                {(templateFilter && !statusFilter) && (
+                                    <span className="filter-indicator" title={`Filtering by Template: ${templateFilter}`}>
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                                        </svg>
+                                        {templateFilter} → All Statuses
+                                    </span>
+                                )}
                             </div>
                         )}
                     </div>
@@ -999,7 +1030,11 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     >
                         {Object.entries(assessmentCounts).map(([templateName, data]) => (
                             <div key={templateName} className="summary-row">
-                                <div className="summary-row__template">
+                                <div 
+                                    className={`summary-row__template ${templateFilter === templateName && !statusFilter ? 'active-template' : ''}`}
+                                    onClick={(e) => handleTemplateFilterClick(templateName, e)}
+                                    title={`Click to filter by ${templateName}`}
+                                >
                                     <span className="template-icon">📄</span>
                                     <span className="template-text">{templateName}</span>
                                     <span className="template-count">({data.total})</span>
