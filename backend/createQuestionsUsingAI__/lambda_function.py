@@ -203,14 +203,20 @@ REQUIREMENTS FOR ELABORATE QUESTIONS:
 - Include scenario-based questions when appropriate
 - Ask for examples, comparisons, or step-by-step explanations
 
-Return ONLY a JSON array with {count} objects:
+REQUIREMENTS FOR correctAnswer:
+- Write a real, detailed model answer specific to the question and {topic}
+- The answer should be 3-6 sentences covering key points an ideal candidate would mention
+- Do NOT use generic placeholders like "Sample comprehensive answer" - write actual content
+- Tailor the answer to the {level} level and the specific question asked
+
+Return ONLY a JSON array with {count} objects in this format:
 [
     {{
         "type": "elaborate",
         "topic": "{topic}",
-        "question": "Explain in detail how you would approach/implement/solve this {topic}-related scenario. Provide specific examples and reasoning.",
+        "question": "<specific open-ended question about {topic}>",
         "options": "",
-        "correctAnswer": "Sample comprehensive answer demonstrating expected depth and key points"
+        "correctAnswer": "<detailed model answer with key points specific to the question>"
     }}
 ]
 
