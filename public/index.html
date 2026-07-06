@@ -2,6 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <!-- Suppress ResizeObserver benign loop warning from CKEditor before CRA overlay loads -->
+    <script>
+      (function() {
+        var _OriginalResizeObserver = window.ResizeObserver;
+        if (_OriginalResizeObserver) {
+          window.ResizeObserver = function(callback) {
+            return new _OriginalResizeObserver(function(entries, observer) {
+              window.requestAnimationFrame(function() {
+                callback(entries, observer);
+              });
+            });
+          };
+          window.ResizeObserver.prototype = _OriginalResizeObserver.prototype;
+        }
+      })();
+    </script>
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"

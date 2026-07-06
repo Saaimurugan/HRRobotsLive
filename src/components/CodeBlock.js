@@ -14,7 +14,7 @@ const CodeBlock = ({ code = '', language = 'javascript' }) => {
   if (!code) return null;
 
   return (
-    <div style={{ borderRadius: '6px', overflow: 'hidden', fontSize: '0.88em' }}>
+    <div style={{ borderRadius: '6px', overflow: 'hidden', fontSize: '0.88em', maxWidth: '100%' }}>
       <SyntaxHighlighter
         language={language}
         style={vscDarkPlus}
@@ -26,6 +26,10 @@ const CodeBlock = ({ code = '', language = 'javascript' }) => {
           borderRadius: '6px',
           maxHeight: '400px',
           overflowY: 'auto',
+          overflowX: 'auto',
+          maxWidth: '100%',
+          wordBreak: 'break-all',
+          whiteSpace: 'pre-wrap',
         }}
       >
         {code}

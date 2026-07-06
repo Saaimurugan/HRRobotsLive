@@ -737,11 +737,36 @@ const EditTemplate = () => {
         </div>
 
         {loadingTemplate ? (
-          <div className="empty-state">
-            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ animation: 'spin 1s linear infinite' }}>
-              <path d="M21 12a9 9 0 11-6.219-8.56" />
-            </svg>
-            <p>Loading template...</p>
+          <div className="template-content">
+            <div className="left-panel">
+              <div className="form-section">
+                <div className="skeleton skeleton-button" style={{ width: '40%', height: '28px', marginBottom: '16px' }}></div>
+                <div className="skeleton skeleton-button" style={{ marginBottom: '12px' }}></div>
+                <div className="skeleton skeleton-button"></div>
+              </div>
+              <div className="generating-overlay" style={{ marginTop: '8px' }}>
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="qcard skeleton-card">
+                    <div className="skeleton skeleton-text-lg" style={{ width: '30%', marginBottom: '12px' }}></div>
+                    <div className="skeleton skeleton-text" style={{ width: '90%' }}></div>
+                    <div className="skeleton skeleton-text" style={{ width: '75%' }}></div>
+                    <div className="skeleton skeleton-text-sm" style={{ marginBottom: '20px' }}></div>
+                    <div className="skeleton-actions">
+                      <div className="skeleton skeleton-icon"></div>
+                      <div className="skeleton skeleton-icon"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="right-panel">
+              <div className="form-section">
+                <div className="skeleton skeleton-text-lg" style={{ width: '50%', marginBottom: '20px' }}></div>
+                <div className="skeleton skeleton-button" style={{ marginBottom: '12px' }}></div>
+                <div className="skeleton skeleton-button" style={{ marginBottom: '12px' }}></div>
+                <div className="skeleton skeleton-button"></div>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="template-content">
@@ -803,7 +828,23 @@ const EditTemplate = () => {
               </div>
 
               <div className="questions-list">
-                {groupedQuestions.length > 0 ? (
+                {isGenerating ? (
+                  <div className="generating-overlay">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="qcard skeleton-card">
+                        <div className="skeleton skeleton-text-lg" style={{ width: '30%', marginBottom: '12px' }}></div>
+                        <div className="skeleton skeleton-text" style={{ width: '90%' }}></div>
+                        <div className="skeleton skeleton-text" style={{ width: '75%' }}></div>
+                        <div className="skeleton skeleton-text-sm" style={{ marginBottom: '20px' }}></div>
+                        <div className="skeleton-actions">
+                          <div className="skeleton skeleton-icon"></div>
+                          <div className="skeleton skeleton-icon"></div>
+                        </div>
+                      </div>
+                    ))}
+                    <p className="generating-status-text">Generating questions with AI...</p>
+                  </div>
+                ) : groupedQuestions.length > 0 ? (
                   groupedQuestions.map((q, index) => {
                     const prevQuestion = index > 0 ? groupedQuestions[index - 1] : null;
                     const showTopicHeader = q.topic && (!prevQuestion || prevQuestion.topic !== q.topic);

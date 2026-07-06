@@ -769,7 +769,23 @@ const CreateTemplate = () => {
             </div>
 
             <div className="questions-list" data-tour="question-list">
-              {groupedQuestions.length > 0 ? (
+              {isGenerating ? (
+                <div className="generating-overlay">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="qcard skeleton-card">
+                      <div className="skeleton skeleton-text-lg" style={{ width: '30%', marginBottom: '12px' }}></div>
+                      <div className="skeleton skeleton-text" style={{ width: '90%' }}></div>
+                      <div className="skeleton skeleton-text" style={{ width: '75%' }}></div>
+                      <div className="skeleton skeleton-text-sm" style={{ marginBottom: '20px' }}></div>
+                      <div className="skeleton-actions">
+                        <div className="skeleton skeleton-icon"></div>
+                        <div className="skeleton skeleton-icon"></div>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="generating-status-text">Generating questions with AI...</p>
+                </div>
+              ) : groupedQuestions.length > 0 ? (
                 groupedQuestions.map((q, index) => {
                   const prevQuestion = index > 0 ? groupedQuestions[index - 1] : null;
                   const showTopicHeader = q.topic && (!prevQuestion || prevQuestion.topic !== q.topic);
