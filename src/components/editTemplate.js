@@ -699,7 +699,7 @@ const EditTemplate = () => {
         return {
           ...q,
           question: escapeHtml(q.question),
-          options: q.options ? q.options.map(opt => escapeHtml(opt)) : undefined,
+          options: Array.isArray(q.options) ? q.options.map(opt => escapeHtml(opt)) : q.options,
           correctAnswer: escapeHtml(q.correctAnswer),
           correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : undefined
         };
