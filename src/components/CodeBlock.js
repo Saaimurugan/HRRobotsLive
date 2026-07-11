@@ -13,6 +13,9 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 const CodeBlock = ({ code = '', language = 'javascript' }) => {
   if (!code) return null;
 
+  // Convert escaped newlines (\n) to actual newlines if the backend returned them as strings
+  const normalizedCode = code.replace(/\\n/g, '\n').replace(/\\t/g, '\t');
+
   return (
     <div style={{ borderRadius: '6px', overflow: 'hidden', fontSize: '0.88em', maxWidth: '100%' }}>
       <SyntaxHighlighter
@@ -32,7 +35,7 @@ const CodeBlock = ({ code = '', language = 'javascript' }) => {
           whiteSpace: 'pre-wrap',
         }}
       >
-        {code}
+        {normalizedCode}
       </SyntaxHighlighter>
     </div>
   );

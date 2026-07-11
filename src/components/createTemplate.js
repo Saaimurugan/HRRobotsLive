@@ -1036,7 +1036,8 @@ const CreateTemplate = () => {
 
               {formData.type === "code" && (
                 <div className="form-group">
-                  <label>Expected Code Solution (Optional)</label>
+                  <label style={{ marginBottom: '4px' }}>Type: Code Solution</label>
+                  <label style={{ marginTop: '8px', marginBottom: '8px' }}>Expected Solution:</label>
                   <CodeEditor
                     value={formData.correctAnswer}
                     onChange={(code) => setFormData({ ...formData, correctAnswer: code })}
