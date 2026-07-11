@@ -87,7 +87,7 @@ const CodeEditor = ({
         minHeight:       minHeight,
         border:          '1px solid #ddd',
         borderRadius:    '4px',
-        backgroundColor: '#2d2d2d',   // dark background matches prism dark theme
+        backgroundColor: '#ffffff',   // white background
         overflow:        'hidden',
       }}
     >
@@ -125,7 +125,7 @@ const CodeEditor = ({
           bottom:        0,
           overflow:      'auto',
           pointerEvents: 'none',
-          color:         '#ccc',
+          color:         '#000',
           background:    'transparent',
           borderRadius:  0,
           textShadow:    'none',
@@ -162,7 +162,7 @@ const CodeEditor = ({
           background:            'transparent',
           // Make text invisible but keep cursor visible
           color:                 'transparent',
-          caretColor:            '#fff',
+          caretColor:            '#000',
           WebkitTextFillColor:   'transparent',
           overflow:              'auto',
           boxSizing:             'border-box',
