@@ -94,7 +94,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     const [toasts, setToasts] = useState([]);
     const [allItemsForStats, setAllItemsForStats] = useState([]); // Store all items for statistics
     const [statsLoading, setStatsLoading] = useState(false);
-    const [isSummaryExpanded, setIsSummaryExpanded] = useState(true); // Accordion state
+    const [isSummaryExpanded, setIsSummaryExpanded] = useState(false); // Accordion state
     const [statusFilter, setStatusFilter] = useState(null); // Filter for status
     const [templateFilter, setTemplateFilter] = useState(null); // Filter for template
 
