@@ -433,11 +433,12 @@
 }
 
 /* AI Section */
+/*
 .ai-section {
   margin-top: 30px;
   padding-top: 25px;
   border-top: 2px solid var(--color-border);
-}
+}*/
 
 .ai-section h3 {
   font-size: var(--font-size-lg);
@@ -1465,4 +1466,89 @@
   outline: none;
   border-color: var(--color-primary, #2563eb);
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+/* Accordion Styles */
+.accordion-section {
+  margin-bottom: 15px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--color-bg-primary);
+}
+
+.accordion-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  background: var(--color-bg-secondary);
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  text-align: left;
+}
+
+.accordion-header:hover {
+  background: var(--color-bg-tertiary, #e5e7eb);
+}
+
+.accordion-header.accordion-open {
+  background: var(--color-primary);
+  color: white;
+}
+
+.accordion-header.accordion-open:hover {
+  background: var(--color-primary-dark, #1e40af);
+}
+
+.accordion-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.accordion-title {
+  flex: 1;
+}
+
+.accordion-chevron {
+  transition: transform var(--transition-normal);
+}
+
+.accordion-chevron-open {
+  transform: rotate(180deg);
+}
+
+.accordion-content {
+  padding: 20px;
+  padding-bottom: 100px;
+  height: 600px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border-top: none;
+}
+
+.accordion-content h3 {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 15px !important;
+}
+
+.accordion-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.accordion-content::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: var(--radius-lg);
+}
+
+.accordion-content::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
 }

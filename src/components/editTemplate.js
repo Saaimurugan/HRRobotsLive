@@ -12,6 +12,38 @@ import { logTemplateModification } from '../utils/templateHistoryLogger';
 // REMOVED: Topic parsing functions are no longer needed
 // Frontend now handles topics as separate entities throughout
 
+// Accordion Component
+const AccordionSection = ({ title, children, isOpen, onToggle, icon }) => {
+  return (
+    <div className="accordion-section">
+      <button 
+        className={`accordion-header ${isOpen ? 'accordion-open' : ''}`}
+        onClick={onToggle}
+        type="button"
+      >
+        {icon && <span className="accordion-icon">{icon}</span>}
+        <span className="accordion-title">{title}</span>
+        <svg 
+          className={`accordion-chevron ${isOpen ? 'accordion-chevron-open' : ''}`}
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2"
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="accordion-content">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Topic Combobox Component
 const TopicCombobox = ({ value, onChange, existingTopics, placeholder = "Select or type a topic" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -143,6 +175,10 @@ const EditTemplate = () => {
   const [showSamplePlaceholder, setShowSamplePlaceholder] = useState(false); // Show sample when no questions
   const rightPanelRef = useRef(null); // Ref for scrolling to edit panel
   const questionInputRef = useRef(null); // Ref for focusing the question input
+  const [accordionStates, setAccordionStates] = useState({
+    addEdit: false,
+    ai: false
+  }); // Accordion open/close states
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -425,6 +461,9 @@ const EditTemplate = () => {
     setManualTopic(topic === '__NO_TOPIC__' ? '' : topic);
     setIsEditing(true);
     setEditingOriginalIndex(originalIndex);
+    
+    // Open the Add/Edit accordion
+    setAccordionStates({ addEdit: true, ai: false });
     
     // Scroll to the edit panel and focus with a slight delay to ensure DOM updates
     setTimeout(() => {
@@ -952,8 +991,15 @@ const EditTemplate = () => {
             </div>
 
             <div className="right-panel" ref={rightPanelRef}>
+              <AccordionSection
+                title={isEditing ? "Edit Question" : "Add Question"}
+                isOpen={accordionStates.addEdit}
+                onToggle={() => setAccordionStates({ addEdit: !accordionStates.addEdit, ai: false })}
+                icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14m-7-7h14" />
+                </svg>}
+              >
               <div className="form-section">
-                <h3>{isEditing ? "Edit Question" : "Add Question"}</h3>
                 <div className="form-group">
                   <label>Type</label>
                   <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
@@ -1150,16 +1196,19 @@ const EditTemplate = () => {
                   <button className="btn-primary" onClick={addQuestion} style={{ marginTop: '15px' }}>Add Question</button>
                 )}
               </div>
+              </AccordionSection>
 
+              <AccordionSection
+                title="Generate with AI"
+                isOpen={accordionStates.ai}
+                onToggle={() => setAccordionStates({ addEdit: false, ai: !accordionStates.ai })}
+                icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2z" />
+                  <circle cx="7.5" cy="14.5" r="1.5" />
+                  <circle cx="16.5" cy="14.5" r="1.5" />
+                </svg>}
+              >
               <div className="ai-section">
-                <h3>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2z" />
-                    <circle cx="7.5" cy="14.5" r="1.5" />
-                    <circle cx="16.5" cy="14.5" r="1.5" />
-                  </svg>
-                  Generate with AI
-                </h3>
                 <div className="form-group">
                   <label>Topic</label>
                   <TopicCombobox
@@ -1257,8 +1306,8 @@ const EditTemplate = () => {
                 >
                   {isGenerating ? "Generating..." : `Generate ${Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0)} Questions`}
                 </button>
-                <p>New questions will be added to the existing ones. Change topic to mix questions from different areas.</p>
               </div>
+              </AccordionSection>
             </div>
           </div>
         )}

@@ -14,6 +14,38 @@ import { logTemplateCreation } from '../utils/templateHistoryLogger';
 // REMOVED: Topic parsing functions are no longer needed
 // Frontend now handles topics as separate entities throughout
 
+// Accordion Component
+const AccordionSection = ({ title, children, isOpen, onToggle, icon }) => {
+  return (
+    <div className="accordion-section">
+      <button 
+        className={`accordion-header ${isOpen ? 'accordion-open' : ''}`}
+        onClick={onToggle}
+        type="button"
+      >
+        {icon && <span className="accordion-icon">{icon}</span>}
+        <span className="accordion-title">{title}</span>
+        <svg 
+          className={`accordion-chevron ${isOpen ? 'accordion-chevron-open' : ''}`}
+          width="20" 
+          height="20" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2"
+        >
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      {isOpen && (
+        <div className="accordion-content">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Topic Combobox Component
 const TopicCombobox = ({ value, onChange, existingTopics, placeholder = "Select or type a topic" }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -144,6 +176,11 @@ const CreateTemplate = () => {
   const [showSamplePlaceholder, setShowSamplePlaceholder] = useState(true); // Show sample when no questions
   const rightPanelRef = useRef(null); // Ref for scrolling to edit panel
   const questionInputRef = useRef(null); // Ref for focusing the question input
+  const [accordionStates, setAccordionStates] = useState({
+    addEdit: false,
+    ai: false,
+    jd: false
+  }); // Accordion open/close states
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -423,6 +460,9 @@ const CreateTemplate = () => {
     setManualTopic(topic === '__NO_TOPIC__' ? '' : topic);
     setIsEditing(true);
     setEditingOriginalIndex(originalIndex);
+    
+    // Open the Add/Edit accordion
+    setAccordionStates({ addEdit: true, ai: false, jd: false });
     
     // Scroll to the edit panel and focus with a slight delay to ensure DOM updates
     setTimeout(() => {
@@ -893,8 +933,15 @@ const CreateTemplate = () => {
           </div>
 
           <div className="right-panel" ref={rightPanelRef}>
+            <AccordionSection
+              title={isEditing ? "Edit Question" : "Add Question"}
+              isOpen={accordionStates.addEdit}
+              onToggle={() => setAccordionStates({ addEdit: !accordionStates.addEdit, ai: false, jd: false })}
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14m-7-7h14" />
+              </svg>}
+            >
             <div className="form-section" data-tour="add-question-form">
-              <h3>{isEditing ? "Edit Question" : "Add Question"}</h3>
               <div className="form-group">
                 <label>Type</label>
                 <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
@@ -1091,16 +1138,19 @@ const CreateTemplate = () => {
                 <button className="btn-primary" onClick={addQuestion} style={{ marginTop: '15px' }}>Add Question</button>
               )}
             </div>
+            </AccordionSection>
 
+            <AccordionSection
+              title="Generate with AI"
+              isOpen={accordionStates.ai}
+              onToggle={() => setAccordionStates({ addEdit: false, ai: !accordionStates.ai, jd: false })}
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2z" />
+                <circle cx="7.5" cy="14.5" r="1.5" />
+                <circle cx="16.5" cy="14.5" r="1.5" />
+              </svg>}
+            >
             <div className="ai-section" data-tour="ai-section">
-              <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2a2 2 0 012 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 017 7h1a1 1 0 011 1v3a1 1 0 01-1 1h-1v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-1H2a1 1 0 01-1-1v-3a1 1 0 011-1h1a7 7 0 017-7h1V5.73c-.6-.34-1-.99-1-1.73a2 2 0 012-2z" />
-                  <circle cx="7.5" cy="14.5" r="1.5" />
-                  <circle cx="16.5" cy="14.5" r="1.5" />
-                </svg>
-                Generate with AI
-              </h3>
               <div className="form-group">
                 <label>Topic</label>
                 <TopicCombobox
@@ -1198,19 +1248,21 @@ const CreateTemplate = () => {
               >
                 {isGenerating ? "Generating..." : `Generate ${Object.values(aiQuestionTypes).reduce((sum, val) => sum + val, 0)} Questions`}
               </button>
-              <p>Adjust question types above. Change topic to mix questions from different areas.</p>
             </div>
+            </AccordionSection>
 
+            <AccordionSection
+              title="Template from JD"
+              isOpen={accordionStates.jd}
+              onToggle={() => setAccordionStates({ addEdit: false, ai: false, jd: !accordionStates.jd })}
+              icon={<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <line x1="16" y1="13" x2="8" y2="13" />
+                <line x1="16" y1="17" x2="8" y2="17" />
+              </svg>}
+            >
             <div className="ai-section" data-tour="jd-template-section">
-              <h3>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-                Template from JD
-              </h3>
               <p style={{ marginBottom: '15px', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-sm)' }}>
                 Upload a Job Description to automatically extract keywords and generate relevant MCQ questions.
               </p>
@@ -1218,6 +1270,7 @@ const CreateTemplate = () => {
                 Create from Job Description
               </button>
             </div>
+            </AccordionSection>
           </div>
         </div>
       </div>
