@@ -23,7 +23,7 @@ const TOUR_STEPS = [
   {
     id: 'candidate-profiler',
     title: 'Candidate Profiler',
-    content: 'Upload a resume and job description to generate a comprehensive report highlighting skill matches and role suitability.',
+    content: 'Upload a resume and job description to generate a comprehensive report. You can profile a single candidate or batch process multiple resumes at once for efficient candidate screening.',
     target: '[data-tour="candidate-profiler"]',
     page: '/list',
     position: 'bottom'
@@ -87,24 +87,24 @@ const TOUR_STEPS = [
   {
     id: 'add-question-manual',
     title: 'Add Questions Manually',
-    content: 'Use this form to add questions one by one. Enter the question, options, and select the correct answer.',
-    target: '[data-tour="add-question-form"]',
+    content: 'Click this accordion to expand the form where you can add questions one by one. Enter the question, options, and select the correct answer.',
+    target: '.accordion-section:first-child .accordion-header',
     page: '/createTemplate',
     position: 'left'
   },
   {
     id: 'generate-ai',
     title: 'Generate with AI',
-    content: 'Let AI generate questions for you! Enter a topic, select difficulty level, and click "Generate 20 Questions" to auto-create questions.',
-    target: '[data-tour="ai-section"]',
+    content: 'Click this accordion to let AI generate questions for you! Enter a topic, select difficulty level, and click "Generate 20 Questions" to auto-create questions.',
+    target: '.accordion-section:nth-child(2) .accordion-header',
     page: '/createTemplate',
     position: 'left'
   },
   {
     id: 'template-from-jd',
     title: 'Template from JD',
-    content: 'Have a Job Description? Upload it here to automatically extract keywords and generate relevant MCQ questions based on the JD requirements.',
-    target: '[data-tour="jd-template-section"]',
+    content: 'Click this accordion if you have a Job Description. Upload it to automatically extract keywords and generate relevant MCQ questions based on the JD requirements.',
+    target: '.accordion-section:nth-child(3) .accordion-header',
     page: '/createTemplate',
     position: 'left'
   },
