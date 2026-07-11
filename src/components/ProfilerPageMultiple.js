@@ -297,16 +297,51 @@ const ProfilerPageMultiple = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Candidate Name', 'Resume File', 'Suitability', 'Summary', 'Status'];
+    const headers = [
+      'Candidate Name', 
+      'Resume File', 
+      'Suitability', 
+      'Summary', 
+      'Key Matching Skills', 
+      'Gaps in Skills/Experience', 
+      'Additional Strengths', 
+      'Suggested Improvements', 
+      'Conclusion', 
+      'Status'
+    ];
+    
     const rows = reports.map(report => {
       if (report.status === 'failed') {
-        return [report.resumeName, report.resumeName, 'N/A', `Error: ${report.error}`, 'Failed'];
+        return [
+          report.resumeName, 
+          report.resumeName, 
+          'N/A', 
+          `Error: ${report.error}`, 
+          '', 
+          '', 
+          '', 
+          '', 
+          '', 
+          'Failed'
+        ];
       }
+      
+      // Convert arrays to formatted strings
+      const formatList = (items) => {
+        if (!items || !Array.isArray(items)) return '';
+        return items.map((item, index) => `${index + 1}. ${item}`).join('; ');
+      };
+      
       return [
-        report.CandidateName,
-        report.resumeName,
-        report.Suitability,
-        report.Summary?.replace(/,/g, ';'),
+        report.CandidateName || '',
+        report.resumeName || '',
+        report.Suitability || '',
+        (report.Summary || '').replace(/,/g, ';').replace(/"/g, '""'),
+        formatList(report.Matching),
+        formatList(report.Gaps),
+        formatList(report.AdditionalStrengths),
+        formatList(report.SuggestedImprovements),
+        (report.Conclusion || '').replace(/,/g, ';').replace(/"/g, '""'),
         'Success'
       ];
     });
