@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import "../CreateTemplate.css";
 import "../createTemplateFromJD.css";
 import "../RichTextEditor.css";
@@ -142,6 +142,8 @@ const CreateTemplate = () => {
   const [loading, setLoading] = useState(false);
   const [selectedTopicFilter, setSelectedTopicFilter] = useState(null); // null means "Total" (show all)
   const [showSamplePlaceholder, setShowSamplePlaceholder] = useState(true); // Show sample when no questions
+  const rightPanelRef = useRef(null); // Ref for scrolling to edit panel
+  const questionInputRef = useRef(null); // Ref for focusing the question input
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -421,6 +423,35 @@ const CreateTemplate = () => {
     setManualTopic(topic === '__NO_TOPIC__' ? '' : topic);
     setIsEditing(true);
     setEditingOriginalIndex(originalIndex);
+    
+    // Scroll to the edit panel and focus with a slight delay to ensure DOM updates
+    setTimeout(() => {
+      // Scroll the right panel to top
+      if (rightPanelRef.current) {
+        rightPanelRef.current.scrollTop = 0;
+      }
+      
+      // Try to scroll the entire page to show the right panel
+      if (rightPanelRef.current) {
+        const rect = rightPanelRef.current.getBoundingClientRect();
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Scroll to show the form at the top of viewport
+        window.scrollTo({
+          top: scrollTop + rect.top - 100,
+          behavior: 'smooth'
+        });
+      }
+      
+      // Focus on the type select or the form heading
+      const formSection = rightPanelRef.current?.querySelector('.form-section');
+      if (formSection) {
+        const firstInput = formSection.querySelector('select, input');
+        if (firstInput) {
+          firstInput.focus();
+        }
+      }
+    }, 150);
   };
 
   const saveEditedQuestion = () => {
@@ -843,8 +874,8 @@ const CreateTemplate = () => {
                           <ul>{q.options.map((opt, i) => <li key={i} className={(q.correctAnswerIndex !== undefined ? i === q.correctAnswerIndex : opt === q.correctAnswer) ? 'correct-answer' : ''}><span className="rendered-html-content" dangerouslySetInnerHTML={{ __html: opt }} /></li>)}</ul>
                         )}
                         <div className="qcard-actions">
-                          <button className="btn-edit" onClick={(e) => { e.preventDefault(); if (!isSample) editQuestion(q.originalIndex); }} disabled={isSample}>Edit</button>
-                          <button className="btn-danger" onClick={(e) => { e.preventDefault(); if (!isSample) removeQuestion(q.originalIndex); }} disabled={isSample}>Remove</button>
+                          <button className="btn-edit" onClick={(e) => { e.preventDefault(); if (!isSample) editQuestion(q.originalIndex); }} disabled={isSample || isEditing}>Edit</button>
+                          <button className="btn-danger" onClick={(e) => { e.preventDefault(); if (!isSample) removeQuestion(q.originalIndex); }} disabled={isSample || isEditing}>Remove</button>
                         </div>
                       </div>
                     </React.Fragment>
@@ -861,7 +892,7 @@ const CreateTemplate = () => {
             </div>
           </div>
 
-          <div className="right-panel">
+          <div className="right-panel" ref={rightPanelRef}>
             <div className="form-section" data-tour="add-question-form">
               <h3>{isEditing ? "Edit Question" : "Add Question"}</h3>
               <div className="form-group">
