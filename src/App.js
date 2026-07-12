@@ -38,6 +38,7 @@ const EULA = lazy(() => import('./components/EULA'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const CloneTemplates = lazy(() => import('./components/cloneTemplates'));
 const APITestSuite = lazy(() => import('./components/APITestSuite'));
+const AdminCleanup = lazy(() => import('./components/AdminCleanup'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -269,6 +270,22 @@ const Header = () => {
                 <button 
                   className="nav-btn"
                   style={navButtonStyle} 
+                  onClick={() => navigate("/admin-cleanup")} 
+                  aria-label="Go to Admin Cleanup" 
+                  title="Admin Cleanup"
+                  onMouseEnter={handleNavBtnMouseEnter}
+                  onMouseLeave={handleNavBtnMouseLeave}
+                >
+                  <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <path d="M3 6H5H21" stroke="#1C274C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="#1C274C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 11V17" stroke="#1C274C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 11V17" stroke="#1C274C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </button>
+                <button 
+                  className="nav-btn"
+                  style={navButtonStyle} 
                   onClick={() => navigate("/api-test")} 
                   aria-label="Go to API Test Suite" 
                   title="API Test Suite"
@@ -414,6 +431,7 @@ const App = () => {
                 <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
                 <Route path="/cloneTemplates" element={<ProtectedRoute><CloneTemplates /></ProtectedRoute>} />
                 <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+                <Route path="/admin-cleanup" element={<AdminProtectedRoute><AdminCleanup /></AdminProtectedRoute>} />
                 <Route path="/api-test" element={<ProtectedRoute><APITestSuite /></ProtectedRoute>} />
                   </Routes>
                 </Suspense>

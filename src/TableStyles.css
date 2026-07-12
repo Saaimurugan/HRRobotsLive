@@ -777,3 +777,89 @@ td.status-not-started {
     justify-content: space-between;
   }
 }
+
+/* ===================================
+   Data Retention Disclaimer
+   =================================== */
+
+.data-retention-disclaimer {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  padding: 20px 24px;
+  margin: 24px 0;
+  box-shadow: 0 2px 8px rgba(255, 193, 7, 0.15);
+  animation: fadeInDisclaimer 0.5s ease-in-out;
+}
+
+@keyframes fadeInDisclaimer {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.disclaimer-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 193, 7, 0.2);
+  border-radius: 50%;
+  color: #f59e0b;
+}
+
+.disclaimer-icon svg {
+  stroke: #f59e0b;
+}
+
+.disclaimer-content {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #856404;
+}
+
+.disclaimer-content strong {
+  font-weight: 600;
+  color: #664d03;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .data-retention-disclaimer {
+    flex-direction: column;
+    padding: 16px 20px;
+    gap: 12px;
+  }
+  
+  .disclaimer-icon {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .disclaimer-content {
+    font-size: 13px;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .data-retention-disclaimer {
+    background: #fff9e6;
+    border: 1px solid #ffc107;
+    box-shadow: none;
+    page-break-inside: avoid;
+  }
+}

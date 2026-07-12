@@ -828,6 +828,20 @@ function SearchResult() {
                       <ScoreChart message={fileContent} showToast={showToast} />
                     </div>
                   </div>
+                  
+                  {/* Data Retention Disclaimer */}
+                  <div className="data-retention-disclaimer">
+                    <div className="disclaimer-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <line x1="12" y1="8" x2="12" y2="12"/>
+                        <line x1="12" y1="16" x2="12.01" y2="16"/>
+                      </svg>
+                    </div>
+                    <div className="disclaimer-content">
+                      <strong>Data Retention Notice:</strong> Test results and associated data are retained for 90 days from the test completion date. After this period, all test records, responses, and related information will be automatically deleted from our systems.
+                    </div>
+                  </div>
                 </div>
 
                 {showAnalytics && (
