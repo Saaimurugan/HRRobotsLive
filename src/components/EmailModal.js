@@ -34,6 +34,9 @@ function EmailModal({ isOpen, onClose, showToast, testLink, templateName, onEmai
     try {
       const emailBody = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://www.hrrobots.click/logo.png" alt="HR Robots Logo" style="max-width: 200px; height: auto;" />
+          </div>
           <h2 style="color: #1cbbb4;">You're Invited to Take a Screening Test</h2>
           <p>Hello ${candidateName},</p>
           <p><strong>${globalValue}</strong> has invited you to complete a screening test.</p>

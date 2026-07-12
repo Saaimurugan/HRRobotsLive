@@ -23,6 +23,9 @@ def send_email(candidate_email, candidate_name, test_link, template_name, compan
     """Invoke the sendEmailSMTP Lambda function to send an email."""
     email_body = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://www.hrrobots.click/logo.png" alt="HR Robots Logo" style="max-width: 200px; height: auto;" />
+          </div>
           <h2 style="color: #1cbbb4;">You're Invited to Take a Screening Test</h2>
           <p>Hello {candidate_name},</p>
           <p><strong>{company_name}</strong> has invited you to complete a screening test.</p>
