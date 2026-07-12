@@ -37,6 +37,7 @@ const DataProtectionPolicy = lazy(() => import('./components/DataProtectionPolic
 const EULA = lazy(() => import('./components/EULA'));
 const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const CloneTemplates = lazy(() => import('./components/cloneTemplates'));
+const APITestSuite = lazy(() => import('./components/APITestSuite'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -251,19 +252,38 @@ const Header = () => {
               </svg>
             </button>
             {globalValue && globalValue.toLowerCase() === 'saaimurugan@gmail.com' && (
-              <button 
-                className="nav-btn"
-                style={navButtonStyle} 
-                onClick={() => navigate("/admin")} 
-                aria-label="Go to Admin Dashboard" 
-                title="Admin Dashboard"
-                onMouseEnter={handleNavBtnMouseEnter}
-                onMouseLeave={handleNavBtnMouseLeave}
-              >
-                <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#1C274C"/>
-                </svg>
-              </button>
+              <>
+                <button 
+                  className="nav-btn"
+                  style={navButtonStyle} 
+                  onClick={() => navigate("/admin")} 
+                  aria-label="Go to Admin Dashboard" 
+                  title="Admin Dashboard"
+                  onMouseEnter={handleNavBtnMouseEnter}
+                  onMouseLeave={handleNavBtnMouseLeave}
+                >
+                  <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" fill="#1C274C"/>
+                  </svg>
+                </button>
+                <button 
+                  className="nav-btn"
+                  style={navButtonStyle} 
+                  onClick={() => navigate("/api-test")} 
+                  aria-label="Go to API Test Suite" 
+                  title="API Test Suite"
+                  onMouseEnter={handleNavBtnMouseEnter}
+                  onMouseLeave={handleNavBtnMouseLeave}
+                >
+                  <svg width="30px" height="30px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <path d="M9 2C8.44772 2 8 2.44772 8 3C8 3.55228 8.44772 4 9 4H15C15.5523 4 16 3.55228 16 3C16 2.44772 15.5523 2 15 2H9Z" fill="#1C274C"/>
+                    <path d="M6.5 4C5.67157 4 5 4.67157 5 5.5V20.5C5 21.3284 5.67157 22 6.5 22H17.5C18.3284 22 19 21.3284 19 20.5V5.5C19 4.67157 18.3284 4 17.5 4H17V5C17 6.10457 16.1046 7 15 7H9C7.89543 7 7 6.10457 7 5V4H6.5Z" fill="#1C274C"/>
+                    <path d="M8 10C8 9.44772 8.44772 9 9 9H15C15.5523 9 16 9.44772 16 10C16 10.5523 15.5523 11 15 11H9C8.44772 11 8 10.5523 8 10Z" fill="#ffffff"/>
+                    <path d="M9 13C8.44772 13 8 13.4477 8 14C8 14.5523 8.44772 15 9 15H15C15.5523 15 16 14.5523 16 14C16 13.4477 15.5523 13 15 13H9Z" fill="#ffffff"/>
+                    <path d="M8 18C8 17.4477 8.44772 17 9 17H12C12.5523 17 13 17.4477 13 18C13 18.5523 12.5523 19 12 19H9C8.44772 19 8 18.5523 8 18Z" fill="#ffffff"/>
+                  </svg>
+                </button>
+              </>
             )}
             <div 
               style={{ position: "relative" }}
@@ -394,6 +414,7 @@ const App = () => {
                 <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
                 <Route path="/cloneTemplates" element={<ProtectedRoute><CloneTemplates /></ProtectedRoute>} />
                 <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+                <Route path="/api-test" element={<ProtectedRoute><APITestSuite /></ProtectedRoute>} />
                   </Routes>
                 </Suspense>
               </main>
