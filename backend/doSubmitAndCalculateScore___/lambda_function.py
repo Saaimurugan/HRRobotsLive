@@ -59,6 +59,7 @@ def getAllQuestions(template_ID):
     return questions
 
 def getAllAnswers(test_id):
+    """Get all answers for a test, deduplicated by questionID (keeping most recent)"""
     answers = []
     last_evaluated_key = None
     
@@ -77,7 +78,21 @@ def getAllAnswers(test_id):
         if not last_evaluated_key:
             break
 
-    return answers
+    # Deduplicate answers by questionID - keep the most recent answer for each question
+    deduplicated_answers = {}
+    for answer in answers:
+        question_id = answer['questionID']
+        # If this questionID hasn't been seen or this answer is more recent, keep it
+        if question_id not in deduplicated_answers:
+            deduplicated_answers[question_id] = answer
+        else:
+            # Compare timestamps and keep the most recent
+            existing_timestamp = deduplicated_answers[question_id].get('datetime', deduplicated_answers[question_id].get('timestamp', ''))
+            current_timestamp = answer.get('datetime', answer.get('timestamp', ''))
+            if current_timestamp > existing_timestamp:
+                deduplicated_answers[question_id] = answer
+    
+    return list(deduplicated_answers.values())
 
 def evaluate_with_llm(question_text, submitted_answer, template_answer, question_type):
     """
@@ -490,7 +505,8 @@ def handle_direct_submission(test_id, answers):
             try:
                 # Only save if not already saved by saveAnswerSubmitted
                 if answer_data['questionID'] not in existing_question_ids:
-                    answer_id = str(uuid.uuid4())
+                    # Use deterministic answerID to prevent duplicates (same format as saveAnswerSubmitted)
+                    answer_id = f"{answer_data['testID']}_{answer_data['questionID']}"
                     mcq_answers_table.put_item(
                         Item={
                             'answerID': answer_id,

@@ -101,7 +101,7 @@ def getAllQuestions(template_ID):
 
 
 def getAllPreviousAnswers(test_id):
-    """Optimized to use query instead of scan if possible, with pagination"""
+    """Optimized to use query instead of scan if possible, with pagination and deduplication"""
     tables = get_thread_local_tables()
     answers_table = tables['answers']
     
@@ -125,7 +125,21 @@ def getAllPreviousAnswers(test_id):
         if not last_evaluated_key:
             break
 
-    return answers
+    # Deduplicate answers by questionID - keep the most recent answer for each question
+    deduplicated_answers = {}
+    for answer in answers:
+        question_id = answer['questionID']
+        # If this questionID hasn't been seen or this answer is more recent, keep it
+        if question_id not in deduplicated_answers:
+            deduplicated_answers[question_id] = answer
+        else:
+            # Compare timestamps and keep the most recent
+            existing_timestamp = deduplicated_answers[question_id].get('timestamp', '')
+            current_timestamp = answer.get('timestamp', '')
+            if current_timestamp > existing_timestamp:
+                deduplicated_answers[question_id] = answer
+    
+    return list(deduplicated_answers.values())
 
 
 def fetch_data_parallel(template_id, test_id):
