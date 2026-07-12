@@ -441,18 +441,16 @@ const ProfilerPageMultiple = () => {
               </label>
             </div>
             {resumeFiles.length > 0 && (
-              <div style={{ marginTop: '15px', maxHeight: '150px', overflowY: 'auto', width: '100%' }}>
+              <div style={{ marginTop: '15px', maxHeight: '150px', overflowY: 'auto', width: '100%', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
                 {resumeFiles.map((file, index) => (
-                  <div key={index} className="file-name" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '16px', height: '16px' }}>
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                        <polyline points="22 4 12 14.01 9 11.01" />
-                      </svg>
-                      {file.name}
-                    </span>
-                    <button onClick={() => removeResume(index)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e' }}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '16px', height: '16px' }}>
+                  <div key={index} className="file-tag" title={file.name}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '14px', height: '14px', flexShrink: 0 }}>
+                      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                      <polyline points="22 4 12 14.01 9 11.01" />
+                    </svg>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</span>
+                    <button onClick={() => removeResume(index)} className="file-tag-remove" title="Remove file">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: '14px', height: '14px' }}>
                         <path d="M18 6L6 18M6 6l12 12" />
                       </svg>
                     </button>

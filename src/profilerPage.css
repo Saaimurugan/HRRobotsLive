@@ -187,6 +187,48 @@
   color: var(--color-primary);
 }
 
+/* Compact file tags for inline display */
+.file-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  color: #234e52;
+  max-width: 200px;
+  transition: all var(--transition-normal);
+}
+
+.file-tag:hover {
+  background: rgba(28, 187, 180, 0.2);
+}
+
+.file-tag svg {
+  color: var(--color-primary);
+}
+
+.file-tag-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #e53e3e;
+  border-radius: 50%;
+  transition: all var(--transition-normal);
+  flex-shrink: 0;
+}
+
+.file-tag-remove:hover {
+  background: rgba(229, 62, 62, 0.1);
+  transform: scale(1.1);
+}
+
+
 /* Generate Button - outline style */
 .submit-btn {
   display: inline-flex;
