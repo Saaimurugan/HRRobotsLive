@@ -2030,6 +2030,7 @@ const getPageNumbers = () => {
                         </span>
                       </button>
                     </div>
+                    {globalValue && globalValue.toLowerCase() === 'saaimurugan@gmail.com' && (
                     <div className="form-group" style={{marginTop: '-8px'}}>
                       <button onClick={() => openApplyModal(card)}>
                         <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
@@ -2042,6 +2043,7 @@ const getPageNumbers = () => {
                         </span>
                       </button>
                     </div>
+                    )}
                   </>
                 )}
                 <div style={{position: 'relative', display: 'inline-block', width: '100%'}}>
