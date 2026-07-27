@@ -39,6 +39,8 @@ const AdminDashboard = lazy(() => import('./components/AdminDashboard'));
 const CloneTemplates = lazy(() => import('./components/cloneTemplates'));
 const APITestSuite = lazy(() => import('./components/APITestSuite'));
 const AdminCleanup = lazy(() => import('./components/AdminCleanup'));
+const GenerateResume = lazy(() => import('./components/generateResume'));
+const CandidateApplyPage = lazy(() => import('./components/CandidateApplyPage'));
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -107,7 +109,7 @@ const Header = () => {
   }, []);
 
   // Hide navbar on auth pages
-  const authPages = ["/login", "/logout", "/signup", "/forgot-password", "/verify-email", "/signup-success", "/privacy-policy", "/data-protection-policy", "/eula"];
+  const authPages = ["/login", "/logout", "/signup", "/forgot-password", "/verify-email", "/signup-success", "/privacy-policy", "/data-protection-policy", "/eula", "/generateResume", "/apply"];
   const isAuthPage = authPages.some(route => location.pathname === route || location.pathname.startsWith(route + "/"));
   
   if (isAuthPage) {
@@ -400,39 +402,43 @@ const App = () => {
               <main id="main-content" role="main">
                 <Suspense fallback={<LoadingSpinner />}>
                   <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUp />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/logout" element={<LogoutHandler />} />
-              <Route path="/verify-email" element={<VerifyEmail />} />
-              <Route path="/signup-success" element={<SignupSuccess />} />
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/data-protection-policy" element={<DataProtectionPolicy />} />
-              <Route path="/eula" element={<EULA />} />
-              
-              {/* Protected routes */}
-              <Route path="/" element={<ProtectedRoute><RedirectPage /></ProtectedRoute>} />
-              <Route path="/list" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
-                <Route path="/test/:id" element={<TestPage />} />
-                <Route path="/reset/:id" element={<ResetPage />} />
-                <Route path="/result" element={<ProtectedRoute><SearchResult/></ProtectedRoute>} />
-                <Route path="/createTemplate" element={<ProtectedRoute><CreateTemplate/></ProtectedRoute>} />
-                <Route path="/profilerPage" element={<ProtectedRoute><ProfilerPage/></ProtectedRoute>} />
-                <Route path="/profilerPageMultiple" element={<ProtectedRoute><ProfilerPageMultiple/></ProtectedRoute>} />
-                <Route path="/aiinterview" element={<ProtectedRoute><AIInterview/></ProtectedRoute>} />
-                <Route path="/interviewPage" element={<ProtectedRoute><InterviewPage/></ProtectedRoute>} />
-                <Route path="/speechtotext" element={<ProtectedRoute><SpeechToText/></ProtectedRoute>} />
-                <Route path="/chatBot" element={<ProtectedRoute><ChatBot/></ProtectedRoute>} />
-                <Route path="/faceDetection" element={<ProtectedRoute><FaceDetection/></ProtectedRoute>} />
-                <Route path="/edit/:id" element={<ProtectedRoute><EditTemplate/></ProtectedRoute>} />
-                <Route path='/profile' element={<ProtectedRoute><Profile/></ProtectedRoute>} />
-                <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
-                <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
-                <Route path="/cloneTemplates" element={<ProtectedRoute><CloneTemplates /></ProtectedRoute>} />
-                <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
-                <Route path="/admin-cleanup" element={<AdminProtectedRoute><AdminCleanup /></AdminProtectedRoute>} />
-                <Route path="/api-test" element={<ProtectedRoute><APITestSuite /></ProtectedRoute>} />
+                    {/* Public routes */}
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignUp />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/logout" element={<LogoutHandler />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
+                    <Route path="/signup-success" element={<SignupSuccess />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/data-protection-policy" element={<DataProtectionPolicy />} />
+                    <Route path="/eula" element={<EULA />} />
+                    <Route path="/generateResume" element={<GenerateResume />} />
+                    <Route path="/apply/:templateId" element={<CandidateApplyPage />} />
+
+                    {/* Public candidate routes */}
+                    <Route path="/test/:id" element={<TestPage />} />
+                    <Route path="/reset/:id" element={<ResetPage />} />
+
+                    {/* Protected routes */}
+                    <Route path="/" element={<ProtectedRoute><RedirectPage /></ProtectedRoute>} />
+                    <Route path="/list" element={<ProtectedRoute><CreateTest /></ProtectedRoute>} />
+                    <Route path="/result" element={<ProtectedRoute><SearchResult /></ProtectedRoute>} />
+                    <Route path="/createTemplate" element={<ProtectedRoute><CreateTemplate /></ProtectedRoute>} />
+                    <Route path="/profilerPage" element={<ProtectedRoute><ProfilerPage /></ProtectedRoute>} />
+                    <Route path="/profilerPageMultiple" element={<ProtectedRoute><ProfilerPageMultiple /></ProtectedRoute>} />
+                    <Route path="/aiinterview" element={<ProtectedRoute><AIInterview /></ProtectedRoute>} />
+                    <Route path="/interviewPage" element={<ProtectedRoute><InterviewPage /></ProtectedRoute>} />
+                    <Route path="/speechtotext" element={<ProtectedRoute><SpeechToText /></ProtectedRoute>} />
+                    <Route path="/chatBot" element={<ProtectedRoute><ChatBot /></ProtectedRoute>} />
+                    <Route path="/faceDetection" element={<ProtectedRoute><FaceDetection /></ProtectedRoute>} />
+                    <Route path="/edit/:id" element={<ProtectedRoute><EditTemplate /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                    <Route path="/createJD" element={<ProtectedRoute><CreateJD /></ProtectedRoute>} />
+                    <Route path="/createTemplateFromJD" element={<ProtectedRoute><CreateTemplateFromJD /></ProtectedRoute>} />
+                    <Route path="/cloneTemplates" element={<ProtectedRoute><CloneTemplates /></ProtectedRoute>} />
+                    <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+                    <Route path="/admin-cleanup" element={<AdminProtectedRoute><AdminCleanup /></AdminProtectedRoute>} />
+                    <Route path="/api-test" element={<ProtectedRoute><APITestSuite /></ProtectedRoute>} />
                   </Routes>
                 </Suspense>
               </main>

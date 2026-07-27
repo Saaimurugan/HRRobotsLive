@@ -11,6 +11,7 @@ import ConfigTemplate from "./configTemplate";
 import CandidateSpecificTestModal from "./CandidateSpecificTestModal";
 import EmailModal from "./EmailModal";
 import BulkUploadModal from "./BulkUploadModal";
+import CandidateApplyModal from "./CandidateApplyModal";
 import TemplateHistoryModal from "./TemplateHistoryModal";
 import { logConfigurationActivity, logAssignActivity, logGenerateTestLinkActivity } from '../utils/activityLogger';
 import { logTemplateAssignmentForReview, logTemplateAssignmentToRecruiter, logTemplateApproval, logTemplateConfigurationChange } from '../utils/templateHistoryLogger';
@@ -72,6 +73,8 @@ const [selectedTemplateForEmail, setSelectedTemplateForEmail] = useState(null);
 const [showBulkUploadModal, setShowBulkUploadModal] = useState(false);
 const [selectedTemplateForBulk, setSelectedTemplateForBulk] = useState(null);
 const [existingTestCount, setExistingTestCount] = useState(0);
+const [showApplyModal, setShowApplyModal] = useState(false);
+const [selectedTemplateForApply, setSelectedTemplateForApply] = useState(null);
 const [searchQuery, setSearchQuery] = useState("");
 const [currentPage, setCurrentPage] = useState(1);
 const templatesPerPage = 8;
@@ -154,6 +157,11 @@ const openBulkUploadModal = async (template) => {
   setExistingTestCount(count || 0);
   setSelectedTemplateForBulk(template);
   setShowBulkUploadModal(true);
+};
+
+const openApplyModal = (template) => {
+  setSelectedTemplateForApply(template);
+  setShowApplyModal(true);
 };
 
 const handleSave = () => {
@@ -300,6 +308,8 @@ const handleCancel = () => {
   setSelectedTemplateForEmail(null);
   setShowBulkUploadModal(false);
   setSelectedTemplateForBulk(null);
+  setShowApplyModal(false);
+  setSelectedTemplateForApply(null);
 };
 
 useEffect(() => {
@@ -972,6 +982,14 @@ const getPageNumbers = () => {
           templateName={selectedTemplateForBulk.templateName}
           existingTestCount={existingTestCount}
           onBulkUploadSuccess={fetchTemplates}
+        />
+      )}
+      {showApplyModal && selectedTemplateForApply && (
+        <CandidateApplyModal
+          isOpen={showApplyModal}
+          onClose={handleCancel}
+          showToast={showToast}
+          template={selectedTemplateForApply}
         />
       )}
       {isOpenAPIModal && (
@@ -2009,6 +2027,18 @@ const getPageNumbers = () => {
                             <path d="M9 15L12 12L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                           Bulk Upload CSV
+                        </span>
+                      </button>
+                    </div>
+                    <div className="form-group" style={{marginTop: '-8px'}}>
+                      <button onClick={() => openApplyModal(card)}>
+                        <span style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'}}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <circle cx="8.5" cy="7" r="4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M20 8v6M23 11h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Request Application
                         </span>
                       </button>
                     </div>
