@@ -1,0 +1,776 @@
+/* ===================================================
+   Candidate Apply Modal
+   =================================================== */
+
+/* ── Overlay ───────────────────────────────────────── */
+.cam-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+  animation: camFadeIn 0.18s ease-out;
+}
+
+@keyframes camFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ── Modal shell ───────────────────────────────────── */
+.cam-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22), 0 4px 16px rgba(0, 0, 0, 0.08);
+  animation: camSlideUp 0.22s ease-out;
+  overflow: hidden;
+}
+
+.cam-modal--wide {
+  max-width: 680px;
+}
+
+@keyframes camSlideUp {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ────────────────────────────────────────── */
+.cam-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cam-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cam-header-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: #2563eb;
+}
+
+.cam-header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.cam-header-text h2 {
+  margin: 0 0 2px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.cam-header-text p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cam-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #f1f5f9;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.cam-close-btn:hover { background: #e2e8f0; }
+
+.cam-close-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: #64748b;
+}
+
+/* ── Tabs ──────────────────────────────────────────── */
+.cam-tabs {
+  display: flex;
+  padding: 0 24px;
+  border-bottom: 2px solid #f1f5f9;
+  gap: 4px;
+}
+
+.cam-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 14px 11px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.cam-tab svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+}
+
+.cam-tab--active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  font-weight: 600;
+}
+
+.cam-tab:hover:not(.cam-tab--active) { color: #334155; }
+
+.cam-tab-badge {
+  background: #2563eb;
+  color: #fff;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 7px;
+  line-height: 18px;
+}
+
+/* ── Body ──────────────────────────────────────────── */
+.cam-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cam-intro {
+  font-size: 0.875rem;
+  color: #475569;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Link box ──────────────────────────────────────── */
+.cam-link-box {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.cam-link-box:focus-within { border-color: #2563eb; }
+
+.cam-link-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  padding: 12px 14px;
+  min-width: 0;
+  background: #f8fafc;
+}
+
+.cam-link-icon {
+  width: 16px;
+  height: 16px;
+  stroke: #94a3b8;
+  flex-shrink: 0;
+}
+
+.cam-link-text {
+  font-size: 0.8125rem;
+  color: #334155;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cam-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 18px;
+  height: 48px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.cam-copy-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: #fff;
+}
+
+.cam-copy-btn:hover { background: #1d4ed8; }
+
+.cam-copy-btn--done { background: #16a34a; }
+.cam-copy-btn--done:hover { background: #15803d; }
+
+/* ── How it works ──────────────────────────────────── */
+.cam-how {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.cam-how-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 14px;
+}
+
+.cam-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cam-step {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 16px;
+}
+
+.cam-step-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cam-step-icon svg {
+  width: 18px;
+  height: 18px;
+  stroke: #2563eb;
+}
+
+.cam-step-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cam-step-body strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.cam-step-body span {
+  font-size: 0.78125rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+.cam-step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Submissions ───────────────────────────────────── */
+.cam-submissions-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.cam-refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: none;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  color: #64748b;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.cam-refresh-btn:hover { border-color: #2563eb; color: #2563eb; }
+
+.cam-refresh-btn svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+}
+
+.cam-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cam-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.cam-list-item:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+  transform: translateY(-1px);
+}
+
+.cam-list-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cam-list-info strong {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cam-list-info span {
+  font-size: 0.78125rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cam-list-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.cam-list-date {
+  font-size: 0.71875rem;
+  color: #94a3b8;
+}
+
+.cam-chevron {
+  width: 16px;
+  height: 16px;
+  stroke: #cbd5e1;
+  flex-shrink: 0;
+}
+
+/* ── Score badge ───────────────────────────────────── */
+.cam-score-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.78125rem;
+  font-weight: 700;
+}
+
+.score--high  { background: #dcfce7; color: #166534; }
+.score--mid   { background: #fef9c3; color: #854d0e; }
+.score--low   { background: #fee2e2; color: #991b1b; }
+.score--none  { background: #f1f5f9; color: #94a3b8; }
+
+/* ── Avatar ────────────────────────────────────────── */
+.cam-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cam-avatar--lg {
+  width: 52px;
+  height: 52px;
+  font-size: 1.375rem;
+}
+
+/* ── Empty & Loading ───────────────────────────────── */
+.cam-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 24px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.cam-empty svg {
+  width: 52px;
+  height: 52px;
+  opacity: 0.4;
+  stroke: currentColor;
+}
+
+.cam-empty p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #475569;
+  margin: 0;
+}
+
+.cam-empty span {
+  font-size: 0.875rem;
+  color: #94a3b8;
+}
+
+.cam-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 48px 24px;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.cam-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #2563eb;
+  border-radius: 50%;
+  animation: camSpin 0.75s linear infinite;
+}
+
+@keyframes camSpin { to { transform: rotate(360deg); } }
+
+/* ── Footer ────────────────────────────────────────── */
+.cam-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.cam-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, transform 0.15s;
+}
+
+.cam-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.cam-btn--primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+
+.cam-btn--ghost {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cam-btn--ghost:hover { background: #e2e8f0; }
+
+/* ── Detail view ───────────────────────────────────── */
+.cam-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 24px 18px;
+  border-bottom: 1px solid #f1f5f9;
+  flex-wrap: wrap;
+}
+
+.cam-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.cam-back-btn:hover { background: #e2e8f0; }
+
+.cam-back-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+}
+
+.cam-detail-name {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.cam-detail-name h2 {
+  margin: 0 0 2px;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.cam-email {
+  font-size: 0.8125rem;
+  color: #64748b;
+}
+
+.cam-detail-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── Info grid ─────────────────────────────────────── */
+.cam-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+}
+
+.cam-info-cell {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cam-info-cell--full { grid-column: 1 / -1; }
+
+.cam-info-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+}
+
+.cam-info-value {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.cam-test-link {
+  font-size: 0.8125rem;
+  color: #2563eb;
+  word-break: break-all;
+  text-decoration: none;
+}
+
+.cam-test-link:hover { text-decoration: underline; }
+
+/* ── Report ────────────────────────────────────────── */
+.cam-report {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cam-report-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.cam-report-title svg {
+  width: 18px;
+  height: 18px;
+  stroke: #2563eb;
+}
+
+.cam-report-section {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.cam-report-section p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #374151;
+  line-height: 1.65;
+}
+
+.cam-report-section-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #94a3b8;
+}
+
+.cam-report-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.cam-report-list-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cam-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cam-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.chip--green  { background: #dcfce7; color: #166534; }
+.chip--red    { background: #fee2e2; color: #991b1b; }
+.chip--blue   { background: #dbeafe; color: #1e40af; }
+.chip--amber  { background: #fef9c3; color: #854d0e; }
+
+.cam-empty-report {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 20px;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.cam-empty-report svg {
+  width: 40px;
+  height: 40px;
+  opacity: 0.4;
+  stroke: currentColor;
+}
+
+.cam-empty-report p {
+  font-size: 0.875rem;
+  color: #64748b;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 360px;
+}
+
+/* ── Responsive ────────────────────────────────────── */
+@media (max-width: 600px) {
+  .cam-modal { border-radius: 16px; }
+  .cam-info-grid { grid-template-columns: 1fr 1fr; }
+  .cam-report-lists { grid-template-columns: 1fr; }
+  .cam-body { padding: 16px; }
+  .cam-header { padding: 16px 16px 14px; }
+  .cam-footer { padding: 12px 16px; }
+}

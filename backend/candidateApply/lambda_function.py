@@ -157,30 +157,43 @@ def lambda_handler(event, context):
 
         action = body.get('action', 'submit')
 
+        CORS_HEADERS = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Content-Type': 'application/json',
+        }
+
         # ── GET apply-page metadata (template name / role) ──────────────────
         if action == 'getInfo':
             template_id = body.get('templateID', '')
             if not template_id:
-                return {'statusCode': 400, 'body': json.dumps({'error': 'templateID required'})}
+                return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'templateID required'})}
             try:
                 resp = template_table.get_item(Key={'templateID': template_id})
                 item = resp.get('Item', {})
+                if not item:
+                    return {
+                        'statusCode': 404,
+                        'headers': CORS_HEADERS,
+                        'body': json.dumps({'error': 'Template not found'}),
+                    }
                 return {
                     'statusCode': 200,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'headers': CORS_HEADERS,
                     'body': json.dumps({
                         'templateName': item.get('templateName', 'Screening Assessment'),
                         'role': item.get('AssignedRole', ''),
-                    }),
+                    }, default=str),
                 }
             except Exception as e:
-                return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+                print(f'getInfo error: {e}')
+                return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
 
         # ── LIST submissions for a template (HR dashboard) ───────────────────
         if action == 'list':
             template_id = body.get('templateID', '')
             if not template_id:
-                return {'statusCode': 400, 'body': json.dumps({'error': 'templateID required'})}
+                return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'templateID required'})}
             try:
                 from boto3.dynamodb.conditions import Key as DKey
                 resp = applications_table.query(
@@ -191,13 +204,15 @@ def lambda_handler(event, context):
                 # Remove large resume text from list response
                 for item in items:
                     item.pop('resumeText', None)
+                    item.pop('resumeBase64', None)
                 return {
                     'statusCode': 200,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
-                    'body': json.dumps({'applications': items}),
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({'applications': items}, default=str),
                 }
             except Exception as e:
-                return {'statusCode': 500, 'body': json.dumps({'error': str(e)})}
+                print(f'list error: {e}')
+                return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
 
         # ── SUBMIT application ────────────────────────────────────────────────
         candidate_name = body.get('candidateName', '').strip()
@@ -211,7 +226,7 @@ def lambda_handler(event, context):
         if not all([candidate_name, candidate_email, template_id]):
             return {
                 'statusCode': 400,
-                'headers': {'Access-Control-Allow-Origin': '*'},
+                'headers': CORS_HEADERS,
                 'body': json.dumps({'error': 'candidateName, candidateEmail, and templateID are required.'}),
             }
 
@@ -226,7 +241,7 @@ def lambda_handler(event, context):
             if dup_check.get('Items'):
                 return {
                     'statusCode': 409,
-                    'headers': {'Access-Control-Allow-Origin': '*'},
+                    'headers': CORS_HEADERS,
                     'body': json.dumps({'error': 'You have already applied for this position.'}),
                 }
         except Exception:
@@ -285,7 +300,7 @@ def lambda_handler(event, context):
 
         return {
             'statusCode': 200,
-            'headers': {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'},
+            'headers': CORS_HEADERS,
             'body': json.dumps({
                 'message': 'Application submitted successfully.',
                 'applicationID': application_id,
@@ -298,6 +313,10 @@ def lambda_handler(event, context):
         print(f'lambda_handler error: {e}')
         return {
             'statusCode': 500,
-            'headers': {'Access-Control-Allow-Origin': '*'},
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Content-Type': 'application/json',
+            },
             'body': json.dumps({'error': str(e)}),
         }
