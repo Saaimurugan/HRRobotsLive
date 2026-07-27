@@ -1,0 +1,32 @@
+{
+    "FunctionName": "generateResume",
+    "FunctionArn": "arn:aws:lambda:us-east-1:850995535850:function:generateResume",
+    "Runtime": "python3.12",
+    "Role": "arn:aws:iam::850995535850:role/dynamo-db-role",
+    "Handler": "lambda_function.lambda_handler",
+    "CodeSize": 0,
+    "Description": "Generate AI-powered resumes using Amazon Nova and store in DynamoDB",
+    "Timeout": 90,
+    "MemorySize": 256,
+    "LastModified": "",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "State": "Active",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/generateResume"
+    }
+}
