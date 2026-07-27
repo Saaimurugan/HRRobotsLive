@@ -370,17 +370,17 @@ const App = () => {
     performanceMonitor.logBundleInfo();
     
     // Optional: Preload models in background after app is ready
-    const preloadModelsInBackground = async () => {
-      try {
-        // Wait for app to be fully loaded before starting model preload
-        setTimeout(async () => {
+    const preloadModelsInBackground = () => {
+      // Wait for app to be fully loaded before starting model preload
+      setTimeout(async () => {
+        try {
           await performanceMonitor.measureAsync('Model Preloading', async () => {
             await modelPreloader.loadModelsLazy();
           });
-        }, 2000); // Delay to ensure app is interactive first
-      } catch (error) {
-        console.warn('Background model preloading failed:', error);
-      }
+        } catch (error) {
+          console.warn('Background model preloading failed:', error);
+        }
+      }, 2000); // Delay to ensure app is interactive first
     };
 
     preloadModelsInBackground();

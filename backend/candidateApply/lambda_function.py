@@ -15,6 +15,86 @@ template_table = dynamodb.Table('template')
 MODEL_ID = 'amazon.nova-lite-v1:0'
 
 
+# ── Resume Parser ─────────────────────────────────────────────────────────────
+
+def parse_resume_with_nova(resume_text):
+    """
+    Use Amazon Nova to extract structured information from a resume.
+    Returns a dict with candidate details ready for the confirmation form.
+    """
+    prompt = f"""You are an expert resume parser. Extract all relevant information from the resume text below and return it as a JSON object.
+
+Return ONLY a valid JSON object with these fields (use empty string "" or empty array [] if information is not found):
+{{
+  "fullName": "candidate's full name",
+  "email": "email address",
+  "phone": "phone number",
+  "location": "city, state/country",
+  "linkedin": "LinkedIn URL or username",
+  "summary": "professional summary or objective (2-3 sentences max)",
+  "currentTitle": "current or most recent job title",
+  "totalExperience": "total years of experience as a string e.g. '3 years'",
+  "skills": ["skill1", "skill2", "skill3"],
+  "experience": [
+    {{
+      "title": "job title",
+      "company": "company name",
+      "duration": "e.g. Jan 2022 - Present",
+      "description": "brief 1-2 line description"
+    }}
+  ],
+  "education": [
+    {{
+      "degree": "degree name",
+      "institution": "university/college name",
+      "year": "graduation year or duration"
+    }}
+  ],
+  "certifications": ["cert1", "cert2"],
+  "languages": ["English", "Spanish"]
+}}
+
+Resume text:
+{resume_text[:8000]}
+
+Return ONLY the JSON object. No markdown, no extra text, no explanations."""
+
+    try:
+        request_body = {
+            'schemaVersion': 'messages-v1',
+            'messages': [{'role': 'user', 'content': [{'text': prompt}]}],
+            'system': [{'text': 'You are a precise resume parser that extracts structured information and returns clean JSON.'}],
+            'inferenceConfig': {'max_new_tokens': 2000, 'top_p': 0.9, 'top_k': 20, 'temperature': 0.2},
+        }
+        response = bedrock_client.invoke_model_with_response_stream(
+            modelId=MODEL_ID, body=json.dumps(request_body)
+        )
+        raw = ''
+        for chunk_event in response.get('body'):
+            chunk = chunk_event.get('chunk')
+            if chunk:
+                chunk_json = json.loads(chunk.get('bytes').decode())
+                raw += chunk_json.get('contentBlockDelta', {}).get('delta', {}).get('text', '')
+
+        cleaned = raw.strip()
+        if cleaned.startswith('```json'):
+            cleaned = cleaned[7:]
+        if cleaned.startswith('```'):
+            cleaned = cleaned[3:]
+        if cleaned.endswith('```'):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
+
+        parsed = json.loads(cleaned)
+        return {'success': True, 'data': parsed}
+    except json.JSONDecodeError as e:
+        print(f'parse_resume JSON error: {e}, raw: {raw[:300]}')
+        return {'success': False, 'error': 'Failed to parse AI response', 'raw': raw[:300]}
+    except Exception as e:
+        print(f'parse_resume error: {e}')
+        return {'success': False, 'error': str(e)}
+
+
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 def get_template_jd(template_id):
@@ -163,6 +243,29 @@ def lambda_handler(event, context):
             'Content-Type': 'application/json',
         }
 
+        # ── PARSE resume with Amazon Nova (step before submission) ──────────
+        if action == 'parseResume':
+            resume_text = body.get('resumeText', '').strip()
+            if not resume_text:
+                return {
+                    'statusCode': 400,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({'error': 'resumeText is required'}),
+                }
+            result = parse_resume_with_nova(resume_text)
+            if result['success']:
+                return {
+                    'statusCode': 200,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({'parsed': result['data']}),
+                }
+            else:
+                return {
+                    'statusCode': 500,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({'error': result.get('error', 'Failed to parse resume')}),
+                }
+
         # ── GET apply-page metadata (template name / role) ──────────────────
         if action == 'getInfo':
             template_id = body.get('templateID', '')
@@ -220,8 +323,10 @@ def lambda_handler(event, context):
         candidate_phone = body.get('candidatePhone', '').strip()
         template_id = body.get('templateID', '').strip()
         resume_text = body.get('resumeText', '').strip()
-        # base64-encoded resume file (optional, stored as-is for record)
-        resume_b64 = body.get('resumeBase64', '')
+        # Truncate resumeText to prevent exceeding DynamoDB 400KB item limit
+        resume_text = resume_text[:15000]
+        # Structured resume data parsed by Nova (optional, from review step)
+        parsed_resume = body.get('parsedResume', None)
 
         if not all([candidate_name, candidate_email, template_id]):
             return {
@@ -278,8 +383,9 @@ def lambda_handler(event, context):
             application_item['suitability'] = suitability
         if profiler_result:
             application_item['profilerReport'] = json.dumps(profiler_result)
-        if resume_b64:
-            application_item['resumeBase64'] = resume_b64
+        # Store the parsed resume details if provided
+        if parsed_resume and isinstance(parsed_resume, dict):
+            application_item['parsedResume'] = json.dumps(parsed_resume)
 
         applications_table.put_item(Item=application_item)
 

@@ -374,3 +374,347 @@
     font-size: 1.25rem;
   }
 }
+
+/* ===================================
+   Review Step — Wide card
+   =================================== */
+
+.apply-card--wide {
+  max-width: 720px;
+}
+
+/* ── Parsing screen ─────────────────────────────────────────────────────── */
+.apply-parsing-card {
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  padding: 48px 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  animation: applyFadeUp 0.4s ease-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.apply-parsing-icon {
+  width: 72px;
+  height: 72px;
+  background: #eff6ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.apply-parsing-card h2 {
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0;
+}
+
+.apply-parsing-card p {
+  color: #4b5563;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 360px;
+}
+
+.apply-parsing-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 300px;
+  margin-top: 8px;
+}
+
+.apply-parsing-step {
+  font-size: 0.8125rem;
+  color: #9ca3af;
+  text-align: left;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+
+.apply-parsing-step--done {
+  color: #16a34a;
+  background: #f0fdf4;
+  font-weight: 600;
+}
+
+.apply-parsing-step--active {
+  color: #2563eb;
+  background: #eff6ff;
+  font-weight: 600;
+}
+
+/* ── Review notices ─────────────────────────────────────────────────────── */
+.apply-review-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 20px;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.apply-review-notice svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.apply-review-notice--success {
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.apply-review-notice--success svg {
+  stroke: #16a34a;
+}
+
+.apply-review-notice--warn {
+  background: #fffbeb;
+  color: #92400e;
+  border-bottom-color: #fde68a;
+}
+
+.apply-review-notice--warn svg {
+  stroke: #d97706;
+}
+
+/* ── Review form layout ─────────────────────────────────────────────────── */
+.apply-review-form {
+  padding: 24px 28px 32px !important;
+}
+
+.apply-review-section {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.apply-review-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1e3a5f;
+  margin: 0 0 16px;
+}
+
+.apply-review-section-title svg {
+  width: 18px;
+  height: 18px;
+  stroke: #2563eb;
+  flex-shrink: 0;
+}
+
+.apply-review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.apply-review-grid--3 {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.apply-review-grid--2col-sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+/* ── Input / textarea in review ─────────────────────────────────────────── */
+.apply-review-form .apply-field input,
+.apply-review-form .apply-field textarea {
+  width: 100%;
+  padding: 9px 12px;
+  font-size: 0.875rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 8px;
+  background: #ffffff;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.apply-review-form .apply-field input:focus,
+.apply-review-form .apply-field textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.apply-review-form .apply-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+/* ── Entries (experience / education cards) ─────────────────────────────── */
+.apply-review-entry {
+  position: relative;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 16px;
+  background: #ffffff;
+  margin-bottom: 12px;
+}
+
+.apply-entry-remove {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: #9ca3af;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.apply-entry-remove:hover {
+  color: #dc2626;
+  background: #fef2f2;
+}
+
+.apply-entry-add {
+  background: none;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 8px;
+  color: #2563eb;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  width: 100%;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.apply-entry-add:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+/* ── Tag list (skills, certs, languages) ────────────────────────────────── */
+.apply-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.apply-tag-item {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 999px;
+  padding: 3px 8px 3px 10px;
+  gap: 4px;
+}
+
+.apply-tag-item input {
+  border: none !important;
+  outline: none !important;
+  background: transparent !important;
+  font-size: 0.8125rem;
+  min-width: 60px;
+  max-width: 140px;
+  padding: 0 !important;
+  box-shadow: none !important;
+}
+
+.apply-tag-remove {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 0.15s;
+}
+
+.apply-tag-remove:hover { color: #dc2626; }
+
+.apply-tag-add {
+  background: none;
+  border: 1.5px dashed #cbd5e1;
+  border-radius: 999px;
+  color: #2563eb;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 12px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.apply-tag-add:hover {
+  background: #eff6ff;
+  border-color: #2563eb;
+}
+
+/* ── Review actions (Back + Submit row) ─────────────────────────────────── */
+.apply-review-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.apply-back-btn {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 14px 22px;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.apply-back-btn:hover:not(:disabled) { background: #e2e8f0; }
+.apply-back-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ── Responsive review ──────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .apply-card--wide {
+    max-width: 100%;
+  }
+
+  .apply-review-form {
+    padding: 16px !important;
+  }
+
+  .apply-review-grid--2col-sections {
+    grid-template-columns: 1fr;
+  }
+
+  .apply-review-actions {
+    flex-direction: column-reverse;
+  }
+
+  .apply-back-btn {
+    width: 100%;
+    text-align: center;
+  }
+}

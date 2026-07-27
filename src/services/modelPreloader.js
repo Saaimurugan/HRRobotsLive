@@ -69,7 +69,7 @@ class ModelPreloader {
 
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Model loading timeout')), 30000);
+        setTimeout(() => reject(new Error('Model loading timeout')), 120000); // 2 minutes for slow networks
       });
 
       await Promise.race([
