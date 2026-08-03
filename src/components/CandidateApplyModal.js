@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGlobalContext } from '../globalContext';
 import '../candidateApplyModal.css';
 
@@ -7,14 +7,129 @@ const BASE_URL = 'https://www.hrrobots.click';
 
 function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
   const { JWTValue } = useGlobalContext();
-  const [tab, setTab] = useState('link');
+  const [tab, setTab] = useState('jd');
   const [copied, setCopied] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
+  const [generatingReport, setGeneratingReport] = useState(false); // for the detail panel
+
+  // ── JD tab state ────────────────────────────────────────────────────────────
+  const [jobDescription, setJobDescription] = useState('');
+  const [jdLoading, setJdLoading]           = useState(false);
+  const [jdSaving, setJdSaving]             = useState(false);
+  const [jdSaved, setJdSaved]               = useState(false);
+  const [jdError, setJdError]               = useState('');
+  const [jdExtracting, setJdExtracting]     = useState(false); // PDF extraction in progress
+  const [jdFileName, setJdFileName]         = useState('');    // name of uploaded PDF
+  const jdFileInputRef                      = useRef(null);
 
   const applyLink = template ? `${BASE_URL}/apply/${template.templateID}` : '';
+  const hasJD = jobDescription.trim().length > 0;
 
+  // ── Load JD when modal opens ────────────────────────────────────────────────
+  const loadJD = useCallback(async () => {
+    if (!template?.templateID) return;
+    setJdLoading(true);
+    setJdError('');
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'getJD', templateID: template.templateID, token: JWTValue }),
+      });
+      const data = await res.json();
+      const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
+      setJobDescription(parsed.jobDescription || '');
+    } catch {
+      setJdError('Failed to load job description.');
+    } finally {
+      setJdLoading(false);
+    }
+  }, [template?.templateID, JWTValue]);
+
+  useEffect(() => {
+    if (isOpen && template?.templateID) {
+      loadJD();
+    }
+  }, [isOpen, template?.templateID, loadJD]);
+
+  // ── Extract text from a JD PDF ──────────────────────────────────────────────
+  const extractJDFromPDF = async (file) => {
+    if (!file || file.type !== 'application/pdf') {
+      setJdError('Only PDF files are accepted.');
+      return;
+    }
+    setJdError('');
+    setJdExtracting(true);
+    setJdFileName(file.name);
+    try {
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        pages.push(content.items.map((it) => it.str).join(' '));
+      }
+      const text = pages.join('\n\n').trim();
+      if (!text) {
+        setJdError('Could not extract text from this PDF. It may be a scanned image. Please paste the JD manually.');
+        return;
+      }
+      setJobDescription(text);
+      setJdSaved(false);
+      showToast('success', 'PDF Loaded', `Text extracted from "${file.name}". Review and save.`);
+    } catch (err) {
+      console.error('JD PDF extraction error:', err);
+      setJdError('Failed to read the PDF. Please try again or paste the JD manually.');
+    } finally {
+      setJdExtracting(false);
+      // Reset file input so the same file can be re-uploaded if needed
+      if (jdFileInputRef.current) jdFileInputRef.current.value = '';
+    }
+  };
+
+  const handleJDFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) extractJDFromPDF(file);
+  };
+
+  // ── Save JD ─────────────────────────────────────────────────────────────────
+  const handleSaveJD = async () => {
+    setJdSaving(true);
+    setJdError('');
+    setJdSaved(false);
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveJD',
+          templateID: template.templateID,
+          jobDescription: jobDescription.trim(),
+          token: JWTValue,
+        }),
+      });
+      const data = await res.json();
+      if (data.statusCode === 200 || res.ok) {
+        setJdSaved(true);
+        showToast('success', 'Saved', 'Job description saved to template.');
+        setTimeout(() => setJdSaved(false), 3000);
+      } else {
+        setJdError('Failed to save. Please try again.');
+      }
+    } catch {
+      setJdError('Network error. Please try again.');
+    } finally {
+      setJdSaving(false);
+    }
+  };
+
+  // ── Load submissions ────────────────────────────────────────────────────────
   const loadSubmissions = useCallback(async () => {
     if (!template?.templateID) return;
     setLoadingList(true);
@@ -50,9 +165,51 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
   };
 
   const handleClose = () => {
-    setTab('link');
+    setTab('jd');
     setSelectedApp(null);
+    setJdSaved(false);
+    setJdError('');
     onClose();
+  };
+
+  // ── Generate / re-generate profiler report for a specific application ────────
+  const handleGenerateReport = async () => {
+    if (!selectedApp) return;
+    setGeneratingReport(true);
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'generateReport',
+          applicationID: selectedApp.applicationID,
+          token: JWTValue,
+        }),
+      });
+      const data = await res.json();
+      const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
+      if (data.statusCode === 200 || res.ok) {
+        // Update the selectedApp in place so the UI re-renders immediately
+        setSelectedApp(prev => ({
+          ...prev,
+          profilerReport: JSON.stringify(parsed.profilerReport),
+          suitability: parsed.suitability,
+        }));
+        // Also refresh the submissions list so the score badge updates there too
+        setSubmissions(prev => prev.map(a =>
+          a.applicationID === selectedApp.applicationID
+            ? { ...a, suitability: parsed.suitability }
+            : a
+        ));
+        showToast('success', 'Report Generated', 'Profiler report created successfully.');
+      } else {
+        showToast('error', 'Failed', parsed.error || 'Could not generate report.');
+      }
+    } catch {
+      showToast('error', 'Network Error', 'Failed to generate report. Please try again.');
+    } finally {
+      setGeneratingReport(false);
+    }
   };
 
   if (!isOpen || !template) return null;
@@ -84,7 +241,6 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
           </div>
 
           <div className="cam-detail-body">
-            {/* Contact grid */}
             <div className="cam-info-grid">
               {[
                 ['Phone', selectedApp.candidatePhone || '—'],
@@ -102,15 +258,32 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
               </div>
             </div>
 
-            {/* Profiler report */}
             {report ? (
               <div className="cam-report">
                 <h3 className="cam-report-title">
                   <svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   AI Profiler Report
-                </h3>
-
-                {report.Summary && (
+                  {hasJD && (
+                    <button
+                      className="cam-report-regen-btn"
+                      onClick={handleGenerateReport}
+                      disabled={generatingReport}
+                      title="Re-generate with latest JD"
+                    >
+                      {generatingReport ? (
+                        <><div className="cam-spinner cam-spinner--sm" style={{ borderTopColor: '#2563eb', borderColor: '#dbeafe' }} /> Generating…</>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none">
+                            <path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Re-generate
+                        </>
+                      )}
+                    </button>
+                  )}
+                </h3>                {report.Summary && (
                   <div className="cam-report-section">
                     <span className="cam-report-section-label">Summary</span>
                     <p>{report.Summary}</p>
@@ -122,7 +295,6 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
                     <p>{report.Conclusion}</p>
                   </div>
                 )}
-
                 <div className="cam-report-lists">
                   {[
                     ['Matching Skills', report.Matching, 'chip--green'],
@@ -142,7 +314,36 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
             ) : (
               <div className="cam-empty-report">
                 <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                <p>No profiler report available. Attach a Job Description to your template to enable AI scoring.</p>
+                <p>No profiler report available.{!hasJD && ' Add a Job Description to this template to enable AI scoring.'}</p>
+                {hasJD && (
+                  <button
+                    className="cam-btn cam-btn--primary"
+                    onClick={handleGenerateReport}
+                    disabled={generatingReport}
+                    style={{ marginTop: '12px' }}
+                  >
+                    {generatingReport ? (
+                      <><div className="cam-spinner cam-spinner--sm cam-spinner--white" /> Generating…</>
+                    ) : (
+                      <>
+                        <svg viewBox="0 0 24 24" fill="none">
+                          <path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Generate Profiler Report
+                      </>
+                    )}
+                  </button>
+                )}
+                {!hasJD && (
+                  <button
+                    className="cam-btn cam-btn--ghost"
+                    onClick={() => { setSelectedApp(null); setTab('jd'); }}
+                    style={{ marginTop: '12px' }}
+                  >
+                    Add Job Description →
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -155,6 +356,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
       </div>
     );
   }
+
 
   /* ── Main modal ────────────────────────────────────────────────────────── */
   return (
@@ -181,6 +383,17 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
 
         {/* Tabs */}
         <div className="cam-tabs">
+          <button className={`cam-tab ${tab === 'jd' ? 'cam-tab--active' : ''}`} onClick={() => setTab('jd')}>
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <polyline points="10 9 9 9 8 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            Job Description
+            {!hasJD && !jdLoading && <span className="cam-tab-badge cam-tab-badge--warn">!</span>}
+          </button>
           <button className={`cam-tab ${tab === 'link' ? 'cam-tab--active' : ''}`} onClick={() => setTab('link')}>
             <svg viewBox="0 0 24 24" fill="none"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
             Share Link
@@ -192,9 +405,147 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
           </button>
         </div>
 
+
+        {/* ── Tab: Job Description ─────────────────────────────────────────── */}
+        {tab === 'jd' && (
+          <div className="cam-body">
+            <p className="cam-intro">
+              Add a job description so our AI can score each candidate's resume against this role.
+              Without a JD, applications are still collected but no suitability score is generated.
+            </p>
+
+            {jdLoading ? (
+              <div className="cam-loading">
+                <div className="cam-spinner" />
+                <p>Loading…</p>
+              </div>
+            ) : (
+              <>
+                <div className="cam-jd-field">
+                  <div className="cam-jd-label-row">
+                    <label className="cam-jd-label" htmlFor="cam-jd-textarea">
+                      Job Description
+                      {hasJD && (
+                        <span className="cam-jd-badge cam-jd-badge--set">
+                          <svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                          Saved
+                        </span>
+                      )}
+                      {!hasJD && (
+                        <span className="cam-jd-badge cam-jd-badge--missing">Not set — AI scoring disabled</span>
+                      )}
+                    </label>
+
+                    {/* PDF upload button */}
+                    <button
+                      type="button"
+                      className="cam-jd-pdf-btn"
+                      onClick={() => jdFileInputRef.current?.click()}
+                      disabled={jdExtracting}
+                      title="Upload JD as PDF"
+                    >
+                      {jdExtracting ? (
+                        <><div className="cam-spinner cam-spinner--sm" style={{ borderTopColor: '#2563eb', borderColor: '#dbeafe' }} /> Extracting…</>
+                      ) : (
+                        <>
+                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <polyline points="17 8 12 3 7 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <line x1="12" y1="3" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Upload PDF
+                        </>
+                      )}
+                    </button>
+                    <input
+                      ref={jdFileInputRef}
+                      type="file"
+                      accept="application/pdf"
+                      onChange={handleJDFileChange}
+                      style={{ display: 'none' }}
+                      aria-hidden="true"
+                    />
+                  </div>
+
+                  {/* Show filename after extraction */}
+                  {jdFileName && !jdExtracting && (
+                    <div className="cam-jd-source">
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        <polyline points="14 2 14 8 20 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Extracted from <strong>{jdFileName}</strong> — review and edit below before saving.
+                    </div>
+                  )}
+
+                  <textarea
+                    id="cam-jd-textarea"
+                    className={`cam-jd-textarea ${jdExtracting ? 'cam-jd-textarea--extracting' : ''}`}
+                    rows={12}
+                    placeholder={`Paste the full job description here, or upload a PDF above…\n\nExample:\nWe are looking for a Senior React Developer with 3+ years of experience...\n\nResponsibilities:\n- Build and maintain frontend applications\n- Collaborate with backend teams\n\nRequirements:\n- React, TypeScript, REST APIs\n- Strong problem-solving skills`}
+                    value={jdExtracting ? '' : jobDescription}
+                    onChange={e => { setJobDescription(e.target.value); setJdSaved(false); }}
+                    disabled={jdExtracting}
+                  />
+                  {jdExtracting && (
+                    <div className="cam-jd-extracting-overlay">
+                      <div className="cam-spinner" />
+                      <span>Extracting text from PDF…</span>
+                    </div>
+                  )}
+
+                  <div className="cam-jd-footer">
+                    <span className="cam-jd-count">{jobDescription.trim().length.toLocaleString()} characters</span>
+                    {jdError && <span className="cam-jd-error">{jdError}</span>}
+                    <button
+                      className={`cam-btn cam-btn--primary ${jdSaved ? 'cam-btn--saved' : ''}`}
+                      onClick={handleSaveJD}
+                      disabled={jdSaving || jdExtracting || !hasJD}
+                    >
+                      {jdSaving ? (
+                        <><div className="cam-spinner cam-spinner--sm cam-spinner--white" /> Saving…</>
+                      ) : jdSaved ? (
+                        <><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>Saved!</>
+                      ) : (
+                        <><svg viewBox="0 0 24 24" fill="none"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="17 21 17 13 7 13 7 21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="7 3 7 8 15 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Save JD</>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="cam-jd-info">
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <div>
+                    <strong>How the JD is used</strong>
+                    <p>When a candidate submits their resume, Amazon Nova compares it against this job description and generates a suitability score, skill match, and gap analysis — visible in the Submissions tab.</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+
         {/* ── Tab: Share Link ─────────────────────────────────────────────── */}
         {tab === 'link' && (
           <div className="cam-body">
+            {/* JD warning banner */}
+            {!hasJD && !jdLoading && (
+              <div className="cam-jd-warning" role="alert">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                <div>
+                  <strong>No Job Description set</strong>
+                  <span>AI candidate scoring is disabled. <button className="cam-jd-warning-link" onClick={() => setTab('jd')}>Add a JD →</button></span>
+                </div>
+              </div>
+            )}
+            {hasJD && (
+              <div className="cam-jd-ready" role="status">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span>AI scoring is active — candidates will be scored against your job description.</span>
+              </div>
+            )}
+
             <p className="cam-intro">
               Share this link publicly. Candidates fill in their details and upload their CV — our AI instantly scores their profile and emails them a personalised assessment link.
             </p>
@@ -236,6 +587,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
             </div>
           </div>
         )}
+
 
         {/* ── Tab: Submissions ────────────────────────────────────────────── */}
         {tab === 'submissions' && (

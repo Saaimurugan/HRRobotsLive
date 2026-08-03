@@ -149,7 +149,15 @@ Return ONLY the JSON object. No markdown, no extra text.
             if chunk:
                 chunk_json = json.loads(chunk.get('bytes').decode())
                 raw += chunk_json.get('contentBlockDelta', {}).get('delta', {}).get('text', '')
-        cleaned = raw.strip().lstrip('```json').lstrip('```').rstrip('```').strip()
+        cleaned = raw.strip()
+        # Strip markdown code fences properly (lstrip/rstrip strip chars, not substrings)
+        if cleaned.startswith('```json'):
+            cleaned = cleaned[7:]
+        elif cleaned.startswith('```'):
+            cleaned = cleaned[3:]
+        if cleaned.endswith('```'):
+            cleaned = cleaned[:-3]
+        cleaned = cleaned.strip()
         return json.loads(cleaned)
     except Exception as e:
         print(f'run_profiler error: {e}')
@@ -266,6 +274,47 @@ def lambda_handler(event, context):
                     'body': json.dumps({'error': result.get('error', 'Failed to parse resume')}),
                 }
 
+        # ── SAVE job description to template table ──────────────────────────
+        if action == 'saveJD':
+            template_id = body.get('templateID', '')
+            job_description = body.get('jobDescription', '').strip()
+            if not template_id:
+                return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'templateID required'})}
+            try:
+                template_table.update_item(
+                    Key={'templateID': template_id},
+                    UpdateExpression='SET jobDescription = :jd',
+                    ExpressionAttributeValues={':jd': job_description},
+                )
+                return {
+                    'statusCode': 200,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({'message': 'Job description saved successfully.'}),
+                }
+            except Exception as e:
+                print(f'saveJD error: {e}')
+                return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
+
+        # ── GET job description for a template (HR dashboard) ───────────────
+        if action == 'getJD':
+            template_id = body.get('templateID', '')
+            if not template_id:
+                return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'templateID required'})}
+            try:
+                resp = template_table.get_item(Key={'templateID': template_id})
+                item = resp.get('Item', {})
+                return {
+                    'statusCode': 200,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'jobDescription': item.get('jobDescription', '') or item.get('AssignedRole', ''),
+                        'templateName': item.get('templateName', ''),
+                    }, default=str),
+                }
+            except Exception as e:
+                print(f'getJD error: {e}')
+                return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
+
         # ── GET apply-page metadata (template name / role) ──────────────────
         if action == 'getInfo':
             template_id = body.get('templateID', '')
@@ -315,6 +364,59 @@ def lambda_handler(event, context):
                 }
             except Exception as e:
                 print(f'list error: {e}')
+                return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
+
+        # ── GENERATE / REGENERATE profiler report for an existing application ──
+        if action == 'generateReport':
+            application_id = body.get('applicationID', '').strip()
+            if not application_id:
+                return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'applicationID required'})}
+            try:
+                # Fetch the application (needs resumeText)
+                app_resp = applications_table.get_item(Key={'applicationID': application_id})
+                app = app_resp.get('Item')
+                if not app:
+                    return {'statusCode': 404, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Application not found'})}
+
+                resume_text_for_report = app.get('resumeText', '').strip()
+                template_id_for_report = app.get('templateID', '').strip()
+
+                if not resume_text_for_report:
+                    return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'No resume text stored for this application.'})}
+
+                # Get JD from template
+                job_description_for_report = get_template_jd(template_id_for_report)
+                if not job_description_for_report:
+                    return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'No job description found on this template. Please add a JD first.'})}
+
+                # Run profiler
+                result = run_profiler(resume_text_for_report, job_description_for_report)
+                if not result:
+                    return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'Profiler failed to generate a report.'})}
+
+                suitability = result.get('Suitability', '')
+
+                # Update the application record with the new report
+                applications_table.update_item(
+                    Key={'applicationID': application_id},
+                    UpdateExpression='SET profilerReport = :r, suitability = :s',
+                    ExpressionAttributeValues={
+                        ':r': json.dumps(result),
+                        ':s': suitability,
+                    },
+                )
+
+                return {
+                    'statusCode': 200,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({
+                        'message': 'Profiler report generated successfully.',
+                        'profilerReport': result,
+                        'suitability': suitability,
+                    }, default=str),
+                }
+            except Exception as e:
+                print(f'generateReport error: {e}')
                 return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
 
         # ── SUBMIT application ────────────────────────────────────────────────
