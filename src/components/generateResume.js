@@ -1,9 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../generateResume.css';
 
 // API endpoint — update after deploying the Lambda + API Gateway
 const API_ENDPOINT = 'https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/generateResume';
+
+// candidateApply Lambda — used for the parseResume action
+const PARSE_API = 'https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/candidateApply';
 
 // ── Default entry shapes ───────────────────────────────────────────────────
 const emptyExperience = () => ({
@@ -345,6 +348,129 @@ const GenerateResume = () => {
       },
    ]);
 
+   // ── Upload-to-prefill state ────────────────────────────────────────────────
+   const uploadInputRef = useRef(null);
+   const [uploadMode, setUploadMode] = useState(false);   // true = "upload" tab active
+   const [uploadFile, setUploadFile] = useState(null);
+   const [uploadStatus, setUploadStatus] = useState('idle'); // idle | extracting | parsing | done | error
+   const [uploadError, setUploadError] = useState('');
+
+   // ── PDF → text extraction (pdfjs-dist, lazy-loaded) ──────────────────────
+   const extractPdfText = async (file) => {
+      const pdfjsLib = await import('pdfjs-dist');
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+      const buf = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+      const pages = [];
+      for (let i = 1; i <= pdf.numPages; i++) {
+         const page = await pdf.getPage(i);
+         const content = await page.getTextContent();
+         pages.push(content.items.map((it) => it.str).join(' '));
+      }
+      return pages.join('\n');
+   };
+
+   // ── Handle PDF file selection & full parse flow ───────────────────────────
+   const handleUploadFile = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (file.type !== 'application/pdf') {
+         setUploadError('Only PDF files are accepted.');
+         return;
+      }
+      setUploadError('');
+      setUploadFile(file);
+      setUploadStatus('extracting');
+
+      let resumeText = '';
+      try {
+         resumeText = await extractPdfText(file);
+      } catch (err) {
+         console.error('PDF extraction error:', err);
+         setUploadError('Could not read the PDF. Please try another file.');
+         setUploadStatus('error');
+         return;
+      }
+
+      if (!resumeText.trim()) {
+         setUploadError('No text could be extracted from this PDF (it may be image-based). Please fill the form manually.');
+         setUploadStatus('error');
+         return;
+      }
+
+      // Send to candidateApply parseResume action
+      setUploadStatus('parsing');
+      try {
+         const res = await fetch(PARSE_API, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'parseResume', resumeText }),
+         });
+         const data = await res.json();
+         const body = typeof data.body === 'string' ? JSON.parse(data.body) : (data.body || data);
+
+         if (!res.ok && !body.parsed) throw new Error(body.error || 'Parse failed');
+
+         const pd = body.parsed || {};
+
+         // ── Map parsed fields → formData ──────────────────────────────────
+         setFormData(prev => ({
+            ...prev,
+            fullName:        pd.fullName        || prev.fullName,
+            email:           pd.email           || prev.email,
+            phone:           pd.phone           || prev.phone,
+            location:        pd.location        || prev.location,
+            linkedin:        pd.linkedin        || prev.linkedin,
+            summary:         pd.summary         || prev.summary,
+            skills:          Array.isArray(pd.skills)
+                                ? pd.skills.join(', ')
+                                : (pd.skills || prev.skills),
+            certifications:  Array.isArray(pd.certifications)
+                                ? pd.certifications.join(', ')
+                                : (pd.certifications || prev.certifications),
+            languages:       Array.isArray(pd.languages)
+                                ? pd.languages.join(', ')
+                                : (pd.languages || prev.languages),
+         }));
+
+         // ── Map experience array ──────────────────────────────────────────
+         if (Array.isArray(pd.experience) && pd.experience.length > 0) {
+            setExperiences(pd.experience.map((exp, i) => ({
+               id: Date.now() + i,
+               title:       exp.title       || '',
+               company:     exp.company     || '',
+               location:    exp.location    || '',
+               startDate:   exp.duration    ? exp.duration.split(/[-–]/)[0].trim() : '',
+               endDate:     exp.duration    ? (exp.duration.split(/[-–]/)[1] || '').trim() : '',
+               current:     /present/i.test(exp.duration || ''),
+               description: exp.description || '',
+            })));
+         }
+
+         // ── Map education array ───────────────────────────────────────────
+         if (Array.isArray(pd.education) && pd.education.length > 0) {
+            setEducations(pd.education.map((edu, i) => ({
+               id: Date.now() + i + 1000,
+               degree:      edu.degree      || '',
+               institution: edu.institution || '',
+               location:    '',
+               startDate:   '',
+               endDate:     edu.year        || '',
+               gpa:         '',
+               notes:       '',
+            })));
+         }
+
+         setUploadStatus('done');
+         showToast('success', 'Resume Imported!', 'Your details have been pre-filled. Review and edit before generating.');
+      } catch (err) {
+         console.error('Parse resume error:', err);
+         setUploadError('AI parsing failed. Your details could not be extracted — please fill the form manually.');
+         setUploadStatus('error');
+      }
+   };
+
    // ── Toast helpers ──────────────────────────────────────────────────────────
    const showToast = useCallback((type, title, message) => {
       const id = Date.now();
@@ -455,57 +581,50 @@ const GenerateResume = () => {
 
    // ── Save as Word (.doc) ───────────────────────────────────────────────────
    const handleSaveWord = () => {
-      const printableContent = document.getElementById('resumePrintable');
-      if (!printableContent) return;
+      if (!resumeHtml) return;
 
-      // Word-compatible HTML using MHTML content type that Word/LibreOffice recognises
-      const wordHtml = `
+      // Wrap the AI-generated HTML (which already has all inline CSS) in a
+      // minimal Word-compatible shell.  We do NOT re-style it here so the
+      // Word document matches the on-screen preview exactly.
+      const wordHtml = `<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office'
       xmlns:w='urn:schemas-microsoft-com:office:word'
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
   <meta charset='utf-8'>
-  <meta name=ProgId content=Word.Document>
-  <meta name=Generator content='Microsoft Word 15'>
-  <meta name=Originator content='Microsoft Word 15'>
-  <!--[if gte mso 9]>
-  <xml><w:WordDocument><w:View>Print</w:View><w:Zoom>90</w:Zoom>
-  <w:DoNotOptimizeForBrowser/></w:WordDocument></xml>
-  <![endif]-->
+  <meta name='ProgId' content='Word.Document'>
+  <meta name='Generator' content='Microsoft Word 15'>
+  <meta name='Originator' content='Microsoft Word 15'>
+  <!--[if gte mso 9]><xml>
+    <w:WordDocument>
+      <w:View>Print</w:View>
+      <w:Zoom>100</w:Zoom>
+      <w:DoNotOptimizeForBrowser/>
+    </w:WordDocument>
+  </xml><![endif]-->
   <style>
+    /* Page size only — all visual styling comes from the resume's own inline CSS */
     @page Section1 {
       size: 8.5in 11.0in;
-      margin: 1.0in 1.0in 1.0in 1.0in;
-      mso-header-margin: .5in;
-      mso-footer-margin: .5in;
+      margin: 0.75in 0.75in 0.75in 0.75in;
+      mso-header-margin: 0.3in;
+      mso-footer-margin: 0.3in;
       mso-paper-source: 0;
     }
     div.Section1 { page: Section1; }
-    body {
-      font-family: Calibri, Arial, sans-serif;
-      font-size: 11pt;
-      color: #374151;
-      line-height: 1.5;
-    }
-    h1 { font-size: 22pt; color: #1e293b; margin-bottom: 4pt; }
-    h2 { font-size: 13pt; color: #2563eb; margin-top: 14pt; margin-bottom: 4pt; border-bottom: 1pt solid #2563eb; padding-bottom: 2pt; }
-    h3 { font-size: 11pt; color: #1e293b; margin-top: 8pt; margin-bottom: 2pt; }
-    p  { margin: 4pt 0; }
-    ul { margin: 4pt 0 4pt 18pt; }
-    li { margin-bottom: 3pt; }
-    a  { color: #2563eb; text-decoration: none; }
+    /* Reset browser defaults that fight inline styles */
+    body { margin: 0; padding: 0; }
+    h1, h2, h3, p, ul, li, div { margin: 0; padding: 0; }
   </style>
 </head>
 <body>
   <div class="Section1">
-    ${printableContent.innerHTML}
+    ${resumeHtml}
   </div>
 </body>
 </html>`;
 
-      const blob = new Blob(['\ufeff', wordHtml], {
-         type: 'application/msword',
-      });
+      const blob = new Blob(['\ufeff', wordHtml], { type: 'application/msword' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -528,6 +647,116 @@ const GenerateResume = () => {
             </button>
             <h1>AI Resume Builder</h1>
          </div>
+
+         {/* ── Upload / Scratch toggle ── */}
+         <div className="resume-mode-toggle">
+            <button
+               type="button"
+               className={`resume-mode-btn ${!uploadMode ? 'active' : ''}`}
+               onClick={() => setUploadMode(false)}
+            >
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+               </svg>
+               Build from Scratch
+            </button>
+            <button
+               type="button"
+               className={`resume-mode-btn ${uploadMode ? 'active' : ''}`}
+               onClick={() => setUploadMode(true)}
+            >
+               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+               </svg>
+               Upload Existing Resume
+            </button>
+         </div>
+
+         {/* ── Upload panel (shown when uploadMode = true) ── */}
+         {uploadMode && (
+            <div className="resume-upload-panel">
+               <input
+                  ref={uploadInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  style={{ display: 'none' }}
+                  aria-hidden="true"
+                  onChange={handleUploadFile}
+               />
+
+               {uploadStatus === 'idle' || uploadStatus === 'error' ? (
+                  <div
+                     className="resume-upload-dropzone"
+                     onClick={() => uploadInputRef.current?.click()}
+                     onDragOver={(e) => e.preventDefault()}
+                     onDrop={(e) => {
+                        e.preventDefault();
+                        const f = e.dataTransfer.files[0];
+                        if (f) {
+                           uploadInputRef.current.files = e.dataTransfer.files;
+                           handleUploadFile({ target: { files: [f] } });
+                        }
+                     }}
+                     role="button"
+                     tabIndex={0}
+                     aria-label="Upload resume PDF"
+                     onKeyDown={(e) => e.key === 'Enter' && uploadInputRef.current?.click()}
+                  >
+                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                        <line x1="12" y1="18" x2="12" y2="12"/>
+                        <line x1="9" y1="15" x2="15" y2="15"/>
+                     </svg>
+                     <p className="resume-upload-dropzone-title">Drop your resume PDF here</p>
+                     <p className="resume-upload-dropzone-sub">or click to browse</p>
+                     {uploadError && (
+                        <p className="resume-upload-error">{uploadError}</p>
+                     )}
+                  </div>
+               ) : uploadStatus === 'extracting' || uploadStatus === 'parsing' ? (
+                  <div className="resume-upload-progress">
+                     <svg className="spinner" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 12a9 9 0 11-6.219-8.56"/>
+                     </svg>
+                     <p>
+                        {uploadStatus === 'extracting'
+                           ? `Reading "${uploadFile?.name}"…`
+                           : 'AI is extracting your details…'}
+                     </p>
+                  </div>
+               ) : uploadStatus === 'done' ? (
+                  <div className="resume-upload-done">
+                     <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                     </svg>
+                     <div>
+                        <p className="resume-upload-done-title">Resume imported — form pre-filled!</p>
+                        <p className="resume-upload-done-sub">{uploadFile?.name}</p>
+                     </div>
+                     <button
+                        type="button"
+                        className="resume-upload-reupload"
+                        onClick={() => {
+                           setUploadFile(null);
+                           setUploadStatus('idle');
+                           setUploadError('');
+                           uploadInputRef.current.value = '';
+                        }}
+                     >
+                        Change file
+                     </button>
+                  </div>
+               ) : null}
+
+               <p className="resume-upload-hint">
+                  Your PDF will be parsed by AI and used to pre-fill the form below. Review and edit all fields before generating.
+               </p>
+            </div>
+         )}
 
          <form className="resume-form" onSubmit={handleSubmit}>
             {/* ── Design picker ── */}
