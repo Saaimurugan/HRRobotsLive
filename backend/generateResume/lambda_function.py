@@ -271,18 +271,16 @@ def build_prompt(form_data: dict, design: str, photo_base64: str = "") -> str:
     contact_line = " · ".join(contact_parts)
 
     # Build photo HTML snippet
-    # We do NOT embed the base64 in the AI prompt (it's too large and the model can't use it).
-    # Instead we use a placeholder token that gets replaced after generation.
+    # The base64 photo is NOT sent to the AI — the model can't use it in a text prompt.
+    # Instead we inject the <img> tag into the generated HTML after the fact.
     if photo_base64 and photo_base64.startswith('data:image'):
-        photo_placeholder = "PHOTO_PLACEHOLDER_TOKEN"
-        photo_img_tag = f'<img src="{photo_base64}" alt="Profile photo" style="width:80px; height:80px; border-radius:50%; object-fit:cover; display:block;">'
-        photo_instruction = f"""CANDIDATE PHOTO: A photo has been provided.
-Place the literal text PHOTO_PLACEHOLDER_TOKEN in the correct position in the HTML (per the design template above).
-Do not embed any base64 data — just place the exact token text: PHOTO_PLACEHOLDER_TOKEN"""
+        photo_img_tag = f'<img src="{photo_base64}" alt="Profile photo" style="width:80px; height:80px; border-radius:50%; object-fit:cover; display:block; margin:0 auto;">'
+        photo_instruction = """CANDIDATE PHOTO: A profile photo has been provided and will be injected automatically.
+Do NOT add any image tag, placeholder text, or empty element for the photo.
+Simply leave a comment <!-- PHOTO_HERE --> at the position in the header where the photo should appear (top-right of header for Classic/Minimal/Executive/Creative, top-center of left sidebar for Modern)."""
     else:
-        photo_placeholder = None
         photo_img_tag = None
-        photo_instruction = "CANDIDATE PHOTO: None provided — do NOT add any photo placeholder, circle, or empty image tag."
+        photo_instruction = "CANDIDATE PHOTO: None provided — do NOT add any photo, placeholder, circle, or comment for a photo."
 
     prompt = f"""You are an expert resume writer and HTML developer. Your task is to produce a complete, pixel-perfect resume in HTML using ONLY inline CSS styles.
 
@@ -316,7 +314,7 @@ STRICT RULES — you MUST follow all of these:
 9. Omit entire sections if all their data fields are empty or "N/A".
 10. Do not hallucinate or add content not in the candidate data.
 """
-    return prompt, photo_placeholder, photo_img_tag
+    return prompt, photo_img_tag
 
 
 def lambda_handler(event, context):
@@ -348,7 +346,7 @@ def lambda_handler(event, context):
                 "body": json.dumps({"error": "Full name and email are required fields."})
             }
 
-        prompt, photo_placeholder, photo_img_tag = build_prompt(form_data, design, photo_base64)
+        prompt, photo_img_tag = build_prompt(form_data, design, photo_base64)
 
         message_list = [
             {"role": "user", "content": [{"text": prompt}]}
@@ -405,8 +403,22 @@ def lambda_handler(event, context):
         resume_html = resume_html.strip()
 
         # Replace the photo placeholder token with the actual base64 <img> tag
-        if photo_placeholder and photo_img_tag and photo_placeholder in resume_html:
-            resume_html = resume_html.replace(photo_placeholder, photo_img_tag)
+        if photo_img_tag:
+            import re
+            # Strategy 1: AI placed the HTML comment marker <!-- PHOTO_HERE -->
+            if '<!-- PHOTO_HERE -->' in resume_html:
+                resume_html = resume_html.replace('<!-- PHOTO_HERE -->', photo_img_tag, 1)
+            # Strategy 2: AI placed any variation of the comment
+            else:
+                comment_re = re.compile(r'<!--\s*PHOTO[_\s]?HERE\s*-->', re.IGNORECASE)
+                resume_html, n = comment_re.subn(photo_img_tag, resume_html, count=1)
+                if n == 0:
+                    # Strategy 3: Fallback — inject right before the first <h1> tag
+                    # Wrap in a right-aligned div so it floats to the header corner
+                    photo_wrapped = (
+                        f'<div style="float:right; margin: 0 0 8px 16px;">{photo_img_tag}</div>'
+                    )
+                    resume_html = re.sub(r'(<h1\b)', photo_wrapped + r'\1', resume_html, count=1)
 
         # Save to DynamoDB
         resume_id = str(uuid.uuid4())
