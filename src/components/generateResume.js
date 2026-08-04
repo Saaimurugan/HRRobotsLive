@@ -65,8 +65,12 @@ const DESIGN_OPTIONS = [
             {/* Page background */}
             <rect width="120" height="160" rx="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1"/>
             {/* Name header */}
-            <rect x="10" y="10" width="70" height="7" rx="1.5" fill="#1e293b"/>
+            <rect x="10" y="10" width="65" height="7" rx="1.5" fill="#1e293b"/>
             <rect x="10" y="20" width="45" height="4" rx="1" fill="#94a3b8"/>
+            {/* Photo placeholder circle (top-right) */}
+            <circle cx="100" cy="17" r="9" fill="#e2e8f0" stroke="#cbd5e1" strokeWidth="1"/>
+            <circle cx="100" cy="14" r="3.5" fill="#94a3b8"/>
+            <path d="M93 23 Q93 19 100 19 Q107 19 107 23" fill="#94a3b8"/>
             {/* Divider */}
             <line x1="10" y1="30" x2="110" y2="30" stroke="#cbd5e1" strokeWidth="1"/>
             {/* Section: Experience */}
@@ -105,7 +109,9 @@ const DESIGN_OPTIONS = [
             {/* Left sidebar */}
             <rect width="38" height="160" rx="3" fill="#1e3a5f"/>
             {/* Sidebar: avatar circle */}
-            <circle cx="19" cy="22" r="11" fill="#2563eb" opacity="0.7"/>
+            <circle cx="19" cy="22" r="11" fill="#2563eb" opacity="0.5"/>
+            <circle cx="19" cy="19" r="4.5" fill="#93c5fd"/>
+            <path d="M10 29 Q10 25 19 25 Q28 25 28 29" fill="#93c5fd"/>
             {/* Sidebar: name */}
             <rect x="5" y="37" width="28" height="3.5" rx="1" fill="#ffffff" opacity="0.9"/>
             <rect x="8" y="43" width="22" height="2.5" rx="1" fill="#93c5fd" opacity="0.8"/>
@@ -153,13 +159,17 @@ const DESIGN_OPTIONS = [
             <rect width="120" height="44" rx="3" fill="#0d9488"/>
             <rect x="0" y="41" width="120" height="3" fill="#0d9488"/>
             {/* Name in header */}
-            <rect x="10" y="10" width="60" height="7" rx="1.5" fill="#ffffff"/>
-            <rect x="10" y="20" width="40" height="3.5" rx="1" fill="#99f6e4" opacity="0.9"/>
-            <rect x="10" y="27" width="55" height="2.5" rx="1" fill="#5eead4" opacity="0.7"/>
+            <rect x="10" y="10" width="55" height="7" rx="1.5" fill="#ffffff"/>
+            <rect x="10" y="20" width="38" height="3.5" rx="1" fill="#99f6e4" opacity="0.9"/>
+            <rect x="10" y="27" width="50" height="2.5" rx="1" fill="#5eead4" opacity="0.7"/>
+            {/* Photo placeholder circle in teal header (top-right) */}
+            <circle cx="101" cy="20" r="10" fill="#0f766e" stroke="rgba(255,255,255,0.4)" strokeWidth="1.5"/>
+            <circle cx="101" cy="17" r="3.5" fill="#99f6e4"/>
+            <path d="M94 27 Q94 23 101 23 Q108 23 108 27" fill="#99f6e4"/>
             {/* Contact pills in header */}
-            <rect x="10" y="35" width="22" height="5" rx="2.5" fill="#0f766e"/>
-            <rect x="35" y="35" width="22" height="5" rx="2.5" fill="#0f766e"/>
-            <rect x="60" y="35" width="22" height="5" rx="2.5" fill="#0f766e"/>
+            <rect x="10" y="35" width="20" height="5" rx="2.5" fill="#0f766e"/>
+            <rect x="33" y="35" width="20" height="5" rx="2.5" fill="#0f766e"/>
+            <rect x="56" y="35" width="20" height="5" rx="2.5" fill="#0f766e"/>
             {/* Skills as badges */}
             <rect x="10" y="52" width="20" height="6" rx="3" fill="#ccfbf1" stroke="#0d9488" strokeWidth="0.75"/>
             <rect x="33" y="52" width="24" height="6" rx="3" fill="#ccfbf1" stroke="#0d9488" strokeWidth="0.75"/>
@@ -193,8 +203,12 @@ const DESIGN_OPTIONS = [
          <svg viewBox="0 0 120 160" fill="none" xmlns="http://www.w3.org/2000/svg" className="design-preview-svg">
             <rect width="120" height="160" rx="3" fill="#ffffff" stroke="#e2e8f0" strokeWidth="1"/>
             {/* Large name — typographic focus */}
-            <rect x="12" y="14" width="75" height="9" rx="1.5" fill="#111827"/>
+            <rect x="12" y="14" width="68" height="9" rx="1.5" fill="#111827"/>
             <rect x="12" y="26" width="48" height="4" rx="1" fill="#6b7280"/>
+            {/* Photo placeholder (top-right, rounded square for minimal style) */}
+            <rect x="92" y="12" width="18" height="18" rx="3" fill="#f3f4f6" stroke="#d1d5db" strokeWidth="1"/>
+            <circle cx="101" cy="18" r="3.5" fill="#9ca3af"/>
+            <path d="M94 27 Q94 23 101 23 Q108 23 108 27" fill="#9ca3af" clipPath="url(#minClip)"/>
             {/* Thin rule */}
             <line x1="12" y1="35" x2="108" y2="35" stroke="#d1d5db" strokeWidth="0.75"/>
             {/* Contact line */}
@@ -240,9 +254,13 @@ const DESIGN_OPTIONS = [
             {/* Gold accent bar */}
             <rect x="0" y="35" width="120" height="3" fill="#c9a84c"/>
             {/* Name */}
-            <rect x="10" y="9" width="65" height="8" rx="1.5" fill="#ffffff"/>
+            <rect x="10" y="9" width="58" height="8" rx="1.5" fill="#ffffff"/>
             <rect x="10" y="20" width="42" height="3.5" rx="1" fill="#93c5fd" opacity="0.85"/>
-            <rect x="10" y="27" width="70" height="2" rx="1" fill="#64748b" opacity="0.6"/>
+            <rect x="10" y="27" width="60" height="2" rx="1" fill="#64748b" opacity="0.6"/>
+            {/* Photo placeholder circle in navy header (top-right) */}
+            <circle cx="103" cy="19" r="10" fill="#2d4f7c" stroke="rgba(255,255,255,0.25)" strokeWidth="1.5"/>
+            <circle cx="103" cy="16" r="3.5" fill="#93c5fd"/>
+            <path d="M96 26 Q96 22 103 22 Q110 22 110 26" fill="#93c5fd"/>
             {/* Executive Summary */}
             <rect x="10" y="44" width="35" height="4" rx="1" fill="#1e3a5f"/>
             <rect x="10" y="51" width="98" height="2" rx="1" fill="#475569"/>
@@ -313,6 +331,31 @@ const GenerateResume = () => {
    const [uploadFile, setUploadFile] = useState(null);
    const [uploadStatus, setUploadStatus] = useState('idle'); // idle | extracting | parsing | done | error
    const [uploadError, setUploadError] = useState('');
+
+   // ── Photo upload state ────────────────────────────────────────────────────
+   const photoInputRef = useRef(null);
+   const [photoBase64, setPhotoBase64] = useState(''); // base64 data URL
+
+   const handlePhotoChange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) {
+         showToast('error', 'Invalid file', 'Please upload a JPG, PNG, or WebP image.');
+         return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+         showToast('error', 'File too large', 'Photo must be under 2 MB.');
+         return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => setPhotoBase64(ev.target.result);
+      reader.readAsDataURL(file);
+   };
+
+   const removePhoto = () => {
+      setPhotoBase64('');
+      if (photoInputRef.current) photoInputRef.current.value = '';
+   };
 
    // ── PDF → text extraction (pdfjs-dist, lazy-loaded) ──────────────────────
    const extractPdfText = async (file) => {
@@ -515,6 +558,7 @@ const GenerateResume = () => {
                experience: serializeExperiences(),
                education: serializeEducations(),
                design: selectedDesign,
+               photoBase64: photoBase64 || '',
             }),
          });
 
@@ -775,6 +819,55 @@ const GenerateResume = () => {
                </svg>
                Personal Information
             </div>
+
+            {/* ── Photo upload ── */}
+            <div className="resume-photo-upload">
+               <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  style={{ display: 'none' }}
+                  aria-hidden="true"
+                  onChange={handlePhotoChange}
+               />
+               <div
+                  className="resume-photo-preview"
+                  onClick={() => !photoBase64 && photoInputRef.current?.click()}
+                  role={!photoBase64 ? 'button' : undefined}
+                  tabIndex={!photoBase64 ? 0 : undefined}
+                  aria-label={!photoBase64 ? 'Upload profile photo' : undefined}
+                  onKeyDown={(e) => !photoBase64 && e.key === 'Enter' && photoInputRef.current?.click()}
+               >
+                  {photoBase64 ? (
+                     <img src={photoBase64} alt="Profile" className="resume-photo-img" />
+                  ) : (
+                     <div className="resume-photo-placeholder">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                           <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                           <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                        <span>Click to upload</span>
+                     </div>
+                  )}
+               </div>
+               <div className="resume-photo-actions">
+                  <p className="resume-photo-label">
+                     Profile Photo <span className="resume-photo-optional">(optional)</span>
+                  </p>
+                  <p className="resume-photo-hint">JPG, PNG or WebP · Max 2 MB · Appears in designs that support a photo</p>
+                  <div className="resume-photo-btns">
+                     <button type="button" className="resume-photo-btn" onClick={() => photoInputRef.current?.click()}>
+                        {photoBase64 ? 'Change Photo' : 'Upload Photo'}
+                     </button>
+                     {photoBase64 && (
+                        <button type="button" className="resume-photo-btn resume-photo-btn--remove" onClick={removePhoto}>
+                           Remove
+                        </button>
+                     )}
+                  </div>
+               </div>
+            </div>
+
             <div className="form-grid">
                <div className="form-group">
                   <label>Full Name *</label>
