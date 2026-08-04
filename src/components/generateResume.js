@@ -580,6 +580,7 @@ const GenerateResume = () => {
          if (!response.ok) throw new Error('Network response was not ok');
 
          const data = await response.json();
+         console.log('generateResume raw response:', data);
 
          // Parse body if it's a JSON string
          let parsed = data;
@@ -588,6 +589,9 @@ const GenerateResume = () => {
          } else if (data.body) {
             parsed = data.body;
          }
+
+         // Surface any error the Lambda returned
+         if (parsed.error) throw new Error(parsed.error);
 
          let html = parsed.resumeHtml || '';
 
