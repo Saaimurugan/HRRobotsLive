@@ -274,10 +274,12 @@ def build_prompt(form_data: dict, design: str, photo_base64: str = "") -> str:
     # The base64 photo is NOT sent to the AI — the model can't use it in a text prompt.
     # Instead we inject the <img> tag into the generated HTML after the fact.
     if photo_base64 and photo_base64.startswith('data:image'):
-        photo_img_tag = f'<img src="{photo_base64}" alt="Profile photo" style="width:80px; height:80px; border-radius:50%; object-fit:cover; display:block; margin:0 auto;">'
-        photo_instruction = """CANDIDATE PHOTO: A profile photo has been provided and will be injected automatically.
-Do NOT add any image tag, placeholder text, or empty element for the photo.
-Simply leave a comment <!-- PHOTO_HERE --> at the position in the header where the photo should appear (top-right of header for Classic/Minimal/Executive/Creative, top-center of left sidebar for Modern)."""
+        photo_img_tag = (
+            f'<img src="{photo_base64}" alt="" '
+            f'style="width:80px; height:80px; border-radius:50%; '
+            f'object-fit:cover; display:block;">'
+        )
+        photo_instruction = """CANDIDATE PHOTO: A profile photo has been provided and will be injected automatically into the header. Do NOT add any image tag, placeholder, or comment for a photo."""
     else:
         photo_img_tag = None
         photo_instruction = "CANDIDATE PHOTO: None provided — do NOT add any photo, placeholder, circle, or comment for a photo."
@@ -402,23 +404,49 @@ def lambda_handler(event, context):
             resume_html = resume_html[:-3]
         resume_html = resume_html.strip()
 
-        # Replace the photo placeholder token with the actual base64 <img> tag
+        # Inject photo into the generated HTML based on design
         if photo_img_tag:
             import re
-            # Strategy 1: AI placed the HTML comment marker <!-- PHOTO_HERE -->
-            if '<!-- PHOTO_HERE -->' in resume_html:
-                resume_html = resume_html.replace('<!-- PHOTO_HERE -->', photo_img_tag, 1)
-            # Strategy 2: AI placed any variation of the comment
+
+            # Remove any <img> tags the AI may have hallucinated (broken placeholders)
+            resume_html = re.sub(r'<img\b[^>]*>', '', resume_html)
+            # Also remove any now-empty wrappers left behind (e.g. <p></p>, <div ...></div>)
+            resume_html = re.sub(r'<(p|div|span)(\s[^>]*)?>(\s*)</\1>', '', resume_html)
+            resume_html = re.sub(r'<(p|div|span)(\s[^>]*)?>\s*</\1>', '', resume_html)
+
+            # Helper: add photo as a right-aligned <td> after the first name/contact <td>
+            def inject_into_header_table(html, img):
+                photo_td = (
+                    f'<td style="padding:0; text-align:right; vertical-align:middle; width:96px;">'
+                    f'<div style="display:inline-block;">{img}</div></td>'
+                )
+                first_td_close = re.search(r'</td>', html)
+                if first_td_close:
+                    pos = first_td_close.end()
+                    return html[:pos] + photo_td + html[pos:]
+                return html
+
+            if design == 'modern':
+                # Modern: photo at top of navy left sidebar, before the <h1>
+                photo_sidebar = (
+                    f'<div style="text-align:center; margin-bottom:16px;">'
+                    f'<img src="{photo_base64}" alt="" '
+                    f'style="width:80px; height:80px; border-radius:50%; object-fit:cover; '
+                    f'display:inline-block; border:3px solid rgba(255,255,255,0.3);">'
+                    f'</div>'
+                )
+                resume_html = re.sub(r'(<h1\b)', photo_sidebar + r'\1', resume_html, count=1)
+
+            elif design in ('classic', 'executive', 'minimal', 'creative'):
+                # These designs use a header table — add photo as a right-aligned second <td>
+                resume_html = inject_into_header_table(resume_html, photo_img_tag)
+
             else:
-                comment_re = re.compile(r'<!--\s*PHOTO[_\s]?HERE\s*-->', re.IGNORECASE)
-                resume_html, n = comment_re.subn(photo_img_tag, resume_html, count=1)
-                if n == 0:
-                    # Strategy 3: Fallback — inject right before the first <h1> tag
-                    # Wrap in a right-aligned div so it floats to the header corner
-                    photo_wrapped = (
-                        f'<div style="float:right; margin: 0 0 8px 16px;">{photo_img_tag}</div>'
-                    )
-                    resume_html = re.sub(r'(<h1\b)', photo_wrapped + r'\1', resume_html, count=1)
+                # Generic fallback: float right before first <h1>
+                photo_wrapped = (
+                    f'<div style="float:right; margin:0 0 8px 16px;">{photo_img_tag}</div>'
+                )
+                resume_html = re.sub(r'(<h1\b)', photo_wrapped + r'\1', resume_html, count=1)
 
         # Save to DynamoDB
         resume_id = str(uuid.uuid4())
