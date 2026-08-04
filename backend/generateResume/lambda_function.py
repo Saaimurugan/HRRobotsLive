@@ -270,13 +270,19 @@
         contact_parts = [p for p in [email, phone, location, linkedin, website] if p and p.strip()]
         contact_line = " · ".join(contact_parts)
 
-        # Build photo HTML snippet (base64 embedded — no external URLs needed)
+        # Build photo HTML snippet
+        # We do NOT embed the base64 in the AI prompt (it's too large and the model can't use it).
+        # Instead we use a placeholder token that gets replaced after generation.
         if photo_base64 and photo_base64.startswith('data:image'):
-            photo_html = f'<img src="{photo_base64}" alt="Profile photo" style="width:90px; height:90px; border-radius:50%; object-fit:cover; display:block;">'
-            photo_instruction = f"CANDIDATE PHOTO (include this in the resume header area per the design template): {photo_html}"
+            photo_placeholder = "PHOTO_PLACEHOLDER_TOKEN"
+            photo_img_tag = f'<img src="{photo_base64}" alt="Profile photo" style="width:80px; height:80px; border-radius:50%; object-fit:cover; display:block;">'
+            photo_instruction = f"""CANDIDATE PHOTO: A photo has been provided.
+Place the literal text PHOTO_PLACEHOLDER_TOKEN in the correct position in the HTML (per the design template above).
+Do not embed any base64 data — just place the exact token text: PHOTO_PLACEHOLDER_TOKEN"""
         else:
-            photo_html = ""
-            photo_instruction = "CANDIDATE PHOTO: None provided — do NOT add any photo placeholder or empty image tag."
+            photo_placeholder = None
+            photo_img_tag = None
+            photo_instruction = "CANDIDATE PHOTO: None provided — do NOT add any photo placeholder, circle, or empty image tag."
 
         prompt = f"""You are an expert resume writer and HTML developer. Your task is to produce a complete, pixel-perfect resume in HTML using ONLY inline CSS styles.
 
@@ -310,7 +316,7 @@
     9. Omit entire sections if all their data fields are empty or "N/A".
     10. Do not hallucinate or add content not in the candidate data.
     """
-        return prompt
+        return prompt, photo_placeholder, photo_img_tag
 
 
     def lambda_handler(event, context):
@@ -342,7 +348,7 @@
                     "body": json.dumps({"error": "Full name and email are required fields."})
                 }
 
-            prompt = build_prompt(form_data, design, photo_base64)
+            prompt, photo_placeholder, photo_img_tag = build_prompt(form_data, design, photo_base64)
 
             message_list = [
                 {"role": "user", "content": [{"text": prompt}]}
@@ -398,6 +404,10 @@
                 resume_html = resume_html[:-3]
             resume_html = resume_html.strip()
 
+            # Replace the photo placeholder token with the actual base64 <img> tag
+            if photo_placeholder and photo_img_tag and photo_placeholder in resume_html:
+                resume_html = resume_html.replace(photo_placeholder, photo_img_tag)
+
             # Save to DynamoDB
             resume_id = str(uuid.uuid4())
             created_at = datetime.utcnow().isoformat()
@@ -409,7 +419,7 @@
                         "userEmail": user_email,
                         "fullName": form_data["fullName"],
                         "design": design,
-                        "formData": form_data,
+                        "formData": form_data,  # does not include photo
                         "resumeHtml": resume_html,
                         "createdAt": created_at,
                     }

@@ -334,7 +334,7 @@ const GenerateResume = () => {
 
    // ── Photo upload state ────────────────────────────────────────────────────
    const photoInputRef = useRef(null);
-   const [photoBase64, setPhotoBase64] = useState(''); // base64 data URL
+   const [photoBase64, setPhotoBase64] = useState(''); // base64 data URL (resized)
 
    const handlePhotoChange = (e) => {
       const file = e.target.files[0];
@@ -343,13 +343,28 @@ const GenerateResume = () => {
          showToast('error', 'Invalid file', 'Please upload a JPG, PNG, or WebP image.');
          return;
       }
-      if (file.size > 2 * 1024 * 1024) {
-         showToast('error', 'File too large', 'Photo must be under 2 MB.');
-         return;
-      }
-      const reader = new FileReader();
-      reader.onload = (ev) => setPhotoBase64(ev.target.result);
-      reader.readAsDataURL(file);
+      // Resize to max 200×200 using a canvas before storing, so the base64
+      // stays small enough to send through API Gateway (~20–30 KB).
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+         const MAX = 200;
+         const scale = Math.min(MAX / img.width, MAX / img.height, 1);
+         const w = Math.round(img.width * scale);
+         const h = Math.round(img.height * scale);
+         const canvas = document.createElement('canvas');
+         canvas.width = w;
+         canvas.height = h;
+         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+         const resized = canvas.toDataURL('image/jpeg', 0.85);
+         setPhotoBase64(resized);
+         URL.revokeObjectURL(objectUrl);
+      };
+      img.onerror = () => {
+         showToast('error', 'Could not read image', 'Please try a different file.');
+         URL.revokeObjectURL(objectUrl);
+      };
+      img.src = objectUrl;
    };
 
    const removePhoto = () => {
@@ -854,7 +869,7 @@ const GenerateResume = () => {
                   <p className="resume-photo-label">
                      Profile Photo <span className="resume-photo-optional">(optional)</span>
                   </p>
-                  <p className="resume-photo-hint">JPG, PNG or WebP · Max 2 MB · Appears in designs that support a photo</p>
+                  <p className="resume-photo-hint">JPG, PNG or WebP · Auto-resized for optimal performance · Appears in designs that support a photo</p>
                   <div className="resume-photo-btns">
                      <button type="button" className="resume-photo-btn" onClick={() => photoInputRef.current?.click()}>
                         {photoBase64 ? 'Change Photo' : 'Upload Photo'}
