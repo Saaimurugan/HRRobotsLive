@@ -29,11 +29,11 @@ Name & Contact Header:
 Section headers:
 <h2 style="font-size: 10.5pt; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.08em; margin: 18px 0 4px 0; padding-bottom: 3px; border-bottom: 1px solid #2563eb;">
 
-Job entry title line:
-<div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 2px;">
-  <strong style="font-size: 11pt; color: #1e293b;">JOB TITLE</strong>
-  <span style="font-size: 9.5pt; color: #64748b;">START – END</span>
-</div>
+Job entry title line — use a nested table for title + date on the same line:
+<table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;"><tr>
+  <td style="padding: 0;"><strong style="font-size: 11pt; color: #1e293b;">JOB TITLE</strong></td>
+  <td style="padding: 0; text-align: right;"><span style="font-size: 9.5pt; color: #64748b;">START – END</span></td>
+</tr></table>
 <div style="font-size: 10pt; color: #64748b; margin-bottom: 4px;">Company · Location</div>
 
 Bullet points: <ul style="margin: 4px 0 10px 18px; padding: 0;"> with <li style="margin-bottom: 3px; color: #374151;">
@@ -46,33 +46,45 @@ Close outer div at the end.
 """,
 
     "modern": """
-Generate a modern two-column resume using ONLY inline CSS. Follow this exact structure:
+Generate a modern two-column resume using ONLY inline CSS. Use an HTML TABLE for the two-column layout (required for correct rendering).
 
-Outer wrapper (flex row):
-<div style="font-family: 'Calibri', Arial, sans-serif; font-size: 10.5pt; color: #374151; line-height: 1.5; max-width: 780px; margin: 0 auto; display: flex; min-height: 900px; background: #ffffff;">
+Use this EXACT outer structure — copy the style attributes verbatim:
 
-Left sidebar (38% width, dark navy background):
-<div style="width: 38%; background: #1e3a5f; color: #e2e8f0; padding: 28px 20px; box-sizing: border-box;">
-  - Name: <h1 style="font-size: 16pt; font-weight: 700; color: #ffffff; margin: 0 0 4px 0; line-height: 1.2;">
-  - Job title: <p style="font-size: 9.5pt; color: #93c5fd; margin: 0 0 16px 0;">
-  - Divider: <hr style="border: none; border-top: 1px solid #3b82f6; margin: 0 0 16px 0; opacity: 0.5;">
-  Sidebar section headers: <h3 style="font-size: 8.5pt; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.1em; margin: 16px 0 8px 0;">
-  Contact items: <p style="font-size: 9pt; color: #cbd5e1; margin: 3px 0;">
-  Skill items: <p style="font-size: 9pt; color: #cbd5e1; margin: 3px 0; padding-left: 8px; border-left: 2px solid #3b82f6;">
-  Certifications / Languages: <p style="font-size: 9pt; color: #cbd5e1; margin: 3px 0;">
-</div>
+<div style="font-family: 'Calibri', Arial, sans-serif; font-size: 10.5pt; color: #374151; line-height: 1.5; max-width: 780px; margin: 0 auto; background: #ffffff;">
+<table style="width: 100%; border-collapse: collapse; min-height: 900px;">
+<tr style="vertical-align: top;">
 
-Right content (62% width):
-<div style="width: 62%; padding: 28px 28px 28px 24px; box-sizing: border-box;">
+LEFT COLUMN (td, 38% width, dark navy):
+<td style="width: 38%; background: #1e3a5f; color: #e2e8f0; padding: 28px 20px; vertical-align: top;">
+  Name: <h1 style="font-size: 16pt; font-weight: 700; color: #ffffff; margin: 0 0 4px 0; line-height: 1.2;">FULL NAME</h1>
+  Job title: <p style="font-size: 9.5pt; color: #93c5fd; margin: 0 0 16px 0;">CURRENT TITLE</p>
+  Divider: <hr style="border: none; border-top: 1px solid #3b82f6; margin: 0 0 16px 0;">
+  Sidebar section headers (Contact, Skills, Certifications, Languages):
+    <h3 style="font-size: 8.5pt; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: 0.1em; margin: 16px 0 8px 0;">SECTION</h3>
+  Contact items: <p style="font-size: 9pt; color: #cbd5e1; margin: 3px 0;">VALUE</p>
+  Skill items: <p style="font-size: 9pt; color: #cbd5e1; margin: 3px 0; padding-left: 8px; border-left: 2px solid #3b82f6;">SKILL</p>
+  Certifications / Languages: <p style="font-size: 9pt; color: #cbd5e1; margin: 3px 0;">VALUE</p>
+</td>
+
+RIGHT COLUMN (td, 62% width, white):
+<td style="width: 62%; background: #ffffff; padding: 28px 28px 28px 24px; vertical-align: top;">
   Section headers: <h2 style="font-size: 10pt; font-weight: 700; color: #2563eb; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 4px 0; padding-bottom: 3px; border-bottom: 1.5px solid #2563eb;">
-  First section has margin-top: 0; subsequent sections margin-top: 18px.
-  Job title line: flex row justify-content space-between.
-  <strong style="font-size: 10.5pt; color: #1e293b;">TITLE</strong>  <span style="font-size: 9pt; color: #64748b;">DATES</span>
-  Company line: <div style="font-size: 9.5pt; color: #64748b; margin-bottom: 3px;">
-  Bullets: <ul style="margin: 3px 0 10px 16px; padding: 0;"> <li style="margin-bottom: 2px; color: #374151;">
+  First section margin-top: 0; subsequent sections margin-top: 18px.
+  Job entry uses a nested table for title + dates on same line:
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 2px;"><tr>
+    <td style="padding: 0;"><strong style="font-size: 10.5pt; color: #1e293b;">TITLE</strong></td>
+    <td style="padding: 0; text-align: right;"><span style="font-size: 9pt; color: #64748b;">DATES</span></td>
+  </tr></table>
+  Company line: <div style="font-size: 9.5pt; color: #64748b; margin-bottom: 3px;">Company · Location</div>
+  Bullets: <ul style="margin: 3px 0 10px 16px; padding: 0;"><li style="margin-bottom: 2px; color: #374151;">POINT</li></ul>
+</td>
+
+</tr>
+</table>
 </div>
 
-Close outer div.
+Put Contact, Skills, Certifications, and Languages in the LEFT column.
+Put Professional Summary, Work Experience, and Education in the RIGHT column.
 """,
 
     "creative": """
@@ -135,10 +147,10 @@ Followed by a thin rule: <hr style="border: none; border-top: 0.75px solid #e5e7
 
 Job entry:
 <div style="margin-bottom: 14px;">
-  <div style="display: flex; justify-content: space-between; align-items: baseline;">
-    <strong style="font-size: 10.5pt; color: #111827;">TITLE</strong>
-    <span style="font-size: 9pt; color: #9ca3af;">DATES</span>
-  </div>
+  <table style="width: 100%; border-collapse: collapse;"><tr>
+    <td style="padding: 0;"><strong style="font-size: 10.5pt; color: #111827;">TITLE</strong></td>
+    <td style="padding: 0; text-align: right;"><span style="font-size: 9pt; color: #9ca3af;">DATES</span></td>
+  </tr></table>
   <div style="font-size: 9.5pt; color: #6b7280; margin-bottom: 4px;">Company · Location</div>
   Bullets: <ul style="margin: 3px 0 0 14px; padding: 0; list-style: disc;"> <li style="margin-bottom: 2px; color: #374151;">
 </div>
@@ -169,20 +181,27 @@ Executive Summary (first section, no top margin):
 Summary paragraph: <p style="font-size: 10.5pt; color: #334155; margin: 0 0 18px 0; line-height: 1.6;">
 
 Key Achievements section (metric-driven, before Work Experience):
-<h2 style="...same header style... margin: 18px 0 10px 0;">
-Achievement grid (3 columns):
-<div style="display: flex; gap: 12px; margin-bottom: 18px;">
-  Each card: <div style="flex: 1; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px 14px; text-align: center;">
-    Metric: <div style="font-size: 15pt; font-weight: 700; color: #2563eb; margin-bottom: 4px;">
-    Label: <div style="font-size: 8.5pt; color: #64748b;">
+<h2 style="font-size: 10pt; font-weight: 700; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.1em; margin: 18px 0 10px 0; padding-bottom: 3px; border-bottom: 2px solid #1e3a5f;">
+Achievement grid (3 columns) using a TABLE:
+<table style="width: 100%; border-collapse: separate; border-spacing: 10px 0; margin-bottom: 18px;">
+<tr>
+  Each card as a <td style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 12px 14px; text-align: center; width: 33%;">
+    Metric: <div style="font-size: 15pt; font-weight: 700; color: #2563eb; margin-bottom: 4px;">VALUE</div>
+    Label: <div style="font-size: 8.5pt; color: #64748b;">LABEL</div>
+  </td>
+</tr>
+</table>
 
 Work Experience section: margin-top 18px.
-All job entries:
+All job entries use a nested TABLE for title+dates:
 <div style="margin-bottom: 14px;">
-  Title+dates flex row.
-  <strong style="font-size: 11pt; color: #1e293b;">TITLE</strong>  <span style="font-size: 9.5pt; color: #64748b;">DATES</span>
-  Company: <div style="font-size: 10pt; color: #64748b; margin-bottom: 4px;">
-  Bullets: <ul style="margin: 3px 0 0 16px; padding: 0;"> <li style="margin-bottom: 3px; color: #334155;">
+  <table style="width: 100%; border-collapse: collapse;"><tr>
+    <td style="padding: 0;"><strong style="font-size: 11pt; color: #1e293b;">TITLE</strong></td>
+    <td style="padding: 0; text-align: right;"><span style="font-size: 9.5pt; color: #64748b;">DATES</span></td>
+  </tr></table>
+  Company: <div style="font-size: 10pt; color: #64748b; margin-bottom: 4px;">COMPANY · LOCATION</div>
+  Bullets: <ul style="margin: 3px 0 0 16px; padding: 0;"><li style="margin-bottom: 3px; color: #334155;">POINT</li></ul>
+</div>
 
 Education: same section header, simpler entries without bullets.
 Skills / Certifications: section header then <p>.
