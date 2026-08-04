@@ -94,6 +94,13 @@ Return ONLY the JSON object. No markdown, no extra text, no explanations."""
             cleaned = json_match.group(0)
 
         parsed = json.loads(cleaned)
+
+        # Normalize URLs — prepend https:// if protocol is missing
+        for url_field in ('linkedin', 'website'):
+            val = parsed.get(url_field, '')
+            if val and not val.startswith(('http://', 'https://')):
+                parsed[url_field] = 'https://' + val
+
         return {'success': True, 'data': parsed}
     except json.JSONDecodeError as e:
         print(f'parse_resume JSON error: {e}, raw: {raw[:300]}')

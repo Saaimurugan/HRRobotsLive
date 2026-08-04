@@ -794,11 +794,11 @@ const GenerateResume = () => {
                </div>
                <div className="form-group">
                   <label>LinkedIn URL</label>
-                  <input type="url" name="linkedin" value={formData.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/..."/>
+                  <input type="text" name="linkedin" value={formData.linkedin} onChange={handleChange} placeholder="https://linkedin.com/in/..."/>
                </div>
                <div className="form-group">
                   <label>Website / Portfolio</label>
-                  <input type="url" name="website" value={formData.website} onChange={handleChange} placeholder="https://yoursite.com"/>
+                  <input type="text" name="website" value={formData.website} onChange={handleChange} placeholder="https://yoursite.com"/>
                </div>
             </div>
 
