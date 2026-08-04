@@ -287,66 +287,25 @@ const GenerateResume = () => {
    const [showForm, setShowForm] = useState(true);
    const [selectedDesign, setSelectedDesign] = useState('classic');
 
-   const [formData, setFormData] = useState({
-      fullName: 'Sarah Mitchell',
-      email: 'sarah.mitchell@email.com',
-      phone: '+1 (555) 234-5678',
-      location: 'San Francisco, CA',
-      linkedin: 'https://linkedin.com/in/sarahmitchell',
-      website: 'https://sarahmitchell.dev',
-      summary: 'Results-driven Senior Software Engineer with 8+ years of experience building scalable web applications and leading cross-functional engineering teams. Passionate about clean architecture, developer experience, and delivering impactful products.',
-      skills: 'Python, JavaScript, TypeScript, React, Node.js, AWS (EC2, Lambda, S3, RDS), Docker, Kubernetes, PostgreSQL, Redis, GraphQL, REST APIs, CI/CD, Terraform',
-      certifications: 'AWS Certified Solutions Architect – Associate (2023), Google Cloud Professional Data Engineer (2022)',
-      languages: 'English (Native), French (Conversational)',
-      achievements: 'Engineering Excellence Award – Acme Corp (2023), Speaker at ReactConf 2022, Open source contributor (2.4k GitHub stars)',
-   });
+   const defaultFormData = {
+      fullName: '',
+      email: '',
+      phone: '',
+      location: '',
+      linkedin: '',
+      website: '',
+      summary: '',
+      skills: '',
+      certifications: '',
+      languages: '',
+      achievements: '',
+   };
+
+   const [formData, setFormData] = useState(defaultFormData);
 
    // Structured lists
-   const [experiences, setExperiences] = useState([
-      {
-         id: 1,
-         title: 'Senior Software Engineer',
-         company: 'Acme Corp',
-         location: 'San Francisco, CA',
-         startDate: 'Mar 2021',
-         endDate: '',
-         current: true,
-         description: '- Led a team of 6 engineers to redesign the core payments platform, reducing transaction failures by 35%\n- Architected a microservices migration from a monolith, improving deployment frequency from monthly to daily\n- Mentored 4 junior engineers through structured code reviews and pair programming sessions\n- Reduced AWS infrastructure costs by $120k/year through right-sizing and spot instance adoption',
-      },
-      {
-         id: 2,
-         title: 'Software Engineer',
-         company: 'StartupXYZ',
-         location: 'Austin, TX',
-         startDate: 'Jun 2018',
-         endDate: 'Feb 2021',
-         current: false,
-         description: '- Built the real-time analytics dashboard used by 500+ enterprise clients using React and WebSockets\n- Developed RESTful APIs in Node.js handling 2M+ requests/day\n- Implemented automated testing suite increasing code coverage from 40% to 88%\n- Collaborated with product and design to ship 3 major feature releases on schedule',
-      },
-      {
-         id: 3,
-         title: 'Junior Developer',
-         company: 'Digital Agency Co.',
-         location: 'Austin, TX',
-         startDate: 'Jan 2017',
-         endDate: 'May 2018',
-         current: false,
-         description: '- Delivered 12 client websites using React, Vue.js, and WordPress\n- Integrated third-party APIs including Stripe, Twilio, and Google Maps\n- Participated in daily standups and biweekly sprint reviews in an Agile environment',
-      },
-   ]);
-
-   const [educations, setEducations] = useState([
-      {
-         id: 1,
-         degree: 'B.Sc. Computer Science',
-         institution: 'University of Texas at Austin',
-         location: 'Austin, TX',
-         startDate: '2013',
-         endDate: '2017',
-         gpa: '3.8 / 4.0',
-         notes: "Dean's List (2015–2017), Thesis: Distributed Caching Strategies for High-Throughput Systems",
-      },
-   ]);
+   const [experiences, setExperiences] = useState([emptyExperience()]);
+   const [educations, setEducations] = useState([emptyEducation()]);
 
    // ── Upload-to-prefill state ────────────────────────────────────────────────
    const uploadInputRef = useRef(null);
@@ -414,53 +373,65 @@ const GenerateResume = () => {
 
          const pd = body.parsed || {};
 
-         // ── Map parsed fields → formData ──────────────────────────────────
-         setFormData(prev => ({
-            ...prev,
-            fullName:        pd.fullName        || prev.fullName,
-            email:           pd.email           || prev.email,
-            phone:           pd.phone           || prev.phone,
-            location:        pd.location        || prev.location,
-            linkedin:        pd.linkedin        || prev.linkedin,
-            summary:         pd.summary         || prev.summary,
-            skills:          Array.isArray(pd.skills)
-                                ? pd.skills.join(', ')
-                                : (pd.skills || prev.skills),
-            certifications:  Array.isArray(pd.certifications)
-                                ? pd.certifications.join(', ')
-                                : (pd.certifications || prev.certifications),
-            languages:       Array.isArray(pd.languages)
-                                ? pd.languages.join(', ')
-                                : (pd.languages || prev.languages),
-         }));
-
-         // ── Map experience array ──────────────────────────────────────────
-         if (Array.isArray(pd.experience) && pd.experience.length > 0) {
-            setExperiences(pd.experience.map((exp, i) => ({
-               id: Date.now() + i,
-               title:       exp.title       || '',
-               company:     exp.company     || '',
-               location:    exp.location    || '',
-               startDate:   exp.duration    ? exp.duration.split(/[-–]/)[0].trim() : '',
-               endDate:     exp.duration    ? (exp.duration.split(/[-–]/)[1] || '').trim() : '',
-               current:     /present/i.test(exp.duration || ''),
-               description: exp.description || '',
-            })));
+         // If the AI returned nothing useful, surface an error rather than silently showing empty fields
+         if (!pd.fullName && !pd.email && !pd.experience && !pd.education) {
+            throw new Error('AI could not extract data from this resume. Please fill the form manually.');
          }
 
-         // ── Map education array ───────────────────────────────────────────
-         if (Array.isArray(pd.education) && pd.education.length > 0) {
-            setEducations(pd.education.map((edu, i) => ({
-               id: Date.now() + i + 1000,
-               degree:      edu.degree      || '',
-               institution: edu.institution || '',
-               location:    '',
-               startDate:   '',
-               endDate:     edu.year        || '',
-               gpa:         '',
-               notes:       '',
-            })));
-         }
+         console.log('Parsed resume data:', pd);
+
+         // ── Map parsed fields → formData (replace, do not fall back to sample data) ──
+         setFormData({
+            fullName:       pd.fullName        || '',
+            email:          pd.email           || '',
+            phone:          pd.phone           || '',
+            location:       pd.location        || '',
+            linkedin:       pd.linkedin        || '',
+            website:        pd.website         || '',
+            summary:        pd.summary         || '',
+            skills:         Array.isArray(pd.skills)
+                               ? pd.skills.join(', ')
+                               : (pd.skills || ''),
+            certifications: Array.isArray(pd.certifications)
+                               ? pd.certifications.join(', ')
+                               : (pd.certifications || ''),
+            languages:      Array.isArray(pd.languages)
+                               ? pd.languages.join(', ')
+                               : (pd.languages || ''),
+            achievements:   pd.achievements    || '',
+         });
+
+         // ── Map experience array (always replace, clear sample data) ──────
+         setExperiences(
+            Array.isArray(pd.experience) && pd.experience.length > 0
+               ? pd.experience.map((exp, i) => ({
+                    id: Date.now() + i,
+                    title:       exp.title       || '',
+                    company:     exp.company     || '',
+                    location:    exp.location    || '',
+                    startDate:   exp.duration    ? exp.duration.split(/[-–]/)[0].trim() : '',
+                    endDate:     exp.duration    ? (exp.duration.split(/[-–]/)[1] || '').trim() : '',
+                    current:     /present/i.test(exp.duration || ''),
+                    description: exp.description || '',
+                 }))
+               : [emptyExperience()]
+         );
+
+         // ── Map education array (always replace, clear sample data) ───────
+         setEducations(
+            Array.isArray(pd.education) && pd.education.length > 0
+               ? pd.education.map((edu, i) => ({
+                    id: Date.now() + i + 1000,
+                    degree:      edu.degree      || '',
+                    institution: edu.institution || '',
+                    location:    '',
+                    startDate:   '',
+                    endDate:     edu.year        || '',
+                    gpa:         '',
+                    notes:       '',
+                 }))
+               : [emptyEducation()]
+         );
 
          setUploadStatus('done');
          showToast('success', 'Resume Imported!', 'Your details have been pre-filled. Review and edit before generating.');
@@ -653,7 +624,12 @@ const GenerateResume = () => {
             <button
                type="button"
                className={`resume-mode-btn ${!uploadMode ? 'active' : ''}`}
-               onClick={() => setUploadMode(false)}
+               onClick={() => {
+                  setUploadMode(false);
+                  setUploadStatus('idle');
+                  setUploadFile(null);
+                  setUploadError('');
+               }}
             >
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
@@ -663,7 +639,13 @@ const GenerateResume = () => {
             <button
                type="button"
                className={`resume-mode-btn ${uploadMode ? 'active' : ''}`}
-               onClick={() => setUploadMode(true)}
+               onClick={() => {
+                  setUploadMode(true);
+                  // Clear form so sample data doesn't show behind the upload panel
+                  setFormData(defaultFormData);
+                  setExperiences([emptyExperience()]);
+                  setEducations([emptyEducation()]);
+               }}
             >
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -745,6 +727,10 @@ const GenerateResume = () => {
                            setUploadStatus('idle');
                            setUploadError('');
                            uploadInputRef.current.value = '';
+                           // Clear the form so the next upload starts fresh
+                           setFormData(defaultFormData);
+                           setExperiences([emptyExperience()]);
+                           setEducations([emptyEducation()]);
                         }}
                      >
                         Change file

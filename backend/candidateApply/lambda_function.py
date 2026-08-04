@@ -76,6 +76,8 @@ Return ONLY the JSON object. No markdown, no extra text, no explanations."""
                 chunk_json = json.loads(chunk.get('bytes').decode())
                 raw += chunk_json.get('contentBlockDelta', {}).get('delta', {}).get('text', '')
 
+        print(f'parse_resume raw response (first 500 chars): {raw[:500]}')
+
         cleaned = raw.strip()
         if cleaned.startswith('```json'):
             cleaned = cleaned[7:]
@@ -84,6 +86,12 @@ Return ONLY the JSON object. No markdown, no extra text, no explanations."""
         if cleaned.endswith('```'):
             cleaned = cleaned[:-3]
         cleaned = cleaned.strip()
+
+        # If the model wrapped the JSON in extra text, extract just the JSON object
+        import re
+        json_match = re.search(r'\{[\s\S]*\}', cleaned)
+        if json_match:
+            cleaned = json_match.group(0)
 
         parsed = json.loads(cleaned)
         return {'success': True, 'data': parsed}
