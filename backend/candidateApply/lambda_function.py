@@ -179,17 +179,24 @@ Return ONLY the JSON object. No markdown, no extra text.
         return None
 
 
-def create_test_transaction(candidate_email, candidate_name, template_id):
-    """Insert a row into testTransactions and return the testID."""
+def create_test_transaction(candidate_email, candidate_name, template_id, owner_email=None):
+    """Insert a row into testTransactions and return the testID.
+
+    The 'email' field is indexed by the Results page via the email-index GSI,
+    so it must hold the HR owner's email (same as how createTest stores it).
+    The candidate's email is stored separately as 'candidateEmail'.
+    """
     test_id = str(uuid.uuid4())
-    test_table.put_item(Item={
+    item = {
         'testID': test_id,
         'candidateName': candidate_name,
         'templateID': template_id,
-        'email': candidate_email,
+        'email': owner_email if owner_email else candidate_email,
+        'candidateEmail': candidate_email,
         'status': 'Not Started',
         'datetime': datetime.utcnow().isoformat(),
-    })
+    }
+    test_table.put_item(Item=item)
     return test_id
 
 
@@ -478,8 +485,19 @@ def lambda_handler(event, context):
             if profiler_result:
                 suitability = profiler_result.get('Suitability', '')
 
+        # Fetch template for name + owner email (needed before creating test transaction)
+        try:
+            tmpl_resp = template_table.get_item(Key={'templateID': template_id})
+            tmpl_item = tmpl_resp.get('Item', {})
+            template_name = tmpl_item.get('templateName', 'Screening Assessment')
+            owner_email = tmpl_item.get('email', '')  # HR user who owns the template
+        except Exception:
+            template_name = 'Screening Assessment'
+            owner_email = ''
+
         # Create test transaction → get test link
-        test_id = create_test_transaction(candidate_email, candidate_name, template_id)
+        # owner_email is stored as 'email' so the Results page (email-index GSI) can find it
+        test_id = create_test_transaction(candidate_email, candidate_name, template_id, owner_email)
         test_link = f'https://www.hrrobots.click/test/{test_id}'
 
         # Save application to DynamoDB
@@ -505,13 +523,6 @@ def lambda_handler(event, context):
             application_item['parsedResume'] = json.dumps(parsed_resume)
 
         applications_table.put_item(Item=application_item)
-
-        # Get template name for the email
-        try:
-            tmpl_resp = template_table.get_item(Key={'templateID': template_id})
-            template_name = tmpl_resp.get('Item', {}).get('templateName', 'Screening Assessment')
-        except Exception:
-            template_name = 'Screening Assessment'
 
         # Send email with test link (async)
         email_body = build_test_email(candidate_name, test_link, template_name, suitability)
