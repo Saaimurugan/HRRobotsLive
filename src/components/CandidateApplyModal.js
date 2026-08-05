@@ -34,6 +34,11 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
   const [thresholdSaved, setThresholdSaved]         = useState(false);
   const [thresholdError, setThresholdError]         = useState('');
 
+  // ── Submissions search + pagination ─────────────────────────────────────
+  const PAGE_SIZE = 8;
+  const [subSearch, setSubSearch]   = useState('');
+  const [subPage, setSubPage]       = useState(1);
+
   const applyLink = template ? `${BASE_URL}/apply/${template.templateID}` : '';
   const hasJD = jobDescription.trim().length > 0;
 
@@ -220,6 +225,8 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     setJdError('');
     setThresholdSaved(false);
     setThresholdError('');
+    setSubSearch('');
+    setSubPage(1);
     onClose();
   };
 
@@ -324,6 +331,19 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     const liveStatus = testScore?.liveStatus || selectedApp.status;
     navigate('/result', { state: { testID: selectedApp.testID, itemData: { status: liveStatus } } });
   };
+
+  /* ── Derived: filtered + paginated submissions ──────────────────────────── */
+  const filteredSubs = submissions.filter(app => {
+    const q = subSearch.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      app.candidateName.toLowerCase().includes(q) ||
+      app.candidateEmail.toLowerCase().includes(q)
+    );
+  });
+  const totalPages = Math.max(1, Math.ceil(filteredSubs.length / PAGE_SIZE));
+  const safePage   = Math.min(subPage, totalPages);
+  const pagedSubs  = filteredSubs.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
 
 
@@ -833,34 +853,106 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
               </div>
             ) : (
               <>
-                <div className="cam-submissions-meta">
-                  <span>{submissions.length} application{submissions.length !== 1 ? 's' : ''}</span>
-                  <button className="cam-refresh-btn" onClick={loadSubmissions}>
-                    <svg viewBox="0 0 24 24" fill="none"><path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                    Refresh
-                  </button>
-                </div>
-                <div className="cam-list">
-                  {submissions.map(app => {
-                    const score = app.suitability || '—';
-                    const scoreNum = parseInt(String(score).replace('%', '')) || 0;
-                    const scoreClass = scoreNum >= 75 ? 'score--high' : scoreNum >= 50 ? 'score--mid' : scoreNum > 0 ? 'score--low' : 'score--none';
-                    return (
-                      <button key={app.applicationID} className="cam-list-item" onClick={() => setSelectedApp(app)}>
-                        <div className="cam-avatar">{app.candidateName.charAt(0).toUpperCase()}</div>
-                        <div className="cam-list-info">
-                          <strong>{app.candidateName}</strong>
-                          <span>{app.candidateEmail}</span>
-                        </div>
-                        <div className="cam-list-right">
-                          <span className={`cam-score-badge ${scoreClass}`}>{score}</span>
-                          <span className="cam-list-date">{new Date(app.submittedAt).toLocaleDateString()}</span>
-                        </div>
-                        <svg className="cam-chevron" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                {/* Search + meta row */}
+                <div className="cam-sub-toolbar">
+                  <div className="cam-sub-search">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search by name or email…"
+                      value={subSearch}
+                      onChange={e => { setSubSearch(e.target.value); setSubPage(1); }}
+                      className="cam-sub-search-input"
+                      aria-label="Search candidates"
+                    />
+                    {subSearch && (
+                      <button className="cam-sub-search-clear" onClick={() => { setSubSearch(''); setSubPage(1); }} aria-label="Clear search">
+                        <svg viewBox="0 0 24 24" fill="none"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
                       </button>
-                    );
-                  })}
+                    )}
+                  </div>
+                  <div className="cam-sub-meta">
+                    <span>
+                      {subSearch
+                        ? `${filteredSubs.length} of ${submissions.length}`
+                        : `${submissions.length}`
+                      } application{submissions.length !== 1 ? 's' : ''}
+                    </span>
+                    <button className="cam-refresh-btn" onClick={loadSubmissions} title="Refresh">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M1 4v6h6M23 20v-6h-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                      Refresh
+                    </button>
+                  </div>
                 </div>
+
+                {/* List */}
+                {filteredSubs.length === 0 ? (
+                  <div className="cam-empty">
+                    <svg viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="8" stroke="currentColor" strokeWidth="1.5"/><path d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+                    <p>No matches for "{subSearch}"</p>
+                    <span>Try a different name or email.</span>
+                  </div>
+                ) : (
+                  <div className="cam-list">
+                    {pagedSubs.map(app => {
+                      const score = app.suitability || '—';
+                      const scoreNum = parseInt(String(score).replace('%', '')) || 0;
+                      const scoreClass = scoreNum >= 75 ? 'score--high' : scoreNum >= 50 ? 'score--mid' : scoreNum > 0 ? 'score--low' : 'score--none';
+                      return (
+                        <button key={app.applicationID} className="cam-list-item" onClick={() => setSelectedApp(app)}>
+                          <div className="cam-avatar">{app.candidateName.charAt(0).toUpperCase()}</div>
+                          <div className="cam-list-info">
+                            <strong>{app.candidateName}</strong>
+                            <span>{app.candidateEmail}</span>
+                          </div>
+                          <div className="cam-list-right">
+                            <span className={`cam-score-badge ${scoreClass}`}>{score}</span>
+                            <span className="cam-list-date">{new Date(app.submittedAt).toLocaleDateString()}</span>
+                          </div>
+                          <svg className="cam-chevron" viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="cam-pagination">
+                    <button
+                      className="cam-page-btn"
+                      onClick={() => setSubPage(p => Math.max(1, p - 1))}
+                      disabled={safePage === 1}
+                      aria-label="Previous page"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                      <button
+                        key={n}
+                        className={`cam-page-btn ${n === safePage ? 'cam-page-btn--active' : ''}`}
+                        onClick={() => setSubPage(n)}
+                        aria-label={`Page ${n}`}
+                        aria-current={n === safePage ? 'page' : undefined}
+                      >
+                        {n}
+                      </button>
+                    ))}
+
+                    <button
+                      className="cam-page-btn"
+                      onClick={() => setSubPage(p => Math.min(totalPages, p + 1))}
+                      disabled={safePage === totalPages}
+                      aria-label="Next page"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </button>
+                  </div>
+                )}
               </>
             )}
           </div>

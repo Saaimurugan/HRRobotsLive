@@ -1381,3 +1381,139 @@
   padding: 6px 14px;
   font-size: 0.8125rem;
 }
+
+/* ===================================================
+   Submissions — search toolbar
+   =================================================== */
+
+.cam-sub-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cam-sub-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cam-sub-search > svg {
+  position: absolute;
+  left: 11px;
+  width: 15px;
+  height: 15px;
+  stroke: #94a3b8;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.cam-sub-search-input {
+  width: 100%;
+  padding: 8px 34px 8px 34px;
+  font-size: 0.875rem;
+  color: #1e293b;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.cam-sub-search-input::placeholder { color: #94a3b8; }
+
+.cam-sub-search-input:focus {
+  border-color: #2563eb;
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.cam-sub-search-clear {
+  position: absolute;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: #e2e8f0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+
+.cam-sub-search-clear:hover { background: #cbd5e1; }
+
+.cam-sub-search-clear svg {
+  width: 12px;
+  height: 12px;
+  stroke: #64748b;
+}
+
+.cam-sub-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cam-sub-meta > span {
+  font-size: 0.8125rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* ===================================================
+   Submissions — pagination
+   =================================================== */
+
+.cam-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 4px;
+}
+
+.cam-page-btn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #475569;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.cam-page-btn:hover:not(:disabled):not(.cam-page-btn--active) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.cam-page-btn--active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+  font-weight: 700;
+  cursor: default;
+}
+
+.cam-page-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cam-page-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+}
