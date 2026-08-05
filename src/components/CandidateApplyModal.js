@@ -698,26 +698,9 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
 
         {/* ── Tab: Share Link ─────────────────────────────────────────────── */}
         {tab === 'link' && (
-          <div className="cam-body">
-            {/* JD warning banner */}
-            {!hasJD && !jdLoading && (
-              <div className="cam-jd-warning" role="alert">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                <div>
-                  <strong>No Job Description set</strong>
-                  <span>AI candidate scoring is disabled. <button className="cam-jd-warning-link" onClick={() => setTab('jd')}>Add a JD →</button></span>
-                </div>
-              </div>
-            )}
-            {hasJD && (
-              <div className="cam-jd-ready" role="status">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                <span>AI scoring is active — candidates will be scored against your job description.</span>
-              </div>
-            )}
-
-            {/* Link box — always visible at the top */}
-            <div className="cam-link-box">
+          <>
+            {/* Link bar — lives OUTSIDE the scrollable body so it never scrolls away */}
+            <div className="cam-link-bar">
               <div className="cam-link-display">
                 <svg viewBox="0 0 24 24" fill="none" className="cam-link-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                 <span className="cam-link-text">{applyLink}</span>
@@ -731,109 +714,131 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
               </button>
             </div>
 
-            {/* ── Match Threshold ─────────────────────────────────────────── */}
-            {hasJD && (
-              <div className="cam-threshold-card">
-                <div className="cam-threshold-header">
-                  <div className="cam-threshold-title">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <strong>JD Match Threshold</strong>
-                  </div>
-                  <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
-                    <span className="cam-threshold-badge" style={{
-                      background: matchThreshold >= 80 ? '#f0fdf4' : matchThreshold >= 60 ? '#fefce8' : '#fef2f2',
-                      color: matchThreshold >= 80 ? '#166534' : matchThreshold >= 60 ? '#854d0e' : '#991b1b',
-                      border: `1px solid ${matchThreshold >= 80 ? '#bbf7d0' : matchThreshold >= 60 ? '#fde047' : '#fecaca'}`,
-                    }}>
-                      {matchThreshold}%
-                    </span>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={matchThreshold}
-                      onChange={e => {
-                        const v = Math.min(100, Math.max(0, Number(e.target.value)));
-                        setMatchThreshold(v);
-                        setThresholdSaved(false);
-                      }}
-                      className="cam-threshold-number"
-                      aria-label="Match threshold value"
-                    />
-                    <button
-                      className={`cam-btn cam-btn--primary cam-btn--sm ${thresholdSaved ? 'cam-btn--saved' : ''}`}
-                      onClick={handleSaveThreshold}
-                      disabled={thresholdSaving}
-                    >
-                      {thresholdSaving ? (
-                        <><div className="cam-spinner cam-spinner--sm cam-spinner--white" /> Saving…</>
-                      ) : thresholdSaved ? (
-                        <><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>Saved!</>
-                      ) : (
-                        'Save'
-                      )}
-                    </button>
+            <div className="cam-body cam-body--link-tab">
+              {/* JD warning / ready banner */}
+              {!hasJD && !jdLoading && (
+                <div className="cam-jd-warning" role="alert">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <div>
+                    <strong>No Job Description set</strong>
+                    <span>AI candidate scoring is disabled. <button className="cam-jd-warning-link" onClick={() => setTab('jd')}>Add a JD →</button></span>
                   </div>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="5"
-                  value={matchThreshold}
-                  onChange={e => { setMatchThreshold(Number(e.target.value)); setThresholdSaved(false); }}
-                  className="cam-threshold-slider"
-                  aria-label="Match threshold percentage"
-                  style={{margin:'2px 0 0'}}
-                />
-                <p className="cam-threshold-desc" style={{margin:'2px 0 0'}}>
-                  Candidates at or near this score get the test link. Those below receive a polite mismatch email. A ±5% tolerance is applied.
-                </p>
-                {thresholdError && <span className="cam-jd-error" style={{marginTop: '2px', display: 'block'}}>{thresholdError}</span>}
-              </div>
-            )}
-            {!hasJD && !jdLoading && (
-              <div className="cam-threshold-card cam-threshold-card--disabled">
-                <div className="cam-threshold-header">
-                  <div className="cam-threshold-title">
-                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <strong>JD Match Threshold</strong>
-                  </div>
-                  <span className="cam-threshold-badge" style={{background:'#f1f5f9',color:'#94a3b8',border:'1px solid #e2e8f0'}}>
-                    Disabled
-                  </span>
+              )}
+              {hasJD && (
+                <div className="cam-jd-ready" role="status">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="22 4 12 14.01 9 11.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <span>AI scoring is active — candidates will be scored against your job description.</span>
                 </div>
-                <p className="cam-threshold-desc">
-                  Add a Job Description to enable match threshold filtering. Without a JD, all candidates receive the test link.
-                </p>
-              </div>
-            )}
+              )}
 
-            {/* How it works */}
-            <div className="cam-how">
-              <h4 className="cam-how-title">How it works</h4>
-              <div className="cam-steps">
-                {[
-                  { n: '1', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/></svg>, label: 'Candidate opens the link', sub: 'Fills in Name, Email, Phone & uploads their CV' },
-                  { n: '2', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, label: 'AI scores their profile', sub: 'Resume is matched against your job description instantly' },
-                  { n: '3', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, label: 'Result sent by email', sub: `Candidates meeting the ${matchThreshold}% threshold receive the test link; others get a mismatch email` },
-                ].map(step => (
-                  <div key={step.n} className="cam-step">
-                    <div className="cam-step-icon">{step.icon}</div>
-                    <div className="cam-step-body">
-                      <strong>{step.label}</strong>
-                      <span>{step.sub}</span>
+              {/* ── Match Threshold ──────────────────────────────────────── */}
+              {hasJD && (
+                <div className="cam-threshold-card">
+                  <div className="cam-threshold-header">
+                    <div className="cam-threshold-title">
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <strong>JD Match Threshold</strong>
                     </div>
-                    <div className="cam-step-num">{step.n}</div>
+                    <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                      <span className="cam-threshold-badge" style={{
+                        background: matchThreshold >= 80 ? '#f0fdf4' : matchThreshold >= 60 ? '#fefce8' : '#fef2f2',
+                        color: matchThreshold >= 80 ? '#166534' : matchThreshold >= 60 ? '#854d0e' : '#991b1b',
+                        border: `1px solid ${matchThreshold >= 80 ? '#bbf7d0' : matchThreshold >= 60 ? '#fde047' : '#fecaca'}`,
+                      }}>
+                        {matchThreshold}%
+                      </span>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={matchThreshold}
+                        onChange={e => {
+                          const v = Math.min(100, Math.max(0, Number(e.target.value)));
+                          setMatchThreshold(v);
+                          setThresholdSaved(false);
+                        }}
+                        className="cam-threshold-number"
+                        aria-label="Match threshold value"
+                      />
+                      <button
+                        className={`cam-btn cam-btn--primary cam-btn--sm ${thresholdSaved ? 'cam-btn--saved' : ''}`}
+                        onClick={handleSaveThreshold}
+                        disabled={thresholdSaving}
+                      >
+                        {thresholdSaving ? (
+                          <><div className="cam-spinner cam-spinner--sm cam-spinner--white" /> Saving…</>
+                        ) : thresholdSaved ? (
+                          <><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>Saved!</>
+                        ) : (
+                          'Save'
+                        )}
+                      </button>
+                    </div>
                   </div>
-                ))}
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={matchThreshold}
+                    onChange={e => { setMatchThreshold(Number(e.target.value)); setThresholdSaved(false); }}
+                    className="cam-threshold-slider"
+                    aria-label="Match threshold percentage"
+                    style={{
+                      margin: '2px 0 0',
+                      background: `linear-gradient(to right, #2563eb ${matchThreshold}%, #e2e8f0 ${matchThreshold}%)`
+                    }}
+                  />
+                  <p className="cam-threshold-desc" style={{margin:'2px 0 0'}}>
+                    Candidates at or near this score get the test link. Those below receive a polite mismatch email. A ±5% tolerance is applied.
+                  </p>
+                  {thresholdError && <span className="cam-jd-error" style={{marginTop: '2px', display: 'block'}}>{thresholdError}</span>}
+                </div>
+              )}
+              {!hasJD && !jdLoading && (
+                <div className="cam-threshold-card cam-threshold-card--disabled">
+                  <div className="cam-threshold-header">
+                    <div className="cam-threshold-title">
+                      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <strong>JD Match Threshold</strong>
+                    </div>
+                    <span className="cam-threshold-badge" style={{background:'#f1f5f9',color:'#94a3b8',border:'1px solid #e2e8f0'}}>
+                      Disabled
+                    </span>
+                  </div>
+                  <p className="cam-threshold-desc">
+                    Add a Job Description to enable match threshold filtering. Without a JD, all candidates receive the test link.
+                  </p>
+                </div>
+              )}
+
+              {/* How it works */}
+              <div className="cam-how">
+                <h4 className="cam-how-title">How it works</h4>
+                <div className="cam-steps">
+                  {[
+                    { n: '1', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/></svg>, label: 'Candidate opens the link', sub: 'Fills in Name, Email, Phone & uploads their CV' },
+                    { n: '2', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, label: 'AI scores their profile', sub: 'Resume is matched against your job description instantly' },
+                    { n: '3', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, label: 'Result sent by email', sub: `Candidates meeting the ${matchThreshold}% threshold receive the test link; others get a mismatch email` },
+                  ].map(step => (
+                    <div key={step.n} className="cam-step">
+                      <div className="cam-step-icon">{step.icon}</div>
+                      <div className="cam-step-body">
+                        <strong>{step.label}</strong>
+                        <span>{step.sub}</span>
+                      </div>
+                      <div className="cam-step-num">{step.n}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          </>
         )}
 
 
