@@ -696,11 +696,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
               </div>
             )}
 
-            <p className="cam-intro">
-              Share this link publicly. Candidates fill in their details and upload their CV — our AI instantly scores their profile and emails them a personalised assessment link if their match score meets the threshold.
-            </p>
-
-            {/* Link box */}
+            {/* Link box — always visible at the top */}
             <div className="cam-link-box">
               <div className="cam-link-display">
                 <svg viewBox="0 0 24 24" fill="none" className="cam-link-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
@@ -725,70 +721,57 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
                     </svg>
                     <strong>JD Match Threshold</strong>
                   </div>
-                  <span className="cam-threshold-badge" style={{
-                    background: matchThreshold >= 80 ? '#f0fdf4' : matchThreshold >= 60 ? '#fefce8' : '#fef2f2',
-                    color: matchThreshold >= 80 ? '#166534' : matchThreshold >= 60 ? '#854d0e' : '#991b1b',
-                    border: `1px solid ${matchThreshold >= 80 ? '#bbf7d0' : matchThreshold >= 60 ? '#fde047' : '#fecaca'}`,
-                  }}>
-                    {matchThreshold}%
-                  </span>
-                </div>
-                <p className="cam-threshold-desc">
-                  Only send the assessment link if the candidate's resume matches the job description at or near this score.
-                  Candidates below this threshold receive a polite email explaining the mismatch instead.
-                </p>
-                <div className="cam-threshold-controls">
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="5"
-                    value={matchThreshold}
-                    onChange={e => { setMatchThreshold(Number(e.target.value)); setThresholdSaved(false); }}
-                    className="cam-threshold-slider"
-                    aria-label="Match threshold percentage"
-                  />
-                  <div className="cam-threshold-input-row">
-                    <div className="cam-threshold-labels">
-                      <span>0%</span>
-                      <span>50%</span>
-                      <span>100%</span>
-                    </div>
-                    <div className="cam-threshold-right">
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={matchThreshold}
-                        onChange={e => {
-                          const v = Math.min(100, Math.max(0, Number(e.target.value)));
-                          setMatchThreshold(v);
-                          setThresholdSaved(false);
-                        }}
-                        className="cam-threshold-number"
-                        aria-label="Match threshold value"
-                      />
-                      <button
-                        className={`cam-btn cam-btn--primary cam-btn--sm ${thresholdSaved ? 'cam-btn--saved' : ''}`}
-                        onClick={handleSaveThreshold}
-                        disabled={thresholdSaving}
-                      >
-                        {thresholdSaving ? (
-                          <><div className="cam-spinner cam-spinner--sm cam-spinner--white" /> Saving…</>
-                        ) : thresholdSaved ? (
-                          <><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>Saved!</>
-                        ) : (
-                          'Save'
-                        )}
-                      </button>
-                    </div>
+                  <div style={{display:'flex', alignItems:'center', gap:'8px'}}>
+                    <span className="cam-threshold-badge" style={{
+                      background: matchThreshold >= 80 ? '#f0fdf4' : matchThreshold >= 60 ? '#fefce8' : '#fef2f2',
+                      color: matchThreshold >= 80 ? '#166534' : matchThreshold >= 60 ? '#854d0e' : '#991b1b',
+                      border: `1px solid ${matchThreshold >= 80 ? '#bbf7d0' : matchThreshold >= 60 ? '#fde047' : '#fecaca'}`,
+                    }}>
+                      {matchThreshold}%
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={matchThreshold}
+                      onChange={e => {
+                        const v = Math.min(100, Math.max(0, Number(e.target.value)));
+                        setMatchThreshold(v);
+                        setThresholdSaved(false);
+                      }}
+                      className="cam-threshold-number"
+                      aria-label="Match threshold value"
+                    />
+                    <button
+                      className={`cam-btn cam-btn--primary cam-btn--sm ${thresholdSaved ? 'cam-btn--saved' : ''}`}
+                      onClick={handleSaveThreshold}
+                      disabled={thresholdSaving}
+                    >
+                      {thresholdSaving ? (
+                        <><div className="cam-spinner cam-spinner--sm cam-spinner--white" /> Saving…</>
+                      ) : thresholdSaved ? (
+                        <><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>Saved!</>
+                      ) : (
+                        'Save'
+                      )}
+                    </button>
                   </div>
-                  {thresholdError && <span className="cam-jd-error" style={{marginTop: '4px', display: 'block'}}>{thresholdError}</span>}
                 </div>
-                <div className="cam-threshold-info">
-                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
-                  <span>A ±5% tolerance is applied — scores within 5 points below the threshold still receive the test link.</span>
-                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="5"
+                  value={matchThreshold}
+                  onChange={e => { setMatchThreshold(Number(e.target.value)); setThresholdSaved(false); }}
+                  className="cam-threshold-slider"
+                  aria-label="Match threshold percentage"
+                  style={{margin:'2px 0 0'}}
+                />
+                <p className="cam-threshold-desc" style={{margin:'2px 0 0'}}>
+                  Candidates at or near this score get the test link. Those below receive a polite mismatch email. A ±5% tolerance is applied.
+                </p>
+                {thresholdError && <span className="cam-jd-error" style={{marginTop: '2px', display: 'block'}}>{thresholdError}</span>}
               </div>
             )}
             {!hasJD && !jdLoading && (
