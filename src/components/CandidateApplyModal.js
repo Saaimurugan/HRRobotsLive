@@ -28,6 +28,12 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
   const [jdFileName, setJdFileName]         = useState('');    // name of uploaded PDF
   const jdFileInputRef                      = useRef(null);
 
+  // ── Match threshold state ────────────────────────────────────────────────
+  const [matchThreshold, setMatchThreshold]         = useState(80);
+  const [thresholdSaving, setThresholdSaving]       = useState(false);
+  const [thresholdSaved, setThresholdSaved]         = useState(false);
+  const [thresholdError, setThresholdError]         = useState('');
+
   const applyLink = template ? `${BASE_URL}/apply/${template.templateID}` : '';
   const hasJD = jobDescription.trim().length > 0;
 
@@ -45,6 +51,12 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
       const data = await res.json();
       const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
       setJobDescription(parsed.jobDescription || '');
+      // Load saved threshold, default to 80 if not set
+      if (typeof parsed.matchThreshold === 'number') {
+        setMatchThreshold(parsed.matchThreshold);
+      } else {
+        setMatchThreshold(80);
+      }
     } catch {
       setJdError('Failed to load job description.');
     } finally {
@@ -133,6 +145,39 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     }
   };
 
+  // ── Save threshold ──────────────────────────────────────────────────────────
+  const handleSaveThreshold = async () => {
+    const value = Math.min(100, Math.max(0, Math.round(matchThreshold)));
+    setMatchThreshold(value);
+    setThresholdSaving(true);
+    setThresholdError('');
+    setThresholdSaved(false);
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'saveThreshold',
+          templateID: template.templateID,
+          matchThreshold: value,
+          token: JWTValue,
+        }),
+      });
+      const data = await res.json();
+      if (data.statusCode === 200 || res.ok) {
+        setThresholdSaved(true);
+        showToast('success', 'Threshold Saved', `Match threshold set to ${value}%.`);
+        setTimeout(() => setThresholdSaved(false), 3000);
+      } else {
+        setThresholdError('Failed to save. Please try again.');
+      }
+    } catch {
+      setThresholdError('Network error. Please try again.');
+    } finally {
+      setThresholdSaving(false);
+    }
+  };
+
   // ── Load submissions ────────────────────────────────────────────────────────
   const loadSubmissions = useCallback(async () => {
     if (!template?.templateID) return;
@@ -173,6 +218,8 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     setSelectedApp(null);
     setJdSaved(false);
     setJdError('');
+    setThresholdSaved(false);
+    setThresholdError('');
     onClose();
   };
 
@@ -650,7 +697,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
             )}
 
             <p className="cam-intro">
-              Share this link publicly. Candidates fill in their details and upload their CV — our AI instantly scores their profile and emails them a personalised assessment link.
+              Share this link publicly. Candidates fill in their details and upload their CV — our AI instantly scores their profile and emails them a personalised assessment link if their match score meets the threshold.
             </p>
 
             {/* Link box */}
@@ -668,6 +715,101 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
               </button>
             </div>
 
+            {/* ── Match Threshold ─────────────────────────────────────────── */}
+            {hasJD && (
+              <div className="cam-threshold-card">
+                <div className="cam-threshold-header">
+                  <div className="cam-threshold-title">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <strong>JD Match Threshold</strong>
+                  </div>
+                  <span className="cam-threshold-badge" style={{
+                    background: matchThreshold >= 80 ? '#f0fdf4' : matchThreshold >= 60 ? '#fefce8' : '#fef2f2',
+                    color: matchThreshold >= 80 ? '#166534' : matchThreshold >= 60 ? '#854d0e' : '#991b1b',
+                    border: `1px solid ${matchThreshold >= 80 ? '#bbf7d0' : matchThreshold >= 60 ? '#fde047' : '#fecaca'}`,
+                  }}>
+                    {matchThreshold}%
+                  </span>
+                </div>
+                <p className="cam-threshold-desc">
+                  Only send the assessment link if the candidate's resume matches the job description at or near this score.
+                  Candidates below this threshold receive a polite email explaining the mismatch instead.
+                </p>
+                <div className="cam-threshold-controls">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={matchThreshold}
+                    onChange={e => { setMatchThreshold(Number(e.target.value)); setThresholdSaved(false); }}
+                    className="cam-threshold-slider"
+                    aria-label="Match threshold percentage"
+                  />
+                  <div className="cam-threshold-input-row">
+                    <div className="cam-threshold-labels">
+                      <span>0%</span>
+                      <span>50%</span>
+                      <span>100%</span>
+                    </div>
+                    <div className="cam-threshold-right">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={matchThreshold}
+                        onChange={e => {
+                          const v = Math.min(100, Math.max(0, Number(e.target.value)));
+                          setMatchThreshold(v);
+                          setThresholdSaved(false);
+                        }}
+                        className="cam-threshold-number"
+                        aria-label="Match threshold value"
+                      />
+                      <button
+                        className={`cam-btn cam-btn--primary cam-btn--sm ${thresholdSaved ? 'cam-btn--saved' : ''}`}
+                        onClick={handleSaveThreshold}
+                        disabled={thresholdSaving}
+                      >
+                        {thresholdSaving ? (
+                          <><div className="cam-spinner cam-spinner--sm cam-spinner--white" /> Saving…</>
+                        ) : thresholdSaved ? (
+                          <><svg viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>Saved!</>
+                        ) : (
+                          'Save'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  {thresholdError && <span className="cam-jd-error" style={{marginTop: '4px', display: 'block'}}>{thresholdError}</span>}
+                </div>
+                <div className="cam-threshold-info">
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/><path d="M12 8v4M12 16h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                  <span>A ±5% tolerance is applied — scores within 5 points below the threshold still receive the test link.</span>
+                </div>
+              </div>
+            )}
+            {!hasJD && !jdLoading && (
+              <div className="cam-threshold-card cam-threshold-card--disabled">
+                <div className="cam-threshold-header">
+                  <div className="cam-threshold-title">
+                    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    <strong>JD Match Threshold</strong>
+                  </div>
+                  <span className="cam-threshold-badge" style={{background:'#f1f5f9',color:'#94a3b8',border:'1px solid #e2e8f0'}}>
+                    Disabled
+                  </span>
+                </div>
+                <p className="cam-threshold-desc">
+                  Add a Job Description to enable match threshold filtering. Without a JD, all candidates receive the test link.
+                </p>
+              </div>
+            )}
+
             {/* How it works */}
             <div className="cam-how">
               <h4 className="cam-how-title">How it works</h4>
@@ -675,7 +817,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
                 {[
                   { n: '1', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/></svg>, label: 'Candidate opens the link', sub: 'Fills in Name, Email, Phone & uploads their CV' },
                   { n: '2', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, label: 'AI scores their profile', sub: 'Resume is matched against your job description instantly' },
-                  { n: '3', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, label: 'Test link sent by email', sub: 'Candidate receives their personalised assessment automatically' },
+                  { n: '3', icon: <svg viewBox="0 0 24 24" fill="none"><path d="M22 2L11 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polygon points="22 2 15 22 11 13 2 9 22 2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>, label: 'Result sent by email', sub: `Candidates meeting the ${matchThreshold}% threshold receive the test link; others get a mismatch email` },
                 ].map(step => (
                   <div key={step.n} className="cam-step">
                     <div className="cam-step-icon">{step.icon}</div>

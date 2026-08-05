@@ -255,6 +255,41 @@ def build_test_email(candidate_name, test_link, template_name, suitability):
 </body></html>"""
 
 
+def build_mismatch_email(candidate_name, template_name, suitability, threshold):
+    """Build a polite rejection email explaining the JD mismatch."""
+    score_line = f'Your resume scored <strong>{suitability}</strong> against our job requirements.' if suitability else \
+                 'Our AI was unable to determine a match score for your profile.'
+    return f"""
+<html><head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f4f4f9;">
+  <div style="background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 4px 10px rgba(0,0,0,.1);">
+    <div style="background:#64748b;padding:24px;text-align:center;">
+      <h1 style="color:#fff;margin:0;font-size:22px;">Application Received</h1>
+    </div>
+    <div style="padding:28px;">
+      <p>Hello <strong>{candidate_name}</strong>,</p>
+      <p>Thank you for your interest in the <strong>{template_name or 'position'}</strong> role and for taking the time to apply.</p>
+      <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:16px 0;">
+        <p style="margin:0;color:#991b1b;font-size:14px;">
+          {score_line} Unfortunately, this does not meet our current threshold of <strong>{threshold}%</strong> for this role.
+        </p>
+      </div>
+      <p>While your application will not proceed to the assessment stage at this time, we encourage you to:</p>
+      <ul style="color:#475569;font-size:14px;line-height:1.8;">
+        <li>Review the job description and align your CV with the key requirements</li>
+        <li>Apply again for future roles that better match your experience</li>
+        <li>Keep developing the skills highlighted in the job posting</li>
+      </ul>
+      <p>We appreciate your interest and wish you the best in your career journey.</p>
+      <p>Kind regards,<br><strong>HR Robots Team</strong></p>
+    </div>
+    <div style="background:#f4f4f9;padding:12px;text-align:center;font-size:12px;color:#aaa;">
+      Powered by <a href="https://www.hrrobots.click" style="color:#1CBBB4;">HR Robots</a>
+    </div>
+  </div>
+</body></html>"""
+
+
 # ── main handler ──────────────────────────────────────────────────────────────
 
 def lambda_handler(event, context):
@@ -317,6 +352,31 @@ def lambda_handler(event, context):
                 print(f'saveJD error: {e}')
                 return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
 
+        # ── SAVE match threshold to template table ───────────────────────────
+        if action == 'saveThreshold':
+            template_id = body.get('templateID', '')
+            try:
+                match_threshold = int(body.get('matchThreshold', 80))
+                match_threshold = max(0, min(100, match_threshold))
+            except (TypeError, ValueError):
+                match_threshold = 80
+            if not template_id:
+                return {'statusCode': 400, 'headers': CORS_HEADERS, 'body': json.dumps({'error': 'templateID required'})}
+            try:
+                template_table.update_item(
+                    Key={'templateID': template_id},
+                    UpdateExpression='SET matchThreshold = :t',
+                    ExpressionAttributeValues={':t': match_threshold},
+                )
+                return {
+                    'statusCode': 200,
+                    'headers': CORS_HEADERS,
+                    'body': json.dumps({'message': 'Match threshold saved.', 'matchThreshold': match_threshold}),
+                }
+            except Exception as e:
+                print(f'saveThreshold error: {e}')
+                return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
+
         # ── GET job description for a template (HR dashboard) ───────────────
         if action == 'getJD':
             template_id = body.get('templateID', '')
@@ -325,12 +385,18 @@ def lambda_handler(event, context):
             try:
                 resp = template_table.get_item(Key={'templateID': template_id})
                 item = resp.get('Item', {})
+                raw_threshold = item.get('matchThreshold', 80)
+                try:
+                    saved_threshold = int(raw_threshold)
+                except (TypeError, ValueError):
+                    saved_threshold = 80
                 return {
                     'statusCode': 200,
                     'headers': CORS_HEADERS,
                     'body': json.dumps({
                         'jobDescription': item.get('jobDescription', '') or item.get('AssignedRole', ''),
                         'templateName': item.get('templateName', ''),
+                        'matchThreshold': saved_threshold,
                     }, default=str),
                 }
             except Exception as e:
@@ -491,12 +557,29 @@ def lambda_handler(event, context):
             tmpl_item = tmpl_resp.get('Item', {})
             template_name = tmpl_item.get('templateName', 'Screening Assessment')
             owner_email = tmpl_item.get('email', '')  # HR user who owns the template
+            # Match threshold — default 80 if not configured
+            try:
+                match_threshold = int(tmpl_item.get('matchThreshold', 80))
+            except (TypeError, ValueError):
+                match_threshold = 80
         except Exception:
             template_name = 'Screening Assessment'
             owner_email = ''
+            match_threshold = 80
 
-        # Create test transaction → get test link
-        # owner_email is stored as 'email' so the Results page (email-index GSI) can find it
+        # Determine suitability score as an integer (0 if unavailable)
+        score_num = 0
+        if suitability:
+            try:
+                score_num = int(str(suitability).replace('%', '').strip())
+            except (ValueError, TypeError):
+                score_num = 0
+
+        # A ±5% tolerance: candidate passes if score >= (threshold - 5)
+        tolerance = 5
+        score_meets_threshold = (not job_description) or (not suitability) or (score_num >= match_threshold - tolerance)
+
+        # Create test transaction → get test link (always create so we have the record)
         test_id = create_test_transaction(candidate_email, candidate_name, template_id, owner_email)
         test_link = f'https://www.hrrobots.click/test/{test_id}'
 
@@ -513,6 +596,7 @@ def lambda_handler(event, context):
             'testLink': test_link,
             'submittedAt': datetime.utcnow().isoformat(),
             'status': 'Applied',
+            'thresholdMet': score_meets_threshold,
         }
         if suitability:
             application_item['suitability'] = suitability
@@ -524,13 +608,23 @@ def lambda_handler(event, context):
 
         applications_table.put_item(Item=application_item)
 
-        # Send email with test link (async)
-        email_body = build_test_email(candidate_name, test_link, template_name, suitability)
-        send_email(
-            candidate_email,
-            f'Your Assessment Link — {template_name}',
-            email_body,
-        )
+        # Send appropriate email based on threshold check
+        if score_meets_threshold:
+            # Candidate meets (or is close to) the threshold — send the test link
+            email_body = build_test_email(candidate_name, test_link, template_name, suitability)
+            send_email(
+                candidate_email,
+                f'Your Assessment Link — {template_name}',
+                email_body,
+            )
+        else:
+            # Candidate is below threshold — send a polite mismatch email (no test link)
+            email_body = build_mismatch_email(candidate_name, template_name, suitability, match_threshold)
+            send_email(
+                candidate_email,
+                f'Your Application — {template_name}',
+                email_body,
+            )
 
         return {
             'statusCode': 200,
@@ -538,8 +632,9 @@ def lambda_handler(event, context):
             'body': json.dumps({
                 'message': 'Application submitted successfully.',
                 'applicationID': application_id,
-                'testLink': test_link,
+                'testLink': test_link if score_meets_threshold else None,
                 'suitability': suitability,
+                'thresholdMet': score_meets_threshold,
             }),
         }
 
