@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useGlobalContext } from "../globalContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useSessionHandler } from "../useSessionHandler";
 import ListTestResultPage from "./listTestResultPage"
 import ScoreChart from "./scoreChart";
@@ -51,6 +51,7 @@ function SearchResult() {
   const questionReviewRef = useRef(null);
   const { globalValue, JWTValue } = useGlobalContext("");
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Toast functions - memoized to prevent re-renders
   const showToast = useCallback((type, title, message) => {
@@ -259,8 +260,7 @@ function SearchResult() {
 
   const handleSearchFromList = useCallback(async (testID, itemData = {}) => {
     const searchUUID = testID.split('/').pop();
-    const cacheKey = cacheKeys.testResult(searchUUID);
-    
+    const cacheKey = cacheKeys.testResult(searchUUID);    
     // Check cache first
     const cachedResult = resultCache.get(cacheKey);
     if (cachedResult) {
@@ -327,6 +327,16 @@ function SearchResult() {
       setCandidateLoading(false);
     }
   }, [JWTValue, checkUnauthorized, showToast]);
+
+  // Auto-load a specific test result when navigated here with state.testID
+  useEffect(() => {
+    if (!location.state?.testID || !JWTValue) return;
+    const testID = location.state.testID;
+    const itemData = location.state.itemData || {};
+    // Clear the navigation state so refresh doesn't re-trigger
+    window.history.replaceState({}, document.title);
+    handleSearchFromList(testID, itemData);
+  }, [location.state, JWTValue, handleSearchFromList]);
 
   const handlePrint = () => {
     const printableContent = document.getElementById("printableContent");

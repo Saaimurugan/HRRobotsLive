@@ -660,6 +660,60 @@
 
 .cam-test-link:hover { text-decoration: underline; }
 
+/* ── Status result button ──────────────────────────── */
+.cam-status-result-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.cam-status-result-btn:hover .cam-test-status-badge {
+  filter: brightness(0.92);
+}
+
+.cam-test-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 20px;
+  padding: 3px 10px;
+}
+
+.cam-test-status-badge--completed {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.cam-test-status-badge--terminated {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.cam-test-status-badge--inprogress {
+  background: #fef9c3;
+  color: #a16207;
+}
+
+.cam-test-status-badge--pending {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.cam-test-status-badge--loading {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+
+
 /* ── Report ────────────────────────────────────────── */
 .cam-report {
   background: #f8fafc;

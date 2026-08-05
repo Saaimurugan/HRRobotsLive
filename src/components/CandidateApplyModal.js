@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGlobalContext } from '../globalContext';
+import { useNavigate } from 'react-router-dom';
 import '../candidateApplyModal.css';
 
 const API = 'https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/candidateApply';
@@ -7,12 +8,15 @@ const BASE_URL = 'https://www.hrrobots.click';
 
 function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
   const { JWTValue } = useGlobalContext();
+  const navigate = useNavigate();
   const [tab, setTab] = useState('jd');
   const [copied, setCopied] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [loadingList, setLoadingList] = useState(false);
   const [selectedApp, setSelectedApp] = useState(null);
   const [generatingReport, setGeneratingReport] = useState(false); // for the detail panel
+  const [testScore, setTestScore] = useState(null); // cached score for selectedApp
+  const [loadingScore, setLoadingScore] = useState(false);
 
   // ── JD tab state ────────────────────────────────────────────────────────────
   const [jobDescription, setJobDescription] = useState('');
@@ -212,7 +216,69 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     }
   };
 
-  if (!isOpen || !template) return null;
+  // ── Fetch live test status + score when an application is selected ────────
+  useEffect(() => {
+    setTestScore(null);
+    if (!selectedApp?.testID) return;
+
+    const fetchTestStatusAndScore = async () => {
+      setLoadingScore(true);
+      try {
+        // Step 1: get the real test status from testTransactions
+        const statusRes = await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkTestStatus', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ testID: selectedApp.testID }),
+        });
+        const statusData = await statusRes.json();
+        if (statusData.statusCode !== 200) return;
+        const statusBody = typeof statusData.body === 'string' ? JSON.parse(statusData.body) : statusData.body;
+        const liveStatus = statusBody.status; // "Not Started" | "In Progress" | "Completed" | "Terminated"
+
+        const isCompleted = liveStatus === 'Completed' || liveStatus === 'Complete';
+        const isTerminated = liveStatus === 'Terminated';
+
+        if (!isCompleted && !isTerminated) {
+          // Test not done yet — store status so we can show it, but no score
+          setTestScore({ liveStatus, pct: null, correct: null, total: null });
+          return;
+        }
+
+        // Step 2: fetch score for completed / terminated tests
+        const scoreRes = await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult_', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ searchTerm: selectedApp.testID, token: JWTValue }),
+        });
+        const scoreData = await scoreRes.json();
+        if (scoreData.statusCode === 200) {
+          const parsed = typeof scoreData.body === 'string' ? JSON.parse(scoreData.body) : scoreData.body;
+          const total = parsed.totalQuestions || 0;
+          const correct = parsed.correctAnswers || 0;
+          const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+          setTestScore({ liveStatus, correct, total, pct });
+        } else {
+          setTestScore({ liveStatus, pct: null, correct: null, total: null });
+        }
+      } catch {
+        // silently ignore — status will fall back to app record
+      } finally {
+        setLoadingScore(false);
+      }
+    };
+
+    fetchTestStatusAndScore();
+  }, [selectedApp, JWTValue]);
+
+  // ── Navigate to result page for a specific test ───────────────────────────
+  const handleViewTestResult = () => {
+    if (!selectedApp?.testID) return;
+    handleClose();
+    const liveStatus = testScore?.liveStatus || selectedApp.status;
+    navigate('/result', { state: { testID: selectedApp.testID, itemData: { status: liveStatus } } });
+  };
+
+
 
   /* ── Detail panel ──────────────────────────────────────────────────────── */
   if (selectedApp) {
@@ -245,13 +311,50 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
               {[
                 ['Phone', selectedApp.candidatePhone || '—'],
                 ['Applied', new Date(selectedApp.submittedAt).toLocaleString()],
-                ['Status', selectedApp.status || 'Applied'],
               ].map(([label, val]) => (
                 <div key={label} className="cam-info-cell">
                   <span className="cam-info-label">{label}</span>
                   <span className="cam-info-value">{val}</span>
                 </div>
               ))}
+              <div className="cam-info-cell">
+                <span className="cam-info-label">Status</span>
+                {loadingScore ? (
+                  // Still checking live status — show a loading pill
+                  <span className="cam-test-status-badge cam-test-status-badge--loading">
+                    <div className="cam-spinner cam-spinner--sm" style={{ borderTopColor: '#64748b', borderColor: '#e2e8f0' }} />
+                    Checking…
+                  </span>
+                ) : (() => {
+                  const liveStatus = testScore?.liveStatus || selectedApp.status || 'Applied';
+                  const isCompleted = liveStatus === 'Completed' || liveStatus === 'Complete';
+                  const isTerminated = liveStatus === 'Terminated';
+                  const canViewResult = isCompleted || isTerminated;
+
+                  if (canViewResult) {
+                    return (
+                      <button
+                        className="cam-status-result-btn"
+                        onClick={handleViewTestResult}
+                        title="Click to view test result"
+                      >
+                        <span className={`cam-test-status-badge cam-test-status-badge--${isCompleted ? 'completed' : 'terminated'}`}>
+                          {isTerminated ? 'Terminated' : 'Completed'}
+                          {testScore?.pct != null && <> — {testScore.pct}%</>}
+                        </span>
+                        <svg viewBox="0 0 24 24" fill="none" width="14" height="14" style={{ marginLeft: 4, flexShrink: 0 }}>
+                          <path d="M9 18l6-6-6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    );
+                  }
+                  return (
+                    <span className={`cam-test-status-badge cam-test-status-badge--${liveStatus === 'In Progress' ? 'inprogress' : 'pending'}`}>
+                      {liveStatus}
+                    </span>
+                  );
+                })()}
+              </div>
               <div className="cam-info-cell cam-info-cell--full">
                 <span className="cam-info-label">Test Link</span>
                 <a href={selectedApp.testLink} target="_blank" rel="noreferrer" className="cam-test-link">{selectedApp.testLink}</a>
