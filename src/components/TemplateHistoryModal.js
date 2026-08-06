@@ -15,13 +15,14 @@ const TemplateHistoryModal = ({ templateID, templateName, onClose }) => {
   const fetchTemplateHistory = async () => {
     try {
       setLoading(true);
+      const token = JWTValue || sessionStorage.getItem('jwtSession') || '';
       const response = await fetch(
         'https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplateHistory',
         {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': JWTValue
+            'Authorization': token
           },
           body: JSON.stringify({ templateID })
         }

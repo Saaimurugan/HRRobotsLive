@@ -14,31 +14,36 @@ class DecimalEncoder(json.JSONEncoder):
 
 def lambda_handler(event, context):
     """
-    Get template history
-    Expected event structure:
+    Get template history - auth handled by API Gateway AuthFunction authorizer.
+    Expected event structure (via API Gateway proxy integration):
     {
-        "templateID": "string"
+        "body": "{\"templateID\": \"string\"}"
     }
     """
     try:
-        template_id = event.get('templateID')
-        
+        # Handle API Gateway proxy integration
+        if 'body' in event:
+            data = json.loads(event['body']) if isinstance(event['body'], str) else event['body']
+        else:
+            data = event
+
+        template_id = data.get('templateID')
+
         if not template_id:
             return {
                 'statusCode': 400,
+                'headers': {'Content-Type': 'application/json'},
                 'body': json.dumps({'error': 'templateID is required'})
             }
-        
+
         # Query directly using partition key (templateID)
-        # No GSI needed - templateID is the partition key
         response = table.query(
             KeyConditionExpression=Key('templateID').eq(template_id),
             ScanIndexForward=True  # Sort by timestamp ascending (oldest first)
         )
-        
+
         items = response.get('Items', [])
-        
-        # Format the history for display
+
         history = []
         for item in items:
             history_entry = {
@@ -49,17 +54,20 @@ def lambda_handler(event, context):
                 'details': item.get('details', {})
             }
             history.append(history_entry)
-        
+
         return {
             'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
             'body': json.dumps({
                 'templateID': template_id,
                 'history': history
             }, cls=DecimalEncoder)
         }
-        
+
     except Exception as e:
+        print(f'Error: {str(e)}')
         return {
             'statusCode': 500,
+            'headers': {'Content-Type': 'application/json'},
             'body': json.dumps({'error': str(e)})
         }
