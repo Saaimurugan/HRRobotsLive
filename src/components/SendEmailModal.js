@@ -6,7 +6,7 @@ function SendEmailModal({ isOpen, onClose, showToast, testLink, templateName }) 
   const [candidateName, setCandidateName] = useState("");
   const [candidateEmail, setCandidateEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const { globalValue } = useGlobalContext();
+  const { globalValue, JWTValue } = useGlobalContext();
 
   if (!isOpen) return null;
 
@@ -66,7 +66,8 @@ function SendEmailModal({ isOpen, onClose, showToast, testLink, templateName }) 
         body: JSON.stringify({
           recipient_email: candidateEmail,
           subject: `${globalValue} invited you to take a screening test`,
-          body: emailBody
+          body: emailBody,
+          token: JWTValue
         }),
       });
 

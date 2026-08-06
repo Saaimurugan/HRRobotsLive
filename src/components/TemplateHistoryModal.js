@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useGlobalContext } from '../globalContext';
 import '../styles/TemplateHistoryModal.css';
 
 const TemplateHistoryModal = ({ templateID, templateName, onClose }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { JWTValue } = useGlobalContext();
 
   useEffect(() => {
     fetchTemplateHistory();
@@ -18,7 +20,7 @@ const TemplateHistoryModal = ({ templateID, templateName, onClose }) => {
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ templateID })
+          body: JSON.stringify({ templateID, token: JWTValue })
         }
       );
 

@@ -9,7 +9,7 @@ const ACTIVITY_LOGS_ENDPOINT = 'https://boy6gvghjj.execute-api.us-east-1.amazona
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { globalValue } = useGlobalContext();
+  const { globalValue, JWTValue } = useGlobalContext();
   const [adminData, setAdminData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -105,7 +105,6 @@ const AdminDashboard = () => {
     try {
       console.log('[AdminDashboard] Fetching activity logs...');
       setLogsLoading(true);
-      const token = sessionStorage.getItem('jwtSession');
       
       const response = await fetch(ACTIVITY_LOGS_ENDPOINT, {
         method: 'POST',
@@ -114,7 +113,8 @@ const AdminDashboard = () => {
         },
         body: JSON.stringify({
           days: logsDays,
-          limit: 1000
+          limit: 1000,
+          token: JWTValue
         })
       });
 
