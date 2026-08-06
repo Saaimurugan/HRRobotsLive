@@ -279,7 +279,10 @@ const CloneTemplates = () => {
                   </button>
                 </div>
 
-                <h5 style={{marginTop: "8px", textAlign: 'center'}}>{template.templateName}</h5>
+                <div style={{position: 'relative', display: 'inline-block', width: '100%'}}>
+                  <h5 style={{marginTop: "8px", textAlign: 'center'}} className="template-name-tooltip">{template.templateName}</h5>
+                  <div className="template-tooltip">{template.templateName}</div>
+                </div>
               </div>
             );
           })

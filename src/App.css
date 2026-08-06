@@ -573,12 +573,26 @@ textarea {
 /* Template card specific styles */
 .template-card {
   text-align: left;
+  overflow: visible;
 }
 
 .template-card p {
   font-size: var(--font-size-sm);
   color: var(--color-text-muted);
   margin-bottom: 16px;
+}
+
+.template-card h5 {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.4;
+  white-space: normal;
+}
+
+.template-card .template-name-tooltip {
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
 }
 
 .assigned-badge {

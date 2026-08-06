@@ -877,8 +877,16 @@ const EditTemplate = () => {
                     placeholder="Enter the test template name"
                     value={ttname}
                     onChange={(e) => setTtname(e.target.value)}
+                    maxLength={100}
                     required
                   />
+                  <small style={{
+                    display: 'block',
+                    textAlign: 'right',
+                    color: ttname.length >= 90 ? 'var(--color-error-text, #e53e3e)' : 'var(--color-text-muted)',
+                    fontSize: 'var(--font-size-sm)',
+                    marginTop: '4px'
+                  }}>{ttname.length}/100</small>
                 </div>
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '15px' }}>
                   {/* <input
