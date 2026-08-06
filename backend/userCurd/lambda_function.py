@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import datetime
 import uuid
+import os
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
@@ -13,7 +14,7 @@ table = dynamodb.Table(table_name)
 auth_table = dynamodb.Table("authTable")
 
 # Secret key for JWT signing (in production, use AWS Secrets Manager)
-JWT_SECRET = "HRROBOTSKEYFORJWT"
+JWT_SECRET = os.environ.get("KEYFORJWT")
 
 # Encryption settings (must match userCreate)
 ITERATIONS = 100000
