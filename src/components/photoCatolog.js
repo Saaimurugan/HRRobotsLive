@@ -1,49 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from 'react';
 import { useGlobalContext } from "../globalContext";
+import { useSessionHandler } from "../useSessionHandler";
 import ImageModal from './ImageModal';
 import '../analsticsOnResult.css';
 
 const PhotoCatalog = ({ searchTerm, showToast }) => {
-   const { JWTValue, setRedirectPath, logout } = useGlobalContext();
+   const { JWTValue } = useGlobalContext();
    const [Photos, setPhotos] = useState([]);
    const [loading, setLoading] = useState(false);
    const [error, setError] = useState("");
    const [modalOpen, setModalOpen] = useState(false);
    const [selectedImage, setSelectedImage] = useState({ url: '', alt: '' });
-   const navigate = useNavigate();
-   const location = useLocation();
 
    // Session handler
-   const checkUnauthorized = useCallback((data) => {
-      if (data?.message === "Unauthorized" || 
-          data?.body === '{"message": "Unauthorized"}' ||
-          (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-          data?.statusCode === 401) {
-         setRedirectPath(location.pathname);
-         if (showToast) {
-            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-         }
-         logout();
-         setTimeout(() => navigate('/login'), 1500);
-         return true;
-      }
-      if (data?.body) {
-         try {
-            const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-            if (parsedBody?.message === "Unauthorized") {
-               setRedirectPath(location.pathname);
-               if (showToast) {
-                  showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-               }
-               logout();
-               setTimeout(() => navigate('/login'), 1500);
-               return true;
-            }
-         } catch (e) {}
-      }
-      return false;
-   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+   const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
    useEffect(() => {
       const fetchPhotos = async () => {
@@ -61,6 +31,8 @@ const PhotoCatalog = ({ searchTerm, showToast }) => {
                },
                body: JSON.stringify({ searchTerm: searchTerm, token: JWTValue }),
             });
+
+            if (checkHttpStatus(response)) return;
 
             if (!response.ok) {
                throw new Error("Failed to fetch photos");

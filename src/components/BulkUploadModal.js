@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import { useGlobalContext } from "../globalContext";
+import { useSessionHandler } from "../useSessionHandler";
 import Papa from "papaparse";
 import "../confirmationBox.css";
 
@@ -18,6 +19,9 @@ function BulkUploadModal({
   const [parsedData, setParsedData] = useState([]);
   const fileInputRef = useRef(null);
   const { globalValue, JWTValue } = useGlobalContext();
+
+  // Session handler
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   const maxTests = 25;
   const availableSlots = Math.max(0, maxTests - (existingTestCount || 0));
@@ -169,7 +173,10 @@ function BulkUploadModal({
         }),
       });
 
+      if (checkHttpStatus(response)) return;
       const data = await response.json();
+
+      if (checkUnauthorized(data)) return;
 
       if (data.statusCode === 200) {
         const result = JSON.parse(data.body);

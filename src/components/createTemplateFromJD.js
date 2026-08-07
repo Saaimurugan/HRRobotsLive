@@ -3,7 +3,8 @@ import * as pdfjsLib from 'pdfjs-dist';
 import "../CreateTemplate.css";
 import "../createTemplateFromJD.css";
 import { useGlobalContext } from "../globalContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useSessionHandler } from "../useSessionHandler";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
@@ -46,9 +47,8 @@ const CreateTemplateFromJD = () => {
   const [templateName, setTemplateName] = useState("");
   const [toasts, setToasts] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
-  const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
+  const { globalValue, JWTValue } = useGlobalContext();
   const navigate = useNavigate();
-  const location = useLocation();
 
   // Toast functions
   const showToast = useCallback((type, title, message) => {
@@ -71,31 +71,7 @@ const CreateTemplateFromJD = () => {
 
 
   // Session handler
-  const checkUnauthorized = useCallback((data) => {
-    if (data?.message === "Unauthorized" || 
-        data?.body === '{"message": "Unauthorized"}' ||
-        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-        data?.statusCode === 401) {
-      setRedirectPath(location.pathname);
-      showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-      logout();
-      setTimeout(() => navigate('/login'), 1500);
-      return true;
-    }
-    if (data?.body) {
-      try {
-        const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-        if (parsedBody?.message === "Unauthorized") {
-          setRedirectPath(location.pathname);
-          showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-          logout();
-          setTimeout(() => navigate('/login'), 1500);
-          return true;
-        }
-      } catch (e) {}
-    }
-    return false;
-  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   useEffect(() => {
     if (globalValue === "") {

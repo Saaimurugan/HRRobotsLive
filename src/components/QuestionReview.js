@@ -1,36 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { useGlobalContext } from "../globalContext";
+import { useSessionHandler } from "../useSessionHandler";
 import "../QuestionReview.css";
 import "../RichTextEditor.css";
 
 const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClose }) => {
-  const { JWTValue, setRedirectPath, logout } = useGlobalContext();
+  const { JWTValue } = useGlobalContext();
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [expandedQuestions, setExpandedQuestions] = useState({});
-  const navigate = useNavigate();
-  const location = useLocation();
 
   // Ensure isPsychometricReport is always a boolean
   const isPsychometric = Boolean(isPsychometricReport);
 
-  const checkUnauthorized = useCallback((data) => {
-    if (data?.message === "Unauthorized" || 
-        data?.body === '{"message": "Unauthorized"}' ||
-        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-        data?.statusCode === 401) {
-      setRedirectPath(location.pathname);
-      if (showToast) {
-        showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-      }
-      logout();
-      setTimeout(() => navigate('/login'), 1500);
-      return true;
-    }
-    return false;
-  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+  // Session handler
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   useEffect(() => {
     const fetchQuestionDetails = async () => {
@@ -48,6 +33,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
           body: JSON.stringify({ testID, token: JWTValue }),
         });
 
+        if (checkHttpStatus(response)) return;
         const data = await response.json();
         if (checkUnauthorized(data)) return;
 

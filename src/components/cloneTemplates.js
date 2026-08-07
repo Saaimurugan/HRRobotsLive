@@ -52,7 +52,7 @@ const CloneTemplates = () => {
     }, 4000);
   };
 
-  const { checkUnauthorized } = useSessionHandler(showToast);
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   const removeToast = (id) => {
     setToasts(prev => prev.map(t => t.id === id ? { ...t, exiting: true } : t));

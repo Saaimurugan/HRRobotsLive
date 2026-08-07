@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalContext } from '../globalContext';
+import { useSessionHandler } from '../useSessionHandler';
 import '../styles/AdminCleanup.css';
 
 const ADMIN_EMAIL = 'saaimurugan@gmail.com';
@@ -64,6 +65,9 @@ const AdminCleanup = () => {
   const [results, setResults] = useState({});
   const [confirmingFunction, setConfirmingFunction] = useState(null);
 
+  // Session handler
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(null);
+
   // Check admin access
   React.useEffect(() => {
     if (!globalValue || globalValue.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
@@ -100,12 +104,16 @@ const AdminCleanup = () => {
 
       console.log(`[AdminCleanup] Response status:`, response.status);
 
+      if (checkHttpStatus(response)) return;
+
       if (!response.ok) {
         throw new Error(`Failed to execute cleanup function (${response.status})`);
       }
 
       const data = await response.json();
       console.log(`[AdminCleanup] Response data:`, data);
+
+      if (checkUnauthorized(data)) return;
 
       // Parse response body if it's a string (Lambda Proxy format)
       let resultData = data;

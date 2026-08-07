@@ -1,60 +1,30 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from 'react';
 import { useGlobalContext } from "../globalContext";
+import { useSessionHandler } from "../useSessionHandler";
 import { logConfigurationActivity } from '../utils/activityLogger';
 import '../confirmationBox.css';
 
 const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
-  const { JWTValue, setRedirectPath, logout } = useGlobalContext();
+  const { JWTValue } = useGlobalContext();
   const [allowedDefaults, setAllowedDefaults] = useState(10);
   const [numberOfQuestions, setNumberOfQuestions] = useState(10);
   const [testDuration, setTestDuration] = useState(60);
   const [sensitivityLevel, setSensitivityLevel] = useState(3);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   // Session handler
-  const checkUnauthorized = useCallback((data) => {
-    if (data?.message === "Unauthorized" || 
-        data?.body === '{"message": "Unauthorized"}' ||
-        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-        data?.statusCode === 401) {
-      setRedirectPath(location.pathname);
-      if (showToast) {
-        showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-      }
-      logout();
-      setTimeout(() => navigate('/login'), 1500);
-      return true;
-    }
-    if (data?.body) {
-      try {
-        const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-        if (parsedBody?.message === "Unauthorized") {
-          setRedirectPath(location.pathname);
-          if (showToast) {
-            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-          }
-          logout();
-          setTimeout(() => navigate('/login'), 1500);
-          return true;
-        }
-      } catch (e) {}
-    }
-    return false;
-  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   useEffect(() => {
-    fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ templateID, token: JWTValue }),
-    })
-      .then(res => res.json())
-      .then(data => {
+    const loadConfig = async () => {
+      try {
+        const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ templateID, token: JWTValue }),
+        });
+        if (checkHttpStatus(response)) return;
+        const data = await response.json();
         if (checkUnauthorized(data)) return;
         if (data.statusCode === 200 && data.body) {
           const body = JSON.parse(data.body);
@@ -66,12 +36,14 @@ const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
           setTestDuration(Number(config.testDuration) || 30);
           setSensitivityLevel(Number(config.sensitivityLevel) || 3);
         }
+      } catch (error) {
+        // silent
+      } finally {
         setLoading(false);
-      })
-      .catch(error => {
-        setLoading(false);
-      });
-  }, [templateID, JWTValue, checkUnauthorized]);
+      }
+    };
+    loadConfig();
+  }, [templateID, JWTValue, checkUnauthorized, checkHttpStatus]);
 
   const handleSubmit = (e) => {
     e.preventDefault();

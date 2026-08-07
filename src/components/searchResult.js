@@ -73,7 +73,7 @@ function SearchResult() {
   }, []);
 
   // Session handler
-  const { checkUnauthorized } = useSessionHandler(showToast);
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   useEffect(() => {
     if (globalValue === "") {

@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useGlobalContext } from '../globalContext';
+import { useSessionHandler } from '../useSessionHandler';
 import '../styles/TemplateHistoryModal.css';
 
-const TemplateHistoryModal = ({ templateID, templateName, onClose }) => {
+const TemplateHistoryModal = ({ templateID, templateName, onClose, showToast }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { JWTValue } = useGlobalContext();
+
+  // Session handler
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   useEffect(() => {
     fetchTemplateHistory();
@@ -24,12 +28,15 @@ const TemplateHistoryModal = ({ templateID, templateName, onClose }) => {
             'Content-Type': 'application/json',
             'Authorization': token
           },
-          body: JSON.stringify({ templateID })
+          body: JSON.stringify({ templateID, token: JWTValue })
         }
       );
 
+      if (checkHttpStatus(response)) return;
+
       const data = await response.json();
-      
+      if (checkUnauthorized(data)) return;
+
       if (response.ok) {
         const parsedData = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
         setHistory(parsedData.history || []);

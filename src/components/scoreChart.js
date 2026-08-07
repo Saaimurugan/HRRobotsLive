@@ -1,46 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState, useEffect } from "react";
 import GaugeChart from "react-gauge-chart";
 import PhotoCatolog from "./photoCatolog";
 import { useGlobalContext } from "../globalContext";
+import { useSessionHandler } from "../useSessionHandler";
 
 const ScoreChart = ({ message, showToast }) => {
-  const { JWTValue, setRedirectPath, logout } = useGlobalContext();
+  const { JWTValue } = useGlobalContext();
   const [topicScores, setTopicScores] = useState([]);
   const [loadingTopics, setLoadingTopics] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   // Session handler
-  const checkUnauthorized = useCallback((data) => {
-    if (data?.message === "Unauthorized" || 
-        data?.body === '{"message": "Unauthorized"}' ||
-        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-        data?.statusCode === 401) {
-      setRedirectPath(location.pathname);
-      if (showToast) {
-        showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-      }
-      logout();
-      setTimeout(() => navigate('/login'), 1500);
-      return true;
-    }
-    if (data?.body) {
-      try {
-        const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-        if (parsedBody?.message === "Unauthorized") {
-          setRedirectPath(location.pathname);
-          if (showToast) {
-            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-          }
-          logout();
-          setTimeout(() => navigate('/login'), 1500);
-          return true;
-        }
-      } catch (e) {}
-    }
-    return false;
-  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   const parsedBody = message;
   const { testID, candidateName, templateName, submittedAt, totalQuestions: configTotalQuestions, isPsychometricReport } = parsedBody || {};
@@ -97,6 +67,7 @@ const ScoreChart = ({ message, showToast }) => {
           },
           body: JSON.stringify({ testID, token: JWTValue }),
         });
+        if (checkHttpStatus(response)) return;
         const data = await response.json();
         if (checkUnauthorized(data)) return;
         if (data.statusCode === 200) {

@@ -120,7 +120,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
     };
 
     // Session handler for unauthorized responses
-    const { checkUnauthorized } = useSessionHandler(showToast);
+    const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
     // Handle item click with status check
     const handleItemClick = (item) => {

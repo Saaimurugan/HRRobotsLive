@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalContext } from '../globalContext';
+import { useSessionHandler } from '../useSessionHandler';
 import AdminCharts from './AdminCharts';
 import '../styles/AdminDashboard.css';
 
@@ -27,6 +28,9 @@ const AdminDashboard = () => {
   const [uniqueActions, setUniqueActions] = useState([]);
   const [uniqueActivities, setUniqueActivities] = useState([]);
 
+  // Session handler (showToast is null — the hook will still terminate the session and navigate)
+  const { checkUnauthorized, checkHttpStatus, handleSessionTimeout, handleForbidden } = useSessionHandler(null);
+
   // Log component mount
   useEffect(() => {
     console.log('[AdminDashboard] Component mounted');
@@ -50,7 +54,7 @@ const AdminDashboard = () => {
     try {
       console.log('[AdminDashboard] Fetching admin data...');
       setLoading(true);
-      const token = sessionStorage.getItem('jwtSession');
+      const token = JWTValue || sessionStorage.getItem('jwtSession');
       console.log('[AdminDashboard] JWT token retrieved:', token ? 'Yes' : 'No');
       
       const response = await fetch(
@@ -61,17 +65,19 @@ const AdminDashboard = () => {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({})
+          body: JSON.stringify({ token })
         }
       );
 
       console.log('[AdminDashboard] Response status:', response.status);
       if (response.status === 403) {
-        throw new Error('Access denied. Admin access required. Please ensure you are logged in as saaimurugan@gmail.com');
+        handleForbidden();
+        return;
       }
 
       if (response.status === 401) {
-        throw new Error('Unauthorized. Your session may have expired. Please log in again.');
+        handleSessionTimeout();
+        return;
       }
 
       if (!response.ok) {
@@ -82,6 +88,8 @@ const AdminDashboard = () => {
       let data = await response.json();
       console.log('[AdminDashboard] Raw response received');
       
+      if (checkUnauthorized(data)) return;
+
       // If response has a 'body' property (Lambda Proxy format), parse it
       if (typeof data.body === 'string') {
         data = JSON.parse(data.body);
@@ -118,11 +126,14 @@ const AdminDashboard = () => {
         })
       });
 
+      if (checkHttpStatus(response)) return;
+
       if (!response.ok) {
         throw new Error(`Failed to fetch activity logs (${response.status})`);
       }
 
       const data = await response.json();
+      if (checkUnauthorized(data)) return;
       const parsedData = typeof data.body === 'string' ? JSON.parse(data.body) : data;
       
       console.log('[AdminDashboard] Activity logs loaded:', parsedData.logs?.length);

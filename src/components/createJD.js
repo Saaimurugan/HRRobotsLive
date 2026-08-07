@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useGlobalContext } from "../globalContext";
 import { logCreateJDActivity } from '../utils/activityLogger';
+import { useSessionHandler } from "../useSessionHandler";
 import '../createJD.css';
 
 // Toast Component
@@ -33,8 +34,7 @@ const Toast = ({ toasts, removeToast }) => {
 
 const CreateJD = () => {
    const navigate = useNavigate();
-   const location = useLocation();
-   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
+   const { globalValue, JWTValue } = useGlobalContext();
    const [toasts, setToasts] = useState([]);
    const [formData, setFormData] = useState({
       roleName: '',
@@ -69,31 +69,7 @@ const CreateJD = () => {
    };
 
    // Session handler
-   const checkUnauthorized = useCallback((data) => {
-      if (data?.message === "Unauthorized" || 
-          data?.body === '{"message": "Unauthorized"}' ||
-          (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-          data?.statusCode === 401) {
-         setRedirectPath(location.pathname);
-         showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-         logout();
-         setTimeout(() => navigate('/login'), 1500);
-         return true;
-      }
-      if (data?.body) {
-         try {
-            const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-            if (parsedBody?.message === "Unauthorized") {
-               setRedirectPath(location.pathname);
-               showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-               logout();
-               setTimeout(() => navigate('/login'), 1500);
-               return true;
-            }
-         } catch (e) {}
-      }
-      return false;
-   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+   const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
    useEffect(() => {
       if (globalValue === "") {

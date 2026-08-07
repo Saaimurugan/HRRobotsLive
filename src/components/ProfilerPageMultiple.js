@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { useGlobalContext } from "../globalContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { logProfilerPageActivity } from '../utils/activityLogger';
+import { useSessionHandler } from "../useSessionHandler";
 import "../profilerPage.css";
 import "../CreateTemplate.css";
 
@@ -45,9 +46,8 @@ const ProfilerPageMultiple = () => {
   const [showForm, setShowForm] = useState(true);
   const [toasts, setToasts] = useState([]);
   const [processingProgress, setProcessingProgress] = useState({ current: 0, total: 0 });
-  const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
+  const { globalValue, JWTValue } = useGlobalContext();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     return () => {};
@@ -71,19 +71,8 @@ const ProfilerPageMultiple = () => {
     }, 300);
   };
 
-  const checkUnauthorized = useCallback((data) => {
-    if (data?.message === "Unauthorized" || 
-        data?.body === '{"message": "Unauthorized"}' ||
-        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-        data?.statusCode === 401) {
-      setRedirectPath(location.pathname);
-      showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-      logout();
-      setTimeout(() => navigate('/login'), 1500);
-      return true;
-    }
-    return false;
-  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+  // Session handler
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   useEffect(() => {
     if (globalValue === "") {

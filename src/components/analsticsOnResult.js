@@ -1,45 +1,15 @@
 import { useState, useImperativeHandle, forwardRef, useEffect, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
+import { useSessionHandler } from "../useSessionHandler";
 import "../analsticsOnResult.css";
 
 const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false, showToast }, ref) => {
-   const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
+   const { globalValue, JWTValue } = useGlobalContext();
    const [analyticsData, setAnalyticsData] = useState("");
    const [loading, setLoading] = useState(false);
-   const navigate = useNavigate();
-   const location = useLocation();
 
    // Session handler
-   const checkUnauthorized = useCallback((data) => {
-      if (data?.message === "Unauthorized" || 
-          data?.body === '{"message": "Unauthorized"}' ||
-          (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-          data?.statusCode === 401) {
-         setRedirectPath(location.pathname);
-         if (showToast) {
-            showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-         }
-         logout();
-         setTimeout(() => navigate('/login'), 1500);
-         return true;
-      }
-      if (data?.body) {
-         try {
-            const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-            if (parsedBody?.message === "Unauthorized") {
-               setRedirectPath(location.pathname);
-               if (showToast) {
-                  showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-               }
-               logout();
-               setTimeout(() => navigate('/login'), 1500);
-               return true;
-            }
-         } catch (e) {}
-      }
-      return false;
-   }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+   const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
    const fetchAnalytics = useCallback(async () => {
       if (!searchTerm) {
@@ -58,6 +28,7 @@ const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false, 
 
          if (response.ok) {
             const data = await response.json();
+            if (checkHttpStatus(response)) return;
             if (checkUnauthorized(data)) return;
             const htmlContent = data.body.match(/<!DOCTYPE html>.*?<\/html>/gs)[0];
             setAnalyticsData(htmlContent);

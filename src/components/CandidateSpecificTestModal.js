@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import * as pdfjsLib from 'pdfjs-dist';
 import { useGlobalContext } from "../globalContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useSessionHandler } from "../useSessionHandler";
 import "../CreateTemplate.css";
 import "../createTemplateFromJD.css";
 
@@ -29,36 +29,10 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
   const [selectedOption, setSelectedOption] = useState(null);
   const [includeProjectAnalysis, setIncludeProjectAnalysis] = useState(false);
   const [expandedOption, setExpandedOption] = useState(null);
-  const { globalValue, JWTValue, setRedirectPath, logout } = useGlobalContext();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { globalValue, JWTValue } = useGlobalContext();
 
   // Session handler
-  const checkUnauthorized = useCallback((data) => {
-    if (data?.message === "Unauthorized" || 
-        data?.body === '{"message": "Unauthorized"}' ||
-        (typeof data?.body === 'string' && data.body.includes('"message": "Unauthorized"')) ||
-        data?.statusCode === 401) {
-      setRedirectPath(location.pathname);
-      showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-      logout();
-      setTimeout(() => navigate('/login'), 1500);
-      return true;
-    }
-    if (data?.body) {
-      try {
-        const parsedBody = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-        if (parsedBody?.message === "Unauthorized") {
-          setRedirectPath(location.pathname);
-          showToast('error', 'Session Expired', 'Your session has timed out. Please log in again.');
-          logout();
-          setTimeout(() => navigate('/login'), 1500);
-          return true;
-        }
-      } catch (e) {}
-    }
-    return false;
-  }, [location.pathname, logout, navigate, setRedirectPath, showToast]);
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   // Reset modal state
   const resetModal = () => {

@@ -99,7 +99,7 @@ const showToast = (type, title, message) => {
 };
 
 // Session handler for unauthorized responses
-const { checkUnauthorized } = useSessionHandler(showToast);
+const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
 // Close dropdowns when clicking outside
 useEffect(() => {
@@ -967,6 +967,7 @@ const getPageNumbers = () => {
         <TemplateHistoryModal
           templateID={selectedTemplateForHistory.templateID}
           templateName={selectedTemplateForHistory.templateName}
+          showToast={showToast}
           onClose={() => {
             setShowHistoryModal(false);
             setSelectedTemplateForHistory(null);

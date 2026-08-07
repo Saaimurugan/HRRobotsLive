@@ -215,7 +215,7 @@ const CreateTemplate = () => {
   };
 
   // Session handler for unauthorized responses
-  const { checkUnauthorized } = useSessionHandler(showToast);
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   // Extract unique topics from questions - UPDATED to use separate topic field
   const existingTopics = useMemo(() => {

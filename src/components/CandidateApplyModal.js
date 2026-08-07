@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGlobalContext } from '../globalContext';
 import { useNavigate } from 'react-router-dom';
+import { useSessionHandler } from '../useSessionHandler';
 import '../candidateApplyModal.css';
 
 const API = 'https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/candidateApply';
@@ -9,6 +10,10 @@ const BASE_URL = 'https://www.hrrobots.click';
 function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
   const { JWTValue } = useGlobalContext();
   const navigate = useNavigate();
+
+  // Session handler
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
+
   const [tab, setTab] = useState('jd');
   const [copied, setCopied] = useState(false);
   const [submissions, setSubmissions] = useState([]);
@@ -55,6 +60,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
       });
       const data = await res.json();
       const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
+      if (checkUnauthorized(data)) return;
       setJobDescription(parsed.jobDescription || '');
       // Load saved threshold, default to 80 if not set
       if (typeof parsed.matchThreshold === 'number') {
@@ -136,6 +142,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         }),
       });
       const data = await res.json();
+      if (checkUnauthorized(data)) return;
       if (data.statusCode === 200 || res.ok) {
         setJdSaved(true);
         showToast('success', 'Saved', 'Job description saved to template.');
@@ -169,6 +176,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         }),
       });
       const data = await res.json();
+      if (checkUnauthorized(data)) return;
       if (data.statusCode === 200 || res.ok) {
         setThresholdSaved(true);
         showToast('success', 'Threshold Saved', `Match threshold set to ${value}%.`);
@@ -194,6 +202,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         body: JSON.stringify({ action: 'list', templateID: template.templateID, token: JWTValue }),
       });
       const data = await res.json();
+      if (checkUnauthorized(data)) return;
       const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
       const apps = (parsed.applications || []).sort(
         (a, b) => new Date(b.submittedAt) - new Date(a.submittedAt)
@@ -245,6 +254,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         }),
       });
       const data = await res.json();
+      if (checkUnauthorized(data)) { setGeneratingReport(false); return; }
       const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
       if (data.statusCode === 200 || res.ok) {
         // Update the selectedApp in place so the UI re-renders immediately

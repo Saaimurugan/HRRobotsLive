@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGlobalContext } from "../globalContext";
+import { useSessionHandler } from "../useSessionHandler";
 import "../confirmationBox.css";
 
 function SendEmailModal({ isOpen, onClose, showToast, testLink, templateName }) {
@@ -7,6 +8,9 @@ function SendEmailModal({ isOpen, onClose, showToast, testLink, templateName }) 
   const [candidateEmail, setCandidateEmail] = useState("");
   const [isSending, setIsSending] = useState(false);
   const { globalValue, JWTValue } = useGlobalContext();
+
+  // Session handler
+  const { checkUnauthorized, checkHttpStatus } = useSessionHandler(showToast);
 
   if (!isOpen) return null;
 
@@ -71,7 +75,10 @@ function SendEmailModal({ isOpen, onClose, showToast, testLink, templateName }) 
         }),
       });
 
+      if (checkHttpStatus(response)) return;
       const data = await response.json();
+
+      if (checkUnauthorized(data)) return;
 
       if (data.statusCode === 200) {
         showToast('success', 'Email Sent', `Test link sent successfully to ${candidateEmail}`);
