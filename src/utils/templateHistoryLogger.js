@@ -24,8 +24,7 @@ export const logTemplateHistory = async (templateID, action, performedBy, perfor
         action,
         performedBy,
         performedByName,
-        details,
-        token
+        details
       })
     });
 

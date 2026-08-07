@@ -255,7 +255,7 @@ const ProfilerPage = () => {
       const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/matchJDResume", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-        body: JSON.stringify({ jobDescription: jobDescriptionText, resume: resumeText, token: JWTValue })
+        body: JSON.stringify({ jobDescription: jobDescriptionText, resume: resumeText })
       });
       const data = await response.json();
       if (checkUnauthorized(data)) {

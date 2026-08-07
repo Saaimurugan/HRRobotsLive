@@ -168,7 +168,6 @@ function BulkUploadModal({
         body: JSON.stringify({
           globalValue: globalValue,
           templateID: templateId,
-          token: JWTValue,
           candidates: parsedData,
           templateName: templateName
         }),

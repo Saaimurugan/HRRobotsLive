@@ -187,8 +187,7 @@ const ProfilerPageMultiple = () => {
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           jobDescription: jobDescriptionText, 
-          resumes: resumeTexts,
-          token: JWTValue 
+          resumes: resumeTexts
         })
       });
       

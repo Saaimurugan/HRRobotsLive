@@ -66,7 +66,7 @@ const ScoreChart = ({ message, showToast }) => {
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-          body: JSON.stringify({ testID, token: JWTValue }),
+          body: JSON.stringify({ testID }),
         });
         if (checkHttpStatus(response)) return;
         const data = await response.json();

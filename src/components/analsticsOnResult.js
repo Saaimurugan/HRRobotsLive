@@ -24,7 +24,7 @@ const AnalsticsOnResult = forwardRef(({ searchTerm, hideGenerateButton = false, 
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-            body: JSON.stringify({ globalValue, searchTerm, token: JWTValue }),
+            body: JSON.stringify({ globalValue, searchTerm }),
          });
 
          if (response.ok) {

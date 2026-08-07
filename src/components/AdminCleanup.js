@@ -97,7 +97,6 @@ const AdminCleanup = () => {
           'Authorization': `Bearer ${JWTValue}`
         },
         body: JSON.stringify({
-          token: JWTValue,
           email: globalValue
         })
       });

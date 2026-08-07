@@ -30,7 +30,7 @@ const QuestionReview = ({ testID, isPsychometricReport = false, showToast, onClo
         const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestionReview", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-          body: JSON.stringify({ testID, token: JWTValue }),
+          body: JSON.stringify({ testID }),
         });
 
         if (checkHttpStatus(response)) return;

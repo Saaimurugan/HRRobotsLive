@@ -205,8 +205,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     pageSize: 100, // Larger page size for stats
                     lastKey: currentLastKey,
                     sortKey: sortConfig.key,
-                    sortDirection: sortConfig.direction,
-                    token: JWTValue
+                    sortDirection: sortConfig.direction
                 };
 
                 if (searchTerm) {
@@ -274,8 +273,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     pageSize,
                     lastKey: currentLastKey,
                     sortKey: sortConfig.key,
-                    sortDirection: sortConfig.direction,
-                    token: JWTValue
+                    sortDirection: sortConfig.direction
                 };
                 
                 const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
@@ -329,8 +327,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 pageSize,
                 lastKey: isFirstLoad ? null : lastKey,
                 sortKey: sortConfig.key,
-                sortDirection: sortConfig.direction,
-                token: JWTValue
+                sortDirection: sortConfig.direction
             };
 
             //console.log("Making API call with requestBody:", requestBody);
@@ -420,8 +417,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     lastKey: null, 
                     searchName,
                     sortKey: sortConfig.key,
-                    sortDirection: sortConfig.direction,
-                    token: JWTValue
+                    sortDirection: sortConfig.direction
                 }),
             });
 
@@ -464,8 +460,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                     lastKey: null, 
                     searchName: searchTerm,
                     sortKey: sortConfig.key,
-                    sortDirection: sortConfig.direction,
-                    token: JWTValue
+                    sortDirection: sortConfig.direction
                 }),
             });
 
@@ -575,8 +570,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 pageSize,
                 lastKey: null, // Reset to first page when sorting
                 sortKey: sortCfg.key,
-                sortDirection: sortCfg.direction,
-                token: JWTValue
+                sortDirection: sortCfg.direction
             };
 
             // Include search term if active
@@ -667,7 +661,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-                body: JSON.stringify({ testID: index, globalValue: testGlobalValue, token: JWTValue }),
+                body: JSON.stringify({ testID: index, globalValue: testGlobalValue }),
             });
 
             if (response.status === 200) {
@@ -744,7 +738,7 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-                            body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
+                            body: JSON.stringify({ searchTerm: searchUUID }),
                         });
 
                         const data = await response.json();

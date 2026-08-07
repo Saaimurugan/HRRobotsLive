@@ -78,7 +78,7 @@ const CloneTemplates = () => {
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-        body: JSON.stringify({ globalValue: "saaimurugan@gmail.com", token: JWTValue }),
+        body: JSON.stringify({ globalValue: "saaimurugan@gmail.com" }),
       });
       const data = await response.json();
       if (checkUnauthorized(data)) return;
@@ -107,8 +107,7 @@ const CloneTemplates = () => {
         body: JSON.stringify({
           templateID: templateID,
           newTemplateName: `${templateName} (Cloned)`,
-          email: globalValue,
-          token: JWTValue
+          email: globalValue
         }),
       });
       const data = await response.json();

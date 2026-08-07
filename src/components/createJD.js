@@ -97,7 +97,7 @@ const CreateJD = () => {
             'Content-Type': 'application/json',
             'Authorization': JWTValue,
           },
-            body: JSON.stringify({ ...formData, token: JWTValue }),
+            body: JSON.stringify({ ...formData }),
          });
 
          if (!response.ok) {

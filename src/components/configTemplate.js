@@ -21,7 +21,7 @@ const ConfigTemplate = ({ onConfig, onCancel, templateID, showToast }) => {
         const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-          body: JSON.stringify({ templateID, token: JWTValue }),
+          body: JSON.stringify({ templateID }),
         });
         if (checkHttpStatus(response)) return;
         const data = await response.json();

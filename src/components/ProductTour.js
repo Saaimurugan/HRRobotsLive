@@ -463,12 +463,11 @@ const ProductTour = ({ isOpen, onClose, onComplete }) => {
     try {
       await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           email: globalValue, 
           newUser: "no",
-          action: "update",
-          token: JWTValue 
+          action: "update"
         })
       });
     } catch (error) {

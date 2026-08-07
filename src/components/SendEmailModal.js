@@ -71,8 +71,7 @@ function SendEmailModal({ isOpen, onClose, showToast, testLink, templateName }) 
         body: JSON.stringify({
           recipient_email: candidateEmail,
           subject: `${globalValue} invited you to take a screening test`,
-          body: emailBody,
-          token: JWTValue
+          body: emailBody
         }),
       });
 

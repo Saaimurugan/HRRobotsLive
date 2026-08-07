@@ -28,7 +28,7 @@ const TemplateHistoryModal = ({ templateID, templateName, onClose, showToast }) 
             'Content-Type': 'application/json',
             'Authorization': token
           },
-          body: JSON.stringify({ templateID, token: JWTValue })
+          body: JSON.stringify({ templateID })
         }
       );
 

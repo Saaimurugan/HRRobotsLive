@@ -124,7 +124,7 @@ const CreateTemplateFromJD = () => {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractKeywordsFromJD", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-        body: JSON.stringify({ jdText, token: JWTValue })
+        body: JSON.stringify({ jdText })
       });
       const data = await response.json();
       
@@ -226,8 +226,7 @@ const CreateTemplateFromJD = () => {
               topic: kw.keyword, 
               level: kw.complexity, 
               formattedQuestions: existingQuestions,
-              questionCount: batchSize,
-              token: JWTValue 
+              questionCount: batchSize
             })
           });
 
@@ -271,7 +270,7 @@ const CreateTemplateFromJD = () => {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-        body: JSON.stringify({ globalValue: globalValue, token: JWTValue }),
+        body: JSON.stringify({ globalValue: globalValue }),
       });
 
       const data = await response.json();
@@ -320,7 +319,7 @@ const CreateTemplateFromJD = () => {
       const checkResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-        body: JSON.stringify({ globalValue: globalValue, token: JWTValue }),
+        body: JSON.stringify({ globalValue: globalValue }),
       });
 
       const checkData = await checkResponse.json();
@@ -342,8 +341,7 @@ const CreateTemplateFromJD = () => {
           templateID: "", 
           templateName: templateName, 
           globalValue: globalValue, 
-          questions: generatedQuestions, 
-          token: JWTValue 
+          questions: generatedQuestions
         }),
       });
 
@@ -361,7 +359,7 @@ const CreateTemplateFromJD = () => {
             await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
               method: "POST",
               headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-              body: JSON.stringify({ templateID, createDefault: true, numberOfQuestions: 10, token: JWTValue }),
+              body: JSON.stringify({ templateID, createDefault: true, numberOfQuestions: 10 }),
             });
           } catch (configError) {
             // Silent fail for config

@@ -149,7 +149,7 @@ const Profile = () => {
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-        body: JSON.stringify({ email: globalValue, password, token: JWTValue }),
+        body: JSON.stringify({ email: globalValue, password }),
       });
 
       const data = await response.json();
@@ -274,8 +274,7 @@ const Profile = () => {
         body: JSON.stringify({
           recipient_email: inviteEmail,
           subject: `${globalValue} invited you to join HR Robots`,
-          body: inviteBody,
-          token: JWTValue
+          body: inviteBody
         }),
       });
 
@@ -318,8 +317,7 @@ const Profile = () => {
           },
         body: JSON.stringify({
           email: globalValue,
-          reason: deleteReason,
-          token: JWTValue
+          reason: deleteReason
         }),
       });
 

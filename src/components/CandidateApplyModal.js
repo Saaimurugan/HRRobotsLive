@@ -59,7 +59,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
             'Content-Type': 'application/json',
             'Authorization': JWTValue,
           },
-        body: JSON.stringify({ action: 'getJD', templateID: template.templateID, token: JWTValue }),
+        body: JSON.stringify({ action: 'getJD', templateID: template.templateID }),
       });
       const data = await res.json();
       const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
@@ -143,8 +143,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         body: JSON.stringify({
           action: 'saveJD',
           templateID: template.templateID,
-          jobDescription: jobDescription.trim(),
-          token: JWTValue,
+          jobDescription: jobDescription.trim()
         }),
       });
       const data = await res.json();
@@ -180,8 +179,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         body: JSON.stringify({
           action: 'saveThreshold',
           templateID: template.templateID,
-          matchThreshold: value,
-          token: JWTValue,
+          matchThreshold: value
         }),
       });
       const data = await res.json();
@@ -211,7 +209,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
             'Content-Type': 'application/json',
             'Authorization': JWTValue,
           },
-        body: JSON.stringify({ action: 'list', templateID: template.templateID, token: JWTValue }),
+        body: JSON.stringify({ action: 'list', templateID: template.templateID }),
       });
       const data = await res.json();
       if (checkUnauthorized(data)) return;
@@ -264,8 +262,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
           },
         body: JSON.stringify({
           action: 'generateReport',
-          applicationID: selectedApp.applicationID,
-          token: JWTValue,
+          applicationID: selectedApp.applicationID
         }),
       });
       const data = await res.json();
@@ -333,7 +330,7 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
             'Content-Type': 'application/json',
             'Authorization': JWTValue,
           },
-          body: JSON.stringify({ searchTerm: selectedApp.testID, token: JWTValue }),
+          body: JSON.stringify({ searchTerm: selectedApp.testID }),
         });
         const scoreData = await scoreRes.json();
         if (scoreData.statusCode === 200) {

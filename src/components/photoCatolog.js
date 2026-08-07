@@ -30,7 +30,7 @@ const PhotoCatalog = ({ searchTerm, showToast }) => {
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-               body: JSON.stringify({ searchTerm: searchTerm, token: JWTValue }),
+               body: JSON.stringify({ searchTerm: searchTerm }),
             });
 
             if (checkHttpStatus(response)) return;

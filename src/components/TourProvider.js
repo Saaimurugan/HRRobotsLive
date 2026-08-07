@@ -120,11 +120,10 @@ export const TourProvider = ({ children }) => {
       try {
         const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": JWTValue },
           body: JSON.stringify({ 
             email: globalValue,
-            action: "get",
-            token: JWTValue 
+            action: "get"
           })
         });
 
@@ -175,12 +174,11 @@ export const TourProvider = ({ children }) => {
     try {
       await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           email: globalValue, 
           newUser: "no",
-          action: "update",
-          token: JWTValue 
+          action: "update"
         })
       });
       localStorage.setItem(`tour_completed_${globalValue}`, 'true');
@@ -200,12 +198,11 @@ export const TourProvider = ({ children }) => {
     try {
       await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           email: globalValue, 
           newUser: "no",
-          action: "update",
-          token: JWTValue 
+          action: "update"
         })
       });
       localStorage.setItem(`tour_completed_${globalValue}`, 'true');

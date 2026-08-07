@@ -185,7 +185,7 @@ const handleConfigTemplate = async (d) => {
     const getConfigResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-      body: JSON.stringify({ templateID: templateIDSelectedToAssign, token: JWTValue }),
+      body: JSON.stringify({ templateID: templateIDSelectedToAssign }),
     });
     const getConfigData = await getConfigResponse.json();
     if (getConfigData.statusCode === 200 && getConfigData.body) {
@@ -211,7 +211,7 @@ const handleConfigTemplate = async (d) => {
           "Content-Type": "application/json",
           "Authorization": JWTValue,
         },
-        body: JSON.stringify({ templateIDSelectedToAssign, d, token: JWTValue }),
+        body: JSON.stringify({ templateIDSelectedToAssign, d }),
       });
     const data = await response.json();
     
@@ -331,7 +331,7 @@ const checkExistingTestsCount = async () => {
         "Content-Type": "application/json",
         "Authorization": JWTValue,
       },
-      body: JSON.stringify({ globalValue, token: JWTValue }),
+      body: JSON.stringify({ globalValue }),
     });
 
     const data = await response.json();
@@ -408,7 +408,7 @@ try {
       "Content-Type": "application/json",
       "Authorization": JWTValue,
     },
-    body: JSON.stringify({ globalValue, templateID, token: JWTValue }),
+    body: JSON.stringify({ globalValue, templateID }),
   });
 
   const data = await response.json();
@@ -516,8 +516,7 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
           templateID: templateIDSelectedToAssign, 
           assignedEmail: "REVOKE", 
           assignedRole: "", 
-          actorEmail: globalValue,
-          token: JWTValue 
+          actorEmail: globalValue
         }),
       });
       const data = await response.json();
@@ -560,8 +559,7 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
          assignedEmail: email, 
          assignedRole: role, 
          actorEmail: globalValue,
-         action: "assign",
-         token: JWTValue 
+         action: "assign"
        }),
      });       
      const data = await response.json();
@@ -670,8 +668,7 @@ const handleApproveTemplate = async (templateID, ownerEmail) => {
         templateID: templateID, 
         action: "approve",
         actorEmail: globalValue,
-        actorName: globalValue.split('@')[0], // Use email prefix as name
-        token: JWTValue 
+        actorName: globalValue.split('@')[0]
       }),
     });
     
@@ -753,7 +750,7 @@ const handleDeleteTemplate = async () => {
         "Content-Type": "application/json",
         "Authorization": JWTValue,
       },
-      body: JSON.stringify({ templateIDSelectedForDelete, token: JWTValue }),
+      body: JSON.stringify({ templateIDSelectedForDelete }),
     });       
     const data = await response.json();
     if (checkUnauthorized(data)) {
@@ -790,7 +787,7 @@ const fetchTemplates = async () => {
         "Content-Type": "application/json",
         "Authorization": JWTValue,
       },
-      body: JSON.stringify({ globalValue, token: JWTValue }),
+      body: JSON.stringify({ globalValue }),
     });       
     const data = await response.json();
     if (checkUnauthorized(data)) return;

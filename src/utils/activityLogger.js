@@ -27,8 +27,7 @@ export const logActivity = async (email, activity, action, details = {}, token) 
       details: {
         ...details,
         timestamp: new Date().toISOString()
-      },
-      token
+      }
     };
 
     console.log('[ActivityLogger] Logging activity:', { email, activity, action });

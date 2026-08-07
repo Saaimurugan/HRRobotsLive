@@ -93,7 +93,7 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractKeywordsFromJD", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-        body: JSON.stringify({ jdText, token: JWTValue })
+        body: JSON.stringify({ jdText })
       });
       const data = await response.json();
       
@@ -251,8 +251,7 @@ const CreateTemplateFromJDModal = ({ isOpen, onClose, showToast, onQuestionsGene
               topic: kw.keyword, 
               level: kw.complexity, 
               formattedQuestions: existingQuestions,
-              questionTypes: batchTypes,
-              token: JWTValue 
+              questionTypes: batchTypes
             })
           });
 

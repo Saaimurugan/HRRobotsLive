@@ -107,7 +107,7 @@ function SearchResult() {
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-            body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
+            body: JSON.stringify({ searchTerm: searchUUID }),
           });
 
           const data = await response.json();
@@ -227,7 +227,7 @@ function SearchResult() {
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-          body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
+          body: JSON.stringify({ searchTerm: searchUUID }),
         });
 
         const data = await response.json();
@@ -285,7 +285,7 @@ function SearchResult() {
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-        body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
+        body: JSON.stringify({ searchTerm: searchUUID }),
       });
 
       const data = await response.json();

@@ -157,8 +157,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
-          templateID: template.templateID,
-          token: JWTValue 
+          templateID: template.templateID
         })
       });
       
@@ -239,7 +238,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractKeywordsFromJD", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-        body: JSON.stringify({ jdText: textToUse, token: JWTValue })
+        body: JSON.stringify({ jdText: textToUse })
       });
       const data = await response.json();
       
@@ -395,8 +394,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
             resumeText: resumeText,
             skills: skillsList,
             level: selectedKeywords[0]?.complexity || 'intermediate',
-            existingQuestions: existingQuestions,
-            token: JWTValue
+            existingQuestions: existingQuestions
           })
         });
 
@@ -461,8 +459,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
               topic: kw.keyword, 
               level: kw.complexity, 
               formattedQuestions: existingQuestions,
-              questionCount: batchSize,
-              token: JWTValue 
+              questionCount: batchSize
             })
           });
 
@@ -512,7 +509,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
             "Content-Type": "application/json",
             "Authorization": JWTValue,
           },
-        body: JSON.stringify({ globalValue, token: JWTValue }),
+        body: JSON.stringify({ globalValue }),
       });
 
       const data = await response.json();
@@ -572,7 +569,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-          body: JSON.stringify({ passedTemplateID: template.templateID, token: JWTValue })
+          body: JSON.stringify({ passedTemplateID: template.templateID })
         });
         
         const questionsData = await questionsResponse.json();
@@ -693,8 +690,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
           templateID: "",  // Empty templateID creates a new template
           templateName: finalTemplateName,
           globalValue: globalValue,
-          questions: allQuestions,
-          token: JWTValue 
+          questions: allQuestions
         })
       });
       
@@ -712,7 +708,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-          body: JSON.stringify({ templateID: template.templateID, token: JWTValue })
+          body: JSON.stringify({ templateID: template.templateID })
         });
         
         const configData = await configResponse.json();
@@ -729,8 +725,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
               allowedDefaults: config.allowedDefaults || '10',
               numberOfQuestions: Math.min(allQuestions.length, parseInt(config.numberOfQuestions || '10')).toString(),
               testDuration: config.testDuration || '60',
-              sensitivityLevel: config.sensitivityLevel || '5',
-              token: JWTValue 
+              sensitivityLevel: config.sensitivityLevel || '5'
             })
           });
         }
@@ -744,8 +739,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
             allowedDefaults: '10',
             numberOfQuestions: Math.min(allQuestions.length, 10).toString(),
             testDuration: '60',
-            sensitivityLevel: '5',
-            token: JWTValue 
+            sensitivityLevel: '5'
           })
         });
       }
@@ -756,8 +750,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           globalValue, 
-          templateID: newTemplateID, 
-          token: JWTValue 
+          templateID: newTemplateID
         })
       });
 
@@ -813,7 +806,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": JWTValue },
-        body: JSON.stringify({ passedTemplateID: newTemplateID, token: JWTValue })
+        body: JSON.stringify({ passedTemplateID: newTemplateID })
       });
       
       const questionsData = await questionsResponse.json();
@@ -833,8 +826,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
           templateID: newTemplateID,
           templateName: templateName.trim(),
           globalValue: globalValue,
-          questions: existingQuestions,
-          token: JWTValue 
+          questions: existingQuestions
         })
       });
       

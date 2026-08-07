@@ -122,8 +122,7 @@ const AdminDashboard = () => {
         },
         body: JSON.stringify({
           days: logsDays,
-          limit: 1000,
-          token: JWTValue
+          limit: 1000
         })
       });
 
