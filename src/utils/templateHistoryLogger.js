@@ -11,17 +11,21 @@
  * @param {string} performedByName - Name of the person performing the action
  * @param {object} details - Additional details about the action
  */
-export const logTemplateHistory = async (templateID, action, performedBy, performedByName, details = {}) => {
+export const logTemplateHistory = async (templateID, action, performedBy, performedByName, details = {}, token = '') => {
   try {
     const response = await fetch(`https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/logTemplateHistory`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token
+      },
       body: JSON.stringify({
         templateID,
         action,
         performedBy,
         performedByName,
-        details
+        details,
+        token
       })
     });
 
@@ -38,122 +42,49 @@ export const logTemplateHistory = async (templateID, action, performedBy, perfor
     return false;
   }
 };
-
-/**
- * Log template creation
- */
-export const logTemplateCreation = async (templateID, creatorEmail, creatorName) => {
-  return await logTemplateHistory(
-    templateID,
-    'created',
-    creatorEmail,
-    creatorName,
-    {}
-  );
+export const logTemplateCreation = async (templateID, creatorEmail, creatorName, token = '') => {
+  return await logTemplateHistory(templateID, 'created', creatorEmail, creatorName, {}, token);
 };
 
-/**
- * Log template assignment for review
- */
 export const logTemplateAssignmentForReview = async (
-  templateID,
-  assignerEmail,
-  assignerName,
-  assignedToEmail,
-  assignedToName,
-  assignedRole
+  templateID, assignerEmail, assignerName, assignedToEmail, assignedToName, assignedRole, token = ''
 ) => {
-  return await logTemplateHistory(
-    templateID,
-    'assigned_for_review',
-    assignerEmail,
-    assignerName,
-    {
-      assignedTo: assignedToEmail,
-      assignedToName: assignedToName,
-      assignedRole: assignedRole
-    }
-  );
+  return await logTemplateHistory(templateID, 'assigned_for_review', assignerEmail, assignerName, {
+    assignedTo: assignedToEmail,
+    assignedToName: assignedToName,
+    assignedRole: assignedRole
+  }, token);
 };
 
-/**
- * Log template approval
- */
 export const logTemplateApproval = async (
-  templateID,
-  approverEmail,
-  approverName,
-  comments = ''
+  templateID, approverEmail, approverName, comments = '', token = ''
 ) => {
-  return await logTemplateHistory(
-    templateID,
-    'approved',
-    approverEmail,
-    approverName,
-    {
-      approverComments: comments
-    }
-  );
+  return await logTemplateHistory(templateID, 'approved', approverEmail, approverName, {
+    approverComments: comments
+  }, token);
 };
 
-/**
- * Log template modification
- */
 export const logTemplateModification = async (
-  templateID,
-  modifierEmail,
-  modifierName,
-  modifications = ''
+  templateID, modifierEmail, modifierName, modifications = '', token = ''
 ) => {
-  return await logTemplateHistory(
-    templateID,
-    'modified',
-    modifierEmail,
-    modifierName,
-    {
-      modifications: modifications
-    }
-  );
+  return await logTemplateHistory(templateID, 'modified', modifierEmail, modifierName, {
+    modifications: modifications
+  }, token);
 };
 
-/**
- * Log template assignment to recruiter
- */
 export const logTemplateAssignmentToRecruiter = async (
-  templateID,
-  assignerEmail,
-  assignerName,
-  recruiterEmail,
-  recruiterName
+  templateID, assignerEmail, assignerName, recruiterEmail, recruiterName, token = ''
 ) => {
-  return await logTemplateHistory(
-    templateID,
-    'assigned_to_recruiter',
-    assignerEmail,
-    assignerName,
-    {
-      assignedTo: recruiterEmail,
-      assignedToName: recruiterName
-    }
-  );
+  return await logTemplateHistory(templateID, 'assigned_to_recruiter', assignerEmail, assignerName, {
+    assignedTo: recruiterEmail,
+    assignedToName: recruiterName
+  }, token);
 };
 
-/**
- * Log template configuration changes
- */
 export const logTemplateConfigurationChange = async (
-  templateID,
-  changerEmail,
-  changerName,
-  configChanges
+  templateID, changerEmail, changerName, configChanges, token = ''
 ) => {
-  return await logTemplateHistory(
-    templateID,
-    'configuration_changed',
-    changerEmail,
-    changerName,
-    {
-      configChanges: configChanges
-    }
-  );
+  return await logTemplateHistory(templateID, 'configuration_changed', changerEmail, changerName, {
+    configChanges: configChanges
+  }, token);
 };

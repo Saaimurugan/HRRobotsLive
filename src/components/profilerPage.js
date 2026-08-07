@@ -254,7 +254,7 @@ const ProfilerPage = () => {
     try {
       const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/matchJDResume", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ jobDescription: jobDescriptionText, resume: resumeText, token: JWTValue })
       });
       const data = await response.json();

@@ -146,8 +146,9 @@ const Profile = () => {
       const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/resetPassword", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({ email: globalValue, password, token: JWTValue }),
       });
 
@@ -267,8 +268,9 @@ const Profile = () => {
       const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({
           recipient_email: inviteEmail,
           subject: `${globalValue} invited you to join HR Robots`,
@@ -311,8 +313,9 @@ const Profile = () => {
       const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDel", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({
           email: globalValue,
           reason: deleteReason,

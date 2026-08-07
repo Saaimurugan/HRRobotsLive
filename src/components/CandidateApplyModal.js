@@ -55,7 +55,10 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     try {
       const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': JWTValue,
+          },
         body: JSON.stringify({ action: 'getJD', templateID: template.templateID, token: JWTValue }),
       });
       const data = await res.json();
@@ -133,7 +136,10 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     try {
       const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': JWTValue,
+          },
         body: JSON.stringify({
           action: 'saveJD',
           templateID: template.templateID,
@@ -167,7 +173,10 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     try {
       const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': JWTValue,
+          },
         body: JSON.stringify({
           action: 'saveThreshold',
           templateID: template.templateID,
@@ -198,7 +207,10 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     try {
       const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': JWTValue,
+          },
         body: JSON.stringify({ action: 'list', templateID: template.templateID, token: JWTValue }),
       });
       const data = await res.json();
@@ -246,7 +258,10 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
     try {
       const res = await fetch(API, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': JWTValue,
+          },
         body: JSON.stringify({
           action: 'generateReport',
           applicationID: selectedApp.applicationID,
@@ -291,7 +306,10 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         // Step 1: get the real test status from testTransactions
         const statusRes = await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkTestStatus', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': JWTValue,
+          },
           body: JSON.stringify({ testID: selectedApp.testID }),
         });
         const statusData = await statusRes.json();
@@ -311,7 +329,10 @@ function CandidateApplyModal({ isOpen, onClose, showToast, template }) {
         // Step 2: fetch score for completed / terminated tests
         const scoreRes = await fetch('https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult_', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': JWTValue,
+          },
           body: JSON.stringify({ searchTerm: selectedApp.testID, token: JWTValue }),
         });
         const scoreData = await scoreRes.json();

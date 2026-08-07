@@ -155,7 +155,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       // Use the new getTemplateQuestions endpoint
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplateQuestions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           templateID: template.templateID,
           token: JWTValue 
@@ -238,7 +238,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       // Extract keywords from resume
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractKeywordsFromJD", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ jdText: textToUse, token: JWTValue })
       });
       const data = await response.json();
@@ -390,7 +390,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
 
         const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/extractProjectsAndGenerateQuestions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": JWTValue },
           body: JSON.stringify({
             resumeText: resumeText,
             skills: skillsList,
@@ -456,7 +456,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
           
           const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI__", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "Authorization": JWTValue },
             body: JSON.stringify({ 
               topic: kw.keyword, 
               level: kw.complexity, 
@@ -509,8 +509,9 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestCount", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({ globalValue, token: JWTValue }),
       });
 
@@ -570,7 +571,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         // Get all questions from the original template
         const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": JWTValue },
           body: JSON.stringify({ passedTemplateID: template.templateID, token: JWTValue })
         });
         
@@ -687,7 +688,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       // Save questions (this will create a new template)
       const saveResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           templateID: "",  // Empty templateID creates a new template
           templateName: finalTemplateName,
@@ -710,7 +711,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       if (template.templateID !== 'profiler-template') {
         const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": JWTValue },
           body: JSON.stringify({ templateID: template.templateID, token: JWTValue })
         });
         
@@ -722,7 +723,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
           // Set configuration for new template
           await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "Authorization": JWTValue },
             body: JSON.stringify({ 
               templateID: newTemplateID,
               allowedDefaults: config.allowedDefaults || '10',
@@ -737,7 +738,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
         // Set default configuration for profiler template
         await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/setTestConfiguration", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": JWTValue },
           body: JSON.stringify({ 
             templateID: newTemplateID,
             allowedDefaults: '10',
@@ -752,7 +753,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       // Create test link
       const testResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createTest", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           globalValue, 
           templateID: newTemplateID, 
@@ -811,7 +812,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       // Fetch existing questions first
       const questionsResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ passedTemplateID: newTemplateID, token: JWTValue })
       });
       
@@ -827,7 +828,7 @@ const CandidateSpecificTestModal = ({ isOpen, onClose, showToast, template, onTe
       // Update template with new name
       const updateResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           templateID: newTemplateID,
           templateName: templateName.trim(),

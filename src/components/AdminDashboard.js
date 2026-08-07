@@ -117,7 +117,8 @@ const AdminDashboard = () => {
       const response = await fetch(ACTIVITY_LOGS_ENDPOINT, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': JWTValue
         },
         body: JSON.stringify({
           days: logsDays,

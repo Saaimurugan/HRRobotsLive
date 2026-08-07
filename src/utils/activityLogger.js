@@ -36,7 +36,8 @@ export const logActivity = async (email, activity, action, details = {}, token) 
     const response = await fetch(ACTIVITY_LOG_ENDPOINT, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': token || ''
       },
       body: JSON.stringify(payload)
     });

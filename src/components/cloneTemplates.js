@@ -75,8 +75,9 @@ const CloneTemplates = () => {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({ globalValue: "saaimurugan@gmail.com", token: JWTValue }),
       });
       const data = await response.json();
@@ -100,8 +101,9 @@ const CloneTemplates = () => {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/cloneGKTemplate", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({
           templateID: templateID,
           newTemplateName: `${templateName} (Cloned)`,

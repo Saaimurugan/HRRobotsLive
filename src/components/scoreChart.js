@@ -64,6 +64,7 @@ const ScoreChart = ({ message, showToast }) => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": JWTValue,
           },
           body: JSON.stringify({ testID, token: JWTValue }),
         });

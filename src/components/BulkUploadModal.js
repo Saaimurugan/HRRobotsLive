@@ -162,8 +162,9 @@ function BulkUploadModal({
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createBulkTests", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({
           globalValue: globalValue,
           templateID: templateId,

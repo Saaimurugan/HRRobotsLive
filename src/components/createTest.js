@@ -184,7 +184,7 @@ const handleConfigTemplate = async (d) => {
   try {
     const getConfigResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "Authorization": JWTValue },
       body: JSON.stringify({ templateID: templateIDSelectedToAssign, token: JWTValue }),
     });
     const getConfigData = await getConfigResponse.json();
@@ -209,6 +209,7 @@ const handleConfigTemplate = async (d) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": JWTValue,
         },
         body: JSON.stringify({ templateIDSelectedToAssign, d, token: JWTValue }),
       });
@@ -328,6 +329,7 @@ const checkExistingTestsCount = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": JWTValue,
       },
       body: JSON.stringify({ globalValue, token: JWTValue }),
     });
@@ -404,6 +406,7 @@ try {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": JWTValue,
     },
     body: JSON.stringify({ globalValue, templateID, token: JWTValue }),
   });
@@ -507,6 +510,7 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": JWTValue,
         },
         body: JSON.stringify({ 
           templateID: templateIDSelectedToAssign, 
@@ -549,6 +553,7 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
        method: "POST",
        headers: {
          "Content-Type": "application/json",
+         "Authorization": JWTValue,
        },
        body: JSON.stringify({ 
          templateID: templateIDSelectedToAssign, 
@@ -626,8 +631,9 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
          await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
            method: "POST",
            headers: {
-             "Content-Type": "application/json",
-           },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
            body: JSON.stringify({
              recipient_email: email,
              subject: `${globalValue} assigned you a template on HR Robots`,
@@ -658,6 +664,7 @@ const handleApproveTemplate = async (templateID, ownerEmail) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": JWTValue,
       },
       body: JSON.stringify({ 
         templateID: templateID, 
@@ -710,8 +717,9 @@ const handleApproveTemplate = async (templateID, ownerEmail) => {
       await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({
           recipient_email: ownerEmail,
           subject: `Your template has been approved by ${globalValue}`,
@@ -743,6 +751,7 @@ const handleDeleteTemplate = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": JWTValue,
       },
       body: JSON.stringify({ templateIDSelectedForDelete, token: JWTValue }),
     });       
@@ -779,6 +788,7 @@ const fetchTemplates = async () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": JWTValue,
       },
       body: JSON.stringify({ globalValue, token: JWTValue }),
     });       

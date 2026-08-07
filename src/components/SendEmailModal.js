@@ -65,8 +65,9 @@ function SendEmailModal({ isOpen, onClose, showToast, testLink, templateName }) 
       const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-        },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
         body: JSON.stringify({
           recipient_email: candidateEmail,
           subject: `${globalValue} invited you to take a screening test`,

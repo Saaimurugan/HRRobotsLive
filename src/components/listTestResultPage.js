@@ -216,8 +216,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                    },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                     body: JSON.stringify(requestBody),
                 });
 
@@ -280,8 +281,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                 const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                    },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                     body: JSON.stringify(requestBody),
                 });
                 
@@ -335,8 +337,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                 body: JSON.stringify(requestBody),
             });
 
@@ -408,8 +411,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                 body: JSON.stringify({ 
                     globalValue: testGlobalValue, 
                     pageSize, 
@@ -451,8 +455,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                 body: JSON.stringify({ 
                     globalValue: testGlobalValue, 
                     pageSize, 
@@ -582,8 +587,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/listTestsWithStatus_", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                 body: JSON.stringify(requestBody),
             });
 
@@ -658,8 +664,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
             const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/deleteTestTransaction", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                 body: JSON.stringify({ testID: index, globalValue: testGlobalValue, token: JWTValue }),
             });
 
@@ -734,8 +741,9 @@ const ListTestResultPage = ({ onItemClick, searchFilter, onSearchResults, onSear
                         const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkResult_", {
                             method: "POST",
                             headers: {
-                                "Content-Type": "application/json",
-                            },
+            "Content-Type": "application/json",
+            "Authorization": JWTValue,
+          },
                             body: JSON.stringify({ searchTerm: searchUUID, token: JWTValue }),
                         });
 

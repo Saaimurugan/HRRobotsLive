@@ -531,7 +531,7 @@ const EditTemplate = () => {
     try {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTemplates", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ globalValue: globalValue, token: JWTValue }),
       });
 
@@ -594,7 +594,7 @@ const EditTemplate = () => {
     try {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/saveQuestions_", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ 
           templateID: passedTemplateID, 
           templateName: ttname, 
@@ -637,7 +637,7 @@ const EditTemplate = () => {
       // Fetch questions
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getQuestions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ passedTemplateID, token: JWTValue }),
       });
 
@@ -669,7 +669,7 @@ const EditTemplate = () => {
       try {
         const configResponse = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getTestConfiguration", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", "Authorization": JWTValue },
           body: JSON.stringify({ templateID: passedTemplateID, token: JWTValue }),
         });
         const configData = await configResponse.json();
@@ -715,7 +715,7 @@ const EditTemplate = () => {
     try {
       const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/createQuestionsUsingAI__", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": JWTValue },
         body: JSON.stringify({ topic, level, formattedQuestions, questionTypes: aiQuestionTypes, token: JWTValue }),
       });
 
