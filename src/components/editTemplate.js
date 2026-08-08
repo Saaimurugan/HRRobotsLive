@@ -245,7 +245,13 @@ const EditTemplate = () => {
     questionSet.forEach((q, originalIndex) => {
       // NEW: Use separate topic field directly
       const topic = q.topic || '__NO_TOPIC__';
-      const questionWithMeta = { ...q, originalIndex, displayQuestion: q.question, topic };
+      // Unwrap single <p> wrapper so text renders correctly inside <h4>/<li>
+      const unwrapP = (html) => {
+        if (typeof html !== 'string') return html;
+        const match = html.match(/^<p>([\s\S]*?)<\/p>$/i);
+        return match ? match[1] : html;
+      };
+      const questionWithMeta = { ...q, originalIndex, displayQuestion: unwrapP(q.question), topic };
       
       if (topic && topic !== '__NO_TOPIC__') {
         if (!groups[topic]) groups[topic] = [];
@@ -756,20 +762,21 @@ const EditTemplate = () => {
       const questionsWithTopic = generatedQuestions.map(q => {
         // Calculate correctAnswerIndex from correctAnswer value for MCQ
         const correctAnswerIndex = q.options && Array.isArray(q.options) ? q.options.indexOf(q.correctAnswer) : -1;
-        
-        // Helper function to escape HTML entities
-        const escapeHtml = (text) => {
-          if (typeof text !== 'string') return text;
-          const div = document.createElement('div');
-          div.textContent = text;
-          return div.innerHTML;
+
+        // Wrap plain text in <p> tags to match RichTextEditor output format
+        const toHtml = (text) => {
+          if (typeof text !== 'string' || !text.trim()) return text;
+          // If already HTML (contains tags), return as-is
+          if (/<[a-z][\s\S]*>/i.test(text)) return text;
+          return `<p>${text}</p>`;
         };
-        
+
         return {
           ...q,
-          question: escapeHtml(q.question),
-          options: Array.isArray(q.options) ? q.options.map(opt => escapeHtml(opt)) : q.options,
-          correctAnswer: escapeHtml(q.correctAnswer),
+          question: toHtml(q.question),
+          options: Array.isArray(q.options) ? q.options.map(opt => toHtml(opt)) : q.options,
+          correctAnswer: typeof q.correctAnswer === 'string' ? toHtml(q.correctAnswer) : q.correctAnswer,
+          topic: topic, // Use separate topic field
           correctAnswerIndex: correctAnswerIndex >= 0 ? correctAnswerIndex : undefined
         };
       });
@@ -976,7 +983,10 @@ const EditTemplate = () => {
                               )}
                             </div>
                           ) : q.options && Array.isArray(q.options) && (
-                            <ul>{q.options.map((opt, i) => <li key={i} className={(q.correctAnswerIndex !== undefined ? i === q.correctAnswerIndex : opt === q.correctAnswer) ? 'correct-answer' : ''}><span className="rendered-html-content" dangerouslySetInnerHTML={{ __html: opt }} /></li>)}</ul>
+                            <ul>{q.options.map((opt, i) => {
+                              const optHtml = typeof opt === 'string' ? opt.replace(/^<p>([\s\S]*?)<\/p>$/i, '$1') : opt;
+                              return <li key={i} className={(q.correctAnswerIndex !== undefined ? i === q.correctAnswerIndex : opt === q.correctAnswer) ? 'correct-answer' : ''}><span className="rendered-html-content" dangerouslySetInnerHTML={{ __html: optHtml }} /></li>;
+                            })}</ul>
                           )}
                           <div className="qcard-actions">
                             <button className="btn-edit" onClick={(e) => { e.preventDefault(); if (!isSample) editQuestion(q.originalIndex); }} disabled={isSample || isEditing}>Edit</button>
