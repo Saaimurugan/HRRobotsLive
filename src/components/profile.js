@@ -242,30 +242,7 @@ const Profile = () => {
       }
 
       // Email not registered, send invitation
-      const inviteBody = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #1cbbb4;">You're Invited to HR Robots!</h2>
-          <p>Hello,</p>
-          <p><strong>${globalValue}</strong> has invited you to join HR Robots platform.</p>
-          <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
-          <p style="margin-top: 20px;">
-            <a href="${window.location.origin}/signup" 
-               style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
-                      color: white; 
-                      padding: 12px 24px; 
-                      text-decoration: none; 
-                      border-radius: 6px; 
-                      display: inline-block;">
-              Get Started
-            </a>
-          </p>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">
-            If you have any questions, please contact the person who invited you.
-          </p>
-        </div>
-      `;
-
-      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
+      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendUserInviteEmail", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -273,8 +250,8 @@ const Profile = () => {
           },
         body: JSON.stringify({
           recipient_email: inviteEmail,
-          subject: `${globalValue} invited you to join HR Robots`,
-          body: inviteBody
+          inviter_email: globalValue,
+          signup_url: `${window.location.origin}/signup`,
         }),
       });
 

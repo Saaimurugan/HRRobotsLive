@@ -32,41 +32,17 @@ function EmailModal({ isOpen, onClose, showToast, testLink, templateName, onEmai
     setIsSending(true);
 
     try {
-      const emailBody = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="https://www.hrrobots.click/logo.png" alt="HR Robots Logo" style="max-width: 200px; height: auto;" />
-          </div>
-          <h2 style="color: #1cbbb4;">You're Invited to Take a Screening Test</h2>
-          <p>Hello ${candidateName},</p>
-          <p><strong>${globalValue}</strong> has invited you to complete a screening test.</p>
-          <p><strong>Test Name:</strong> ${templateName || 'Screening Test'}</p>
-          <p style="margin-top: 20px;">
-            <a href="${testLink}" 
-               style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
-                      color: white; 
-                      padding: 12px 24px; 
-                      text-decoration: none; 
-                      border-radius: 6px; 
-                      display: inline-block;">
-              Start Test
-            </a>
-          </p>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">
-            Good luck!
-          </p>
-        </div>
-      `;
-
-      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
+      const response = await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendTestInviteEmail", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          recipient_email: candidateEmail,
-          subject: `${globalValue} invited you to take a screening test`,
-          body: emailBody
+          candidate_name: candidateName,
+          candidate_email: candidateEmail,
+          company_name: globalValue,
+          template_name: templateName || "Screening Test",
+          test_link: testLink,
         }),
       });
 

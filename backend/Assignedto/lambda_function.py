@@ -3,12 +3,104 @@ import boto3
 from botocore.exceptions import ClientError
 from datetime import datetime
 
-def lambda_handler(event, context):
-    # Initialize DynamoDB client
-    dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb')
+lambda_client = boto3.client('lambda', region_name='us-east-1')
 
-    # Reference the 'template' table
-    table = dynamodb.Table('template')
+table = dynamodb.Table('template')
+user_table = dynamodb.Table('userDetails')
+
+
+def is_user_registered(email):
+    """Return True if the email exists in userDetails, False otherwise."""
+    response = user_table.get_item(Key={"userId": email})
+    return "Item" in response
+
+
+def send_email_async(recipient_email, subject, body_html):
+    """Fire-and-forget: invoke sendEmailSMTP asynchronously so it never blocks."""
+    try:
+        lambda_client.invoke(
+            FunctionName="sendEmailSMTP",
+            InvocationType="Event",
+            Payload=json.dumps({
+                "recipient_email": recipient_email,
+                "subject": subject,
+                "body": body_html,
+            }),
+        )
+    except Exception as e:
+        print(f"Warning: failed to invoke sendEmailSMTP: {e}")
+
+
+def build_assign_invite_html(inviter_email, role):
+    role_meta = {
+        "hiring_manager": {
+            "label": "Reviewer",
+            "description": (
+                "As a Reviewer, you can review and edit the template questions, "
+                "approve the template, and create test links for candidates."
+            ),
+        },
+        "recruiter": {
+            "label": "Recruiter",
+            "description": "As a Recruiter, you can create test links for candidates using this template.",
+        },
+    }
+    meta = role_meta.get(role, role_meta["recruiter"])
+    return f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://www.hrrobots.click/logo.png" alt="HR Robots Logo" style="max-width: 200px; height: auto;" />
+          </div>
+          <h2 style="color: #1cbbb4;">You're Invited to HR Robots!</h2>
+          <p>Hello,</p>
+          <p><strong>{inviter_email}</strong> has assigned you a screening test template as a
+             <strong>{meta['label']}</strong> and invited you to join HR Robots platform.</p>
+          <p>{meta['description']}</p>
+          <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate
+             profiling, interviews, and more.</p>
+          <p style="margin-top: 20px;">
+            <a href="https://www.hrrobots.click/signup"
+               style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                      color: white; padding: 12px 24px; text-decoration: none;
+                      border-radius: 6px; display: inline-block;">
+              Get Started
+            </a>
+          </p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">
+            Sign up to access the template that has been assigned to you.
+          </p>
+        </div>
+    """
+
+
+def build_approval_html(approver_email):
+    return f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <img src="https://www.hrrobots.click/logo.png" alt="HR Robots Logo" style="max-width: 200px; height: auto;" />
+          </div>
+          <h2 style="color: #16a34a;">Template Approved! &#10003;</h2>
+          <p>Hello,</p>
+          <p>Great news! Your screening test template has been reviewed and
+             <strong>approved</strong> by <strong>{approver_email}</strong>.</p>
+          <p>The template is now ready for use. You can start generating test links for candidates.</p>
+          <p style="margin-top: 20px;">
+            <a href="https://www.hrrobots.click/list"
+               style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+                      color: white; padding: 12px 24px; text-decoration: none;
+                      border-radius: 6px; display: inline-block;">
+              View Templates
+            </a>
+          </p>
+          <p style="margin-top: 20px; color: #666; font-size: 14px;">
+            Thank you for using HR Robots!
+          </p>
+        </div>
+    """
+
+
+def lambda_handler(event, context):
 
     try:
         # Parse event to get necessary data
@@ -94,7 +186,18 @@ def lambda_handler(event, context):
             
             # Log the updated item for debugging
             print(f"Template after approval: {json.dumps(response.get('Attributes'))}")
-            
+
+            # Notify the template owner that their template was approved.
+            # 'RequestedBy' holds the owner's email (stored at assign time).
+            owner_email = response.get('Attributes', {}).get('RequestedBy') or \
+                          current_item.get('email', '')
+            if owner_email and owner_email != actor_email:
+                send_email_async(
+                    recipient_email=owner_email,
+                    subject=f"Your template has been approved by {actor_email}",
+                    body_html=build_approval_html(actor_email),
+                )
+
             return {
                 "statusCode": 200,
                 "body": json.dumps({
@@ -173,6 +276,14 @@ def lambda_handler(event, context):
             },
             ReturnValues="UPDATED_NEW"
         )
+
+        # If the assignee is not yet registered, send them a platform invite email
+        if not is_user_registered(assigned_email):
+            send_email_async(
+                recipient_email=assigned_email,
+                subject=f"{actor_email} assigned you a template on HR Robots",
+                body_html=build_assign_invite_html(actor_email, assigned_role),
+            )
 
         return {
             "statusCode": 200,

@@ -535,19 +535,9 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
       return;
     }
 
-    // Check if email is registered
-    const checkEmailResponse = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/checkEmail", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    const checkData = await checkEmailResponse.json();
-    const isUserRegistered = checkData.statusCode !== 200;
-
     const roleLabel = role === 'hiring_manager' ? 'Reviewer' : 'Recruiter';
 
-    // Assign the template regardless of registration status
+    // Assign the template — backend handles the invite email if assignee is unregistered
     const response = await fetch("https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/Assignedto", {
        method: "POST",
        headers: {
@@ -595,54 +585,7 @@ const handleAssignTemplate = async (email, role = 'recruiter') => {
        }
        
        fetchTemplates();
-       
-       // If user is not registered, send an invite email
-       if (!isUserRegistered) {
-         const roleDescription = role === 'hiring_manager' 
-           ? 'As a Reviewer, you can review and edit the template questions, approve the template, and create test links for candidates.'
-           : 'As a Recruiter, you can create test links for candidates using this template.';
-         
-         const inviteBody = `
-           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-             <h2 style="color: #1cbbb4;">You're Invited to HR Robots!</h2>
-             <p>Hello,</p>
-             <p><strong>${globalValue}</strong> has assigned you a screening test template as a <strong>${roleLabel}</strong> and invited you to join HR Robots platform.</p>
-             <p>${roleDescription}</p>
-             <p>HR Robots helps streamline your hiring process with AI-powered tools for candidate profiling, interviews, and more.</p>
-             <p style="margin-top: 20px;">
-               <a href="https://www.hrrobots.click/signup" 
-                  style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
-                         color: white; 
-                         padding: 12px 24px; 
-                         text-decoration: none; 
-                         border-radius: 6px; 
-                         display: inline-block;">
-                 Get Started
-               </a>
-             </p>
-             <p style="margin-top: 20px; color: #666; font-size: 14px;">
-               Sign up to access the template that has been assigned to you.
-             </p>
-           </div>
-         `;
-
-         await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
-           method: "POST",
-           headers: {
-            "Content-Type": "application/json",
-            "Authorization": JWTValue,
-          },
-           body: JSON.stringify({
-             recipient_email: email,
-             subject: `${globalValue} assigned you a template on HR Robots`,
-             body: inviteBody
-           }),
-         });
-         
-         showToast('success', 'Template Assigned', `Template assigned to ${email} as ${roleLabel}. An invitation email has been sent since they are not registered.`);
-       } else {
-         showToast('success', 'Template Assigned', `Template assigned successfully to ${email} as ${roleLabel}.`);
-       }
+       showToast('success', 'Template Assigned', `Template assigned to ${email} as ${roleLabel}.`);
      }
   } catch (error) {
     //console.error("Error assigning template:", error);
@@ -686,43 +629,6 @@ const handleApproveTemplate = async (templateID, ownerEmail) => {
       
       // Refresh templates to show updated status
       fetchTemplates();
-      
-      // Send notification email to the template owner
-      const approvalEmailBody = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h2 style="color: #16a34a;">Template Approved! ✓</h2>
-          <p>Hello,</p>
-          <p>Great news! Your screening test template has been reviewed and <strong>approved</strong> by <strong>${globalValue}</strong>.</p>
-          <p>The template is now ready for use. You can start generating test links for candidates.</p>
-          <p style="margin-top: 20px;">
-            <a href="https://www.hrrobots.click/list" 
-               style="background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); 
-                      color: white; 
-                      padding: 12px 24px; 
-                      text-decoration: none; 
-                      border-radius: 6px; 
-                      display: inline-block;">
-              View Templates
-            </a>
-          </p>
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">
-            Thank you for using HR Robots!
-          </p>
-        </div>
-      `;
-
-      await fetch("https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": JWTValue,
-          },
-        body: JSON.stringify({
-          recipient_email: ownerEmail,
-          subject: `Your template has been approved by ${globalValue}`,
-          body: approvalEmailBody
-        }),
-      });
       
       showToast('success', 'Template Approved', 'The template has been approved and the owner has been notified.');
     } else {
