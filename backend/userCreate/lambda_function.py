@@ -5,7 +5,6 @@ import hashlib
 import os
 import uuid
 import datetime
-import urllib.request
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
@@ -19,8 +18,8 @@ config_table = dynamodb.Table('testConfiguration')
 ITERATIONS = 100000
 KEY_LENGTH = 32
 
-# Email API endpoint
-SEND_EMAIL_API = "https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/sendEmailSMTP"
+# SMTP Lambda function name
+SEND_EMAIL_LAMBDA = "sendEmailSMTP"
 
 # Frontend URL for verification
 FRONTEND_URL = "https://www.hrrobots.click"
@@ -41,9 +40,9 @@ def generate_verification_token():
 
 
 def send_verification_email(email, token):
-    """Send verification email using the sendEmailSMTP API."""
+    """Send verification email by invoking the sendEmailSMTP Lambda directly."""
     verification_link = f"{FRONTEND_URL}/verify-email?email={email}&token={token}"
-    
+
     email_body = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <h2 style="color: #1cbbb4;">Verify Your Email Address</h2>
@@ -69,22 +68,22 @@ def send_verification_email(email, token):
         </p>
     </div>
     """
-    
+
     payload = {
         "recipient_email": email,
         "subject": "Verify your HR Robots account",
         "body": email_body
     }
-    
+
     try:
-        req = urllib.request.Request(
-            SEND_EMAIL_API,
-            data=json.dumps(payload).encode('utf-8'),
-            headers={'Content-Type': 'application/json'},
-            method='POST'
+        lambda_client = boto3.client('lambda')
+        response = lambda_client.invoke(
+            FunctionName=SEND_EMAIL_LAMBDA,
+            InvocationType='RequestResponse',
+            Payload=json.dumps(payload)
         )
-        with urllib.request.urlopen(req, timeout=10) as response:
-            return response.status == 200
+        result = json.loads(response['Payload'].read())
+        return result.get('statusCode') == 200
     except Exception as e:
         print(f"Failed to send verification email: {str(e)}")
         return False
