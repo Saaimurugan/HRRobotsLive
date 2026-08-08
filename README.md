@@ -4,6 +4,8 @@
 
 🌐 **Website**: [HRRobots.com](https://hrrobots.com)
 
+📖 **[User Guide](docs/USER_GUIDE.md)** — Detailed walkthrough of every feature for recruiters, hiring managers, candidates, and admins
+
 ## 📹 Demo Videos
 
 - **Quick Demo (45 seconds)**: [Watch on YouTube](https://www.youtube.com/watch?v=4r-FyxGNWtg)
@@ -320,7 +322,18 @@ The platform uses 80+ AWS Lambda functions and 6 Lambda Function URLs organized 
 
 ---
 
-## 📡 API Inventory
+## � Documentation
+
+| Document | Description |
+|----------|-------------|
+| [User Guide](docs/USER_GUIDE.md) | Step-by-step guide for recruiters, hiring managers, candidates, and admins |
+| [API Inventory](HRRobots_API_Inventory.xlsx) | Complete catalogue of all 59 API endpoints |
+| [Bug Report Template](.github/ISSUE_TEMPLATE/bug_report.md) | How to report a bug |
+| [Feature Request Template](.github/ISSUE_TEMPLATE/feature_request.md) | How to suggest a feature |
+
+---
+
+## �📡 API Inventory
 
 A complete API inventory is maintained in `HRRobots_API_Inventory.xlsx` with:
 - 59 documented endpoints across 13 categories
