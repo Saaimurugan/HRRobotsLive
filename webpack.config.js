@@ -1,4 +1,3 @@
-const webpack = require('webpack');
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
@@ -92,10 +91,6 @@ module.exports = {
   },
 
   plugins: [
-    // Define environment variables
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
-    }),
     // Generate HTML file
     new HtmlWebpackPlugin({
       template: './public/index.html',
