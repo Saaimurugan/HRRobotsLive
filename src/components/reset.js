@@ -15,8 +15,7 @@ const ResetPage = () => {
     const [loading, setLoading] = useState(false);
 
     const validatePassword = (password) => {
-        //const passwordRegex = /^.{8,}$/;
-        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
         return passwordRegex.test(password);
     };
 
@@ -39,9 +38,9 @@ const ResetPage = () => {
     }, []); // Run only once on component mount
 
     const resetPassword = async (e) => {
-        setLoading(true);
         e.preventDefault();
         setMessage("");
+        setPasswordError("");
 
         if (!validatePassword(password)) {
             setPasswordError("Password must be at least 8 characters, include uppercase, lowercase, number, and special character.");
@@ -51,9 +50,9 @@ const ResetPage = () => {
         if (password !== confirmPassword) {
             setPasswordError("Passwords do not match");
             return;
-        } else {
-            setPasswordError("");
         }
+
+        setLoading(true);
 
         try {
             const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/resetPassword", {
@@ -65,12 +64,13 @@ const ResetPage = () => {
             });
 
             const data = await response.json();
+            const body = data.body ? JSON.parse(data.body) : data;
 
             if (data.statusCode === 200) {
-                setMessage(data.message || "Password reset successful!");
+                setMessage(body.message || "Password reset successful!");
                 navigate("/login");
             } else {
-                setMessage(data.message || "Password reset failed. Please try again.");
+                setMessage(body.message || "Password reset failed. Please try again.");
             }
         } catch (error) {
             setMessage("An error occurred. Please try again later.");

@@ -157,17 +157,15 @@ const Profile = () => {
       if (checkUnauthorized(data)) return;
 
       if (data.statusCode === 200) {
-        setMessage("Password updated successfully!");
-        setMessageType("success");
+        showToast('success', 'Password Updated', 'Your password has been updated successfully.');
         setPassword('');
         setConfirmPassword('');
       } else {
-        setMessage(data.message || "Password update failed. Please try again.");
-        setMessageType("error");
+        const errMsg = data.body ? JSON.parse(data.body).message : 'Password update failed. Please try again.';
+        showToast('error', 'Update Failed', errMsg);
       }
     } catch (error) {
-      setMessage("An error occurred. Please try again later.");
-      setMessageType("error");
+      showToast('error', 'Error', 'An error occurred. Please try again later.');
     } finally {
       setLoading(false);
     }

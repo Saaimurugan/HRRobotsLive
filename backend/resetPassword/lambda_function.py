@@ -48,29 +48,40 @@ def lambda_handler(event, context):
         JSONData = str(event)
         body = json.loads(JSONData.replace("'",'"'))
         password = body["password"]
-        forgotPasswordID = body["ForgotPasswordID"]
 
-        email = getUserEmailUsingForgotPasswordID(forgotPasswordID)
-        if not email:
+        # Support two flows:
+        # 1. Logged-in password change: { email, password }
+        # 2. Forgot-password reset:     { ForgotPasswordID, password }
+        email = body.get("email")
+        forgotPasswordID = body.get("ForgotPasswordID")
+
+        if not email and not forgotPasswordID:
             return {
-                "statusCode": 404,
-                "body": json.dumps({"message": "User not found"})
+                "statusCode": 400,
+                "body": json.dumps({"message": "Either email or ForgotPasswordID is required"})
             }
+
+        if not email:
+            email = getUserEmailUsingForgotPasswordID(forgotPasswordID)
+            if not email:
+                return {
+                    "statusCode": 404,
+                    "body": json.dumps({"message": "User not found"})
+                }
 
         # Encrypt the new password before storing
         encrypted_password = encrypt_password(password)
 
-        update_expression = "SET #password = :password"
-        expression_attribute_values = {":password": encrypted_password}
-
-        expression_attribute_names = {"#password": "password"}  # To handle reserved keywords
-
         userTable.update_item(
             Key={"userId": email},
-            UpdateExpression=update_expression,
-            ExpressionAttributeValues=expression_attribute_values,
-            ExpressionAttributeNames=expression_attribute_names
+            UpdateExpression="SET #password = :password",
+            ExpressionAttributeValues={":password": encrypted_password},
+            ExpressionAttributeNames={"#password": "password"}
         )
+
+        # If this was a forgot-password flow, delete the used token
+        if forgotPasswordID:
+            table.delete_item(Key={"ForgotPasswordID": forgotPasswordID})
 
         return {
             "statusCode": 200,
