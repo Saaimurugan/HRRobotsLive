@@ -110,8 +110,17 @@ const LoginPage = () => {
             const data = await response.json();
 
             if (data.statusCode === 200) {
-                setMessageType("success");
                 const bodyData = JSON.parse(data.body);
+
+                // V1 user — password change required before granting access.
+                // Do NOT set session — they are not logged in yet.
+                if (bodyData.requiresPasswordChange) {
+                    setGlobalValue(email); // pre-fill email on forgot-password page only
+                    navigate("/forgot-password");
+                    return;
+                }
+
+                setMessageType("success");
                 setMessage(bodyData.message || "Login successful!");
                 setGlobalValue(email);
                 setJWTValue(bodyData.token);
@@ -125,12 +134,6 @@ const LoginPage = () => {
                 // Reset failed attempts on successful login
                 setFailedAttempts(0);
                 sessionStorage.removeItem(FAILED_ATTEMPTS_KEY);
-
-                // V1 user detected — must change password before proceeding
-                if (bodyData.requiresPasswordChange) {
-                    navigate("/forgot-password");
-                    return;
-                }
 
                 const redirectTo = getAndClearRedirectPath();
                 navigate(redirectTo);
