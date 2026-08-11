@@ -3,6 +3,7 @@ import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import "../login.css";
 import { useNavigate } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
+import { hashPassword } from "../utils/cryptoUtils";
 
 const SignUp = () => {
     const [email, setEmail] = useState("");
@@ -47,6 +48,7 @@ const SignUp = () => {
         return personalEmailDomains.includes(domain);
     };
 
+    // Hash a plain-text password with SHA-256, returns hex string
     const handleSignUp = useCallback(async (e) => {
         e.preventDefault();
         
@@ -114,10 +116,13 @@ const SignUp = () => {
         }
 
         try {
+            // Hash password before sending — plain text must never appear in network requests
+            const hashedPassword = await hashPassword(password);
+
             const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password: hashedPassword }),
             });
 
             const data = await response.json();

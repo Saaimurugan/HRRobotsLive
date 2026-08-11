@@ -74,8 +74,11 @@ def lambda_handler(event, context):
 
         userTable.update_item(
             Key={"userId": email},
-            UpdateExpression="SET #password = :password",
-            ExpressionAttributeValues={":password": encrypted_password},
+            UpdateExpression="SET #password = :password, userVersion = :version",
+            ExpressionAttributeValues={
+                ":password": encrypted_password,
+                ":version": "V2"
+            },
             ExpressionAttributeNames={"#password": "password"}
         )
 

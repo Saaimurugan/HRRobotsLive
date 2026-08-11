@@ -99,48 +99,58 @@ def lambda_handler(event, context):
                 "body": json.dumps({"message": "Please verify your email before logging in. Check your inbox for the verification link."})
             }
 
-        # Verify password using decryption
+        # Verify password
         stored_pwd = user["password"]
-        is_enc = is_encrypted(stored_pwd)
         pwd_match = verify_password(password, stored_pwd)
-        print(f"DEBUG: email={email}, is_encrypted={is_enc}, match={pwd_match}, stored_len={len(stored_pwd)}")
-        
-        if pwd_match:
-            # Generate JWT token
-            now = datetime.datetime.utcnow()
-            exp = now + datetime.timedelta(minutes=15)
-            token_payload = {
-                "email": email,
-                "exp": int(exp.timestamp()),
-                "iat": int(now.timestamp()),
-                "jti": str(uuid.uuid4())
-            }
-            jwt_token = create_jwt(token_payload, JWT_SECRET)
+        print(f"DEBUG: email={email}, is_encrypted={is_encrypted(stored_pwd)}, match={pwd_match}, stored_len={len(stored_pwd)}")
 
-            # Store token in authTable
-            current_time = now.isoformat()
-
-            auth_table.put_item(
-                Item={
-                    "email": email,
-                    "authId": jwt_token,
-                    "createdTime": current_time,
-                    "activeFor": 15
+        if not pwd_match:
+            # If the user is not V2, the password mismatch is expected —
+            # the frontend sent a SHA-256 hex that won't match the old stored hash.
+            # Tell the frontend to redirect the user through the Forgot Password flow.
+            user_version = user.get("userVersion", "V1")
+            if user_version != "V2":
+                return {
+                    "statusCode": 200,
+                    "body": json.dumps({
+                        "message": "Password reset required",
+                        "requiresPasswordChange": True
+                    })
                 }
-            )
 
-            return {
-                "statusCode": 200,
-                "body": json.dumps({
-                    "message": "Credentials are valid",
-                    "token": jwt_token
-                })
-            }
-        else:
             return {
                 "statusCode": 401,
                 "body": json.dumps({"message": "Invalid credentials"})
             }
+
+        # Password matched — generate JWT token
+        now = datetime.datetime.utcnow()
+        exp = now + datetime.timedelta(minutes=15)
+        token_payload = {
+            "email": email,
+            "exp": int(exp.timestamp()),
+            "iat": int(now.timestamp()),
+            "jti": str(uuid.uuid4())
+        }
+        jwt_token = create_jwt(token_payload, JWT_SECRET)
+
+        auth_table.put_item(
+            Item={
+                "email": email,
+                "authId": jwt_token,
+                "createdTime": now.isoformat(),
+                "activeFor": 15
+            }
+        )
+
+        return {
+            "statusCode": 200,
+            "body": json.dumps({
+                "message": "Credentials are valid",
+                "token": jwt_token,
+                "requiresPasswordChange": False
+            })
+        }
     except Exception as e:
         return {
             "statusCode": 500,

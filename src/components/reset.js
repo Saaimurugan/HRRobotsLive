@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import "../App.css";
 import { useNavigate } from "react-router-dom";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
+import { hashPassword } from "../utils/cryptoUtils";
 
 const ResetPage = () => {
     const [ForgotPasswordID, setForgotPasswordID] = useState("");
@@ -55,12 +56,15 @@ const ResetPage = () => {
         setLoading(true);
 
         try {
+            // Hash password before sending — plain text must never appear in network requests
+            const hashedPassword = await hashPassword(password);
+
             const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/resetPassword", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ ForgotPasswordID, password }),
+                body: JSON.stringify({ ForgotPasswordID, password: hashedPassword }),
             });
 
             const data = await response.json();

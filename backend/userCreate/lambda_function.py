@@ -191,6 +191,7 @@ def lambda_handler(event, context):
             Item={
                 "userId": email,
                 "password": encrypted_password,
+                "userVersion": "V2",
                 "isVerified": False,
                 "verificationToken": verification_token,
                 "tokenExpiry": token_expiry,

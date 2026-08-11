@@ -4,6 +4,7 @@ import "../login.css";
 import { useNavigate } from "react-router-dom";
 import { useGlobalContext } from "../globalContext";
 import { logLoginActivity } from '../utils/activityLogger';
+import { hashPassword } from '../utils/cryptoUtils';
 
 // Storage key for failed attempts
 const FAILED_ATTEMPTS_KEY = "loginFailedAttempts";
@@ -84,7 +85,6 @@ const LoginPage = () => {
                     setMessage("reCAPTCHA verification failed. Please try again.");
                     return;
                 }
-                // Token obtained successfully - in production, verify this token on your backend
                 //console.log("reCAPTCHA token obtained for login");
             } catch (error) {
                 setMessageType("error");
@@ -96,12 +96,15 @@ const LoginPage = () => {
         setLoading(true);
         setMessage("");
         try {
+            // Hash password before sending — plain text must never appear in network requests
+            const hashedPassword = await hashPassword(password);
+
             const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/login", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ email, password: hashedPassword }),
             });
 
             const data = await response.json();
@@ -122,7 +125,13 @@ const LoginPage = () => {
                 // Reset failed attempts on successful login
                 setFailedAttempts(0);
                 sessionStorage.removeItem(FAILED_ATTEMPTS_KEY);
-                
+
+                // V1 user detected — must change password before proceeding
+                if (bodyData.requiresPasswordChange) {
+                    navigate("/forgot-password");
+                    return;
+                }
+
                 const redirectTo = getAndClearRedirectPath();
                 navigate(redirectTo);
             } else if (data.statusCode === 403) {
