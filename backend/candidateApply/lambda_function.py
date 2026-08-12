@@ -22,49 +22,71 @@ def parse_resume_with_nova(resume_text):
     Use Amazon Nova to extract structured information from a resume.
     Returns a dict with candidate details ready for the confirmation form.
     """
-    prompt = f"""You are an expert resume parser. Extract all relevant information from the resume text below and return it as a JSON object.
+    # Increase truncation limit — most resumes fit in 12 000 chars;
+    # keeping it under Nova Lite's context window.
+    truncated_text = resume_text[:12000]
 
-Return ONLY a valid JSON object with these fields (use empty string "" or empty array [] if information is not found):
+    prompt = f"""You are an expert resume parser. Your task is to extract ALL relevant information from the resume text below and return it as a single JSON object.
+
+IMPORTANT PARSING RULES:
+1. Extract the FULL name exactly as written — do not abbreviate.
+2. Extract ALL work experience entries, even if there are many — do not skip any.
+3. For each work experience, extract the FULL bullet-point description, not just 1-2 lines.
+4. Extract ALL skills listed anywhere in the resume (technical skills, soft skills, tools, platforms).
+5. If a field is genuinely absent, use "" or []. Never invent or hallucinate data.
+6. For phone numbers, include the country code if present.
+7. For LinkedIn, extract the full URL if present (e.g. linkedin.com/in/username).
+8. For summary/objective, keep it to the original text — do not shorten aggressively.
+9. For experience descriptions, join all bullet points with "\\n- " so each bullet is preserved.
+10. For employment type (Full-time, Part-time, Contract, Internship, etc.), extract if mentioned.
+
+Return ONLY a valid JSON object with exactly these fields:
 {{
   "fullName": "candidate's full name",
   "email": "email address",
-  "phone": "phone number",
+  "phone": "phone number with country code if present",
   "location": "city, state/country",
-  "linkedin": "LinkedIn URL or username",
-  "summary": "professional summary or objective (2-3 sentences max)",
+  "linkedin": "LinkedIn URL",
+  "website": "personal website or portfolio URL",
+  "summary": "professional summary or objective statement",
   "currentTitle": "current or most recent job title",
-  "totalExperience": "total years of experience as a string e.g. '3 years'",
+  "totalExperience": "total years of experience as a string e.g. '5 years'",
   "skills": ["skill1", "skill2", "skill3"],
   "experience": [
     {{
       "title": "job title",
       "company": "company name",
+      "location": "city, country",
+      "employmentType": "Full-time | Part-time | Contract | Internship | Freelance | etc. — or empty string",
       "duration": "e.g. Jan 2022 - Present",
-      "description": "brief 1-2 line description"
+      "description": "full bullet-point description joined with \\n- "
     }}
   ],
   "education": [
     {{
-      "degree": "degree name",
-      "institution": "university/college name",
-      "year": "graduation year or duration"
+      "degree": "degree name and field e.g. B.Sc. Computer Science",
+      "institution": "university or college name",
+      "location": "city, country if available",
+      "year": "graduation year or date range e.g. 2016 - 2020",
+      "gpa": "GPA or grade if mentioned, else empty string"
     }}
   ],
-  "certifications": ["cert1", "cert2"],
-  "languages": ["English", "Spanish"]
+  "certifications": ["certification name and issuer e.g. AWS Solutions Architect - Amazon"],
+  "languages": ["English (Native)", "Spanish (Conversational)"],
+  "achievements": "notable awards or achievements as a single string"
 }}
 
 Resume text:
-{resume_text[:8000]}
+{truncated_text}
 
-Return ONLY the JSON object. No markdown, no extra text, no explanations."""
+Return ONLY the JSON object. No markdown fences, no extra text, no explanations."""
 
     try:
         request_body = {
             'schemaVersion': 'messages-v1',
             'messages': [{'role': 'user', 'content': [{'text': prompt}]}],
-            'system': [{'text': 'You are a precise resume parser that extracts structured information and returns clean JSON.'}],
-            'inferenceConfig': {'max_new_tokens': 2000, 'top_p': 0.9, 'top_k': 20, 'temperature': 0.2},
+            'system': [{'text': 'You are a precise, thorough resume parser. Extract ALL information completely and accurately. Return only valid JSON.'}],
+            'inferenceConfig': {'max_new_tokens': 4000, 'top_p': 0.9, 'top_k': 20, 'temperature': 0.1},
         }
         response = bedrock_client.invoke_model_with_response_stream(
             modelId=MODEL_ID, body=json.dumps(request_body)

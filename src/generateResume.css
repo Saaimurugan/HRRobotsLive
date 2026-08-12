@@ -372,7 +372,7 @@
 /* ── Output Container ───────────────────────────────────────────────────────── */
 .resume-output-container {
    background: var(--color-bg-primary);
-   padding: 35px;
+   padding: 24px 35px 35px;
    border-radius: var(--radius-xl);
    box-shadow: var(--shadow-lg);
    width: 100%;
@@ -385,16 +385,34 @@
    to   { opacity: 1; }
 }
 
+/* Hint bar above the scrollable preview */
+.resume-output-scroll-hint {
+   font-size: var(--font-size-xs, 11px);
+   color: var(--color-text-muted);
+   text-align: center;
+   padding: 6px 0 10px;
+   line-height: 1.4;
+}
+
+/* Scrollable wrapper so the full resume is always accessible */
+.resume-output-scroll-wrapper {
+   overflow-x: auto;
+   overflow-y: auto;
+   max-height: 75vh;
+   border-radius: var(--radius-lg);
+   border: 1px solid var(--color-border);
+   -webkit-overflow-scrolling: touch; /* smooth momentum scrolling on iOS */
+}
+
 .resume-output {
    padding: 0;
    background: white;
-   border-radius: var(--radius-lg);
-   border: 1px solid var(--color-border);
    line-height: 1.6;
    font-size: var(--font-size-base);
    color: #374151;
    min-height: 400px;
-   overflow: hidden;
+   /* Remove overflow:hidden so content can scroll freely inside the wrapper */
+   min-width: 680px; /* prevent collapse on small screens; wrapper scrolls */
 }
 
 /* Let the AI-generated HTML control its own layout completely */
@@ -450,6 +468,39 @@
 .print-btn svg {
    width: 18px;
    height: 18px;
+}
+
+/* PDF variant — teal/green tone to distinguish from Word button */
+.print-btn--pdf {
+   background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+   box-shadow: 0 4px 15px rgba(13, 148, 136, 0.35);
+}
+
+.print-btn--pdf:hover {
+   box-shadow: 0 6px 20px rgba(13, 148, 136, 0.45);
+}
+
+/* ── Employment Type select ─────────────────────────────────────────────── */
+.resume-form .form-group .form-select {
+   width: 100%;
+   padding: 12px 15px;
+   font-size: var(--font-size-base);
+   border: 2px solid var(--color-border);
+   border-radius: var(--radius-lg);
+   box-sizing: border-box;
+   transition: all var(--transition-slow);
+   background: var(--color-bg-secondary);
+   font-family: inherit;
+   appearance: auto;
+   cursor: pointer;
+   color: var(--color-text-primary);
+}
+
+.resume-form .form-group .form-select:focus {
+   outline: none;
+   border-color: var(--color-primary);
+   background: var(--color-bg-primary);
+   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
 }
 
 /* ── Entry Cards (Experience / Education) ───────────────────────────────── */
@@ -588,8 +639,25 @@
       white-space: normal;
    }
 
+   .resume-action-btns {
+      flex-wrap: wrap;
+      width: 100%;
+   }
+
+   .print-btn,
+   .resume-redesign-btn {
+      flex: 1;
+      justify-content: center;
+      padding: 10px 12px;
+      font-size: var(--font-size-sm);
+   }
+
    .resume-output {
       padding: 20px 16px;
+   }
+
+   .resume-output-scroll-wrapper {
+      max-height: 60vh;
    }
 
    .resume-output-container,

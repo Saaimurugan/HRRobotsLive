@@ -9,10 +9,24 @@ const API_ENDPOINT = 'https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev
 const PARSE_API = 'https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/candidateApply';
 
 // ── Default entry shapes ───────────────────────────────────────────────────
+const EMPLOYMENT_TYPES = [
+   { value: '', label: 'Select type…' },
+   { value: 'Full-time', label: 'Full-time' },
+   { value: 'Part-time', label: 'Part-time' },
+   { value: 'Contract', label: 'Contract' },
+   { value: 'Freelance', label: 'Freelance' },
+   { value: 'Internship', label: 'Internship' },
+   { value: 'Temporary', label: 'Temporary' },
+   { value: 'Volunteer', label: 'Volunteer' },
+   { value: 'Apprenticeship', label: 'Apprenticeship' },
+   { value: 'Remote', label: 'Remote' },
+];
+
 const emptyExperience = () => ({
    id: Date.now() + Math.random(),
    title: '',
    company: '',
+   employmentType: '',
    location: '',
    startDate: '',
    endDate: '',
@@ -464,13 +478,14 @@ const GenerateResume = () => {
             Array.isArray(pd.experience) && pd.experience.length > 0
                ? pd.experience.map((exp, i) => ({
                     id: Date.now() + i,
-                    title:       exp.title       || '',
-                    company:     exp.company     || '',
-                    location:    exp.location    || '',
-                    startDate:   exp.duration    ? exp.duration.split(/[-–]/)[0].trim() : '',
-                    endDate:     exp.duration    ? (exp.duration.split(/[-–]/)[1] || '').trim() : '',
-                    current:     /present/i.test(exp.duration || ''),
-                    description: exp.description || '',
+                    title:          exp.title          || '',
+                    company:        exp.company        || '',
+                    employmentType: exp.employmentType || '',
+                    location:       exp.location       || '',
+                    startDate:      exp.duration       ? exp.duration.split(/[-–]/)[0].trim() : '',
+                    endDate:        exp.duration       ? (exp.duration.split(/[-–]/)[1] || '').trim() : '',
+                    current:        /present/i.test(exp.duration || ''),
+                    description:    exp.description    || '',
                  }))
                : [emptyExperience()]
          );
@@ -482,10 +497,18 @@ const GenerateResume = () => {
                     id: Date.now() + i + 1000,
                     degree:      edu.degree      || '',
                     institution: edu.institution || '',
-                    location:    '',
-                    startDate:   '',
-                    endDate:     edu.year        || '',
-                    gpa:         '',
+                    location:    edu.location    || '',
+                    startDate:   edu.year
+                                    ? (edu.year.includes('-') || edu.year.includes('–')
+                                          ? edu.year.split(/[-–]/)[0].trim()
+                                          : '')
+                                    : '',
+                    endDate:     edu.year
+                                    ? (edu.year.includes('-') || edu.year.includes('–')
+                                          ? edu.year.split(/[-–]/)[1]?.trim() || edu.year
+                                          : edu.year)
+                                    : '',
+                    gpa:         edu.gpa         || '',
                     notes:       '',
                  }))
                : [emptyEducation()]
@@ -540,7 +563,8 @@ const GenerateResume = () => {
             const period = e.current
                ? `${e.startDate} – Present`
                : `${e.startDate}${e.endDate ? ' – ' + e.endDate : ''}`;
-            const header = [e.title, e.company, e.location, period].filter(Boolean).join(' | ');
+            const typeTag = e.employmentType ? ` (${e.employmentType})` : '';
+            const header = [e.title + typeTag, e.company, e.location, period].filter(Boolean).join(' | ');
             return `${header}\n${e.description || ''}`.trim();
          })
          .join('\n\n');
@@ -617,12 +641,16 @@ const GenerateResume = () => {
    const handleSaveWord = () => {
       if (!resumeHtml) return;
 
-      // Wrap the AI-generated HTML (which already has all inline CSS) in a
-      // minimal Word-compatible shell.  We do NOT re-style it here so the
-      // Word document matches the on-screen preview exactly.
+      // Build a Word-compatible HTML doc.
+      // Key fixes for Android/iOS:
+      //  - mso-list and explicit <li> paragraph styles so Word (and Android viewers)
+      //    render bullet lists instead of a single paragraph
+      //  - explicit mso-element:para-border-div to prevent content collapsing
+      //  - charset + ProgId kept for MS Word on Windows/Mac
       const wordHtml = `<!DOCTYPE html>
 <html xmlns:o='urn:schemas-microsoft-com:office:office'
       xmlns:w='urn:schemas-microsoft-com:office:word'
+      xmlns:m='http://schemas.microsoft.com/office/2004/12/omml'
       xmlns='http://www.w3.org/TR/REC-html40'>
 <head>
   <meta charset='utf-8'>
@@ -634,10 +662,13 @@ const GenerateResume = () => {
       <w:View>Print</w:View>
       <w:Zoom>100</w:Zoom>
       <w:DoNotOptimizeForBrowser/>
+      <w:ValidateAgainstSchemas/>
+      <w:SaveIfXMLInvalid>false</w:SaveIfXMLInvalid>
+      <w:IgnoreMixedContent>false</w:IgnoreMixedContent>
+      <w:AlwaysShowPlaceholderText>false</w:AlwaysShowPlaceholderText>
     </w:WordDocument>
   </xml><![endif]-->
   <style>
-    /* Page size only — all visual styling comes from the resume's own inline CSS */
     @page Section1 {
       size: 8.5in 11.0in;
       margin: 0.75in 0.75in 0.75in 0.75in;
@@ -646,9 +677,17 @@ const GenerateResume = () => {
       mso-paper-source: 0;
     }
     div.Section1 { page: Section1; }
-    /* Reset browser defaults that fight inline styles */
-    body { margin: 0; padding: 0; }
-    h1, h2, h3, p, ul, li, div { margin: 0; padding: 0; }
+    body { margin: 0; padding: 0; font-family: Calibri, Arial, sans-serif; }
+    /* Explicit list styles so Android/Word render bullets correctly */
+    ul { margin: 4pt 0 10pt 18pt; padding: 0; list-style-type: disc; mso-list: l0 level1 lfo1; }
+    li { margin-bottom: 3pt; color: #374151; mso-list: l0 level1 lfo1; display: list-item; }
+    /* Prevent table borders from collapsing weirdly in mobile Word */
+    table { border-collapse: collapse; }
+    td { vertical-align: top; }
+    /* Block elements */
+    h1, h2, h3, p { margin: 0; }
+    /* Preserve line breaks in descriptions */
+    div, p { mso-line-height-rule: exactly; }
   </style>
 </head>
 <body>
@@ -668,6 +707,39 @@ const GenerateResume = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast('success', 'Download started', 'Your resume is downloading as a Word document.');
+   };
+
+   // ── Save as PDF (print dialog) — iOS/Android friendly ────────────────────
+   const handleSavePdf = () => {
+      if (!resumeHtml) return;
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+         showToast('warning', 'Pop-up blocked', 'Please allow pop-ups for this site to use the PDF option.');
+         return;
+      }
+      printWindow.document.write(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <title>Resume — ${formData.fullName || 'Resume'}</title>
+  <style>
+    @media print {
+      @page { size: A4; margin: 0.6in; }
+      body { margin: 0; }
+    }
+    body { margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  </style>
+</head>
+<body>${resumeHtml}</body>
+</html>`);
+      printWindow.document.close();
+      printWindow.onload = () => {
+         setTimeout(() => {
+            printWindow.focus();
+            printWindow.print();
+         }, 400);
+      };
    };
 
    // ── Render: Form ──────────────────────────────────────────────────────────
@@ -958,6 +1030,14 @@ const GenerateResume = () => {
                         <input type="text" value={exp.company} onChange={e => updateExperience(exp.id, 'company', e.target.value)} placeholder="e.g., Acme Corp"/>
                      </div>
                      <div className="form-group">
+                        <label>Employment Type</label>
+                        <select value={exp.employmentType} onChange={e => updateExperience(exp.id, 'employmentType', e.target.value)} className="form-select">
+                           {EMPLOYMENT_TYPES.map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                           ))}
+                        </select>
+                     </div>
+                     <div className="form-group">
                         <label>Location</label>
                         <input type="text" value={exp.location} onChange={e => updateExperience(exp.id, 'location', e.target.value)} placeholder="e.g., New York, NY"/>
                      </div>
@@ -1126,7 +1206,16 @@ const GenerateResume = () => {
                   </svg>
                   Change Design
                </button>
-               <button className="print-btn" onClick={handleSaveWord}>
+               <button className="print-btn print-btn--pdf" onClick={handleSavePdf} title="Save as PDF (recommended for iOS & Android)">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                     <polyline points="14 2 14 8 20 8"/>
+                     <line x1="12" y1="18" x2="12" y2="12"/>
+                     <line x1="9" y1="15" x2="15" y2="15"/>
+                  </svg>
+                  Save as PDF
+               </button>
+               <button className="print-btn" onClick={handleSaveWord} title="Save as Word document (.doc)">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                      <polyline points="14 2 14 8 20 8"/>
@@ -1138,8 +1227,13 @@ const GenerateResume = () => {
             </div>
          </div>
          <div className="resume-output-container">
-            <div id="resumePrintable" className="resume-output">
-               <div dangerouslySetInnerHTML={{ __html: resumeHtml }} />
+            <div className="resume-output-scroll-hint">
+               Scroll to view full resume &nbsp;·&nbsp; Use <strong>Save as PDF</strong> on iOS/Android
+            </div>
+            <div className="resume-output-scroll-wrapper">
+               <div id="resumePrintable" className="resume-output">
+                  <div dangerouslySetInnerHTML={{ __html: resumeHtml }} />
+               </div>
             </div>
          </div>
       </>
