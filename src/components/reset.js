@@ -3,6 +3,7 @@ import "../App.css";
 import { useNavigate } from "react-router-dom";
 import { GlobalProvider, useGlobalContext } from "../globalContext";
 import { hashPassword } from "../utils/cryptoUtils";
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const ResetPage = () => {
     const [ForgotPasswordID, setForgotPasswordID] = useState("");
@@ -14,6 +15,7 @@ const ResetPage = () => {
     const navigate = useNavigate();
     const { globalValue, setGlobalValue } = useGlobalContext(false);  
     const [loading, setLoading] = useState(false);
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     const validatePassword = (password) => {
         const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
@@ -56,6 +58,21 @@ const ResetPage = () => {
         setLoading(true);
 
         try {
+            // Get reCAPTCHA token before making the request
+            if (!executeRecaptcha) {
+                setMessage("reCAPTCHA not ready. Please try again.");
+                setLoading(false);
+                return;
+            }
+            let recaptchaToken = "";
+            try {
+                recaptchaToken = await executeRecaptcha('reset_password');
+            } catch {
+                setMessage("reCAPTCHA verification failed. Please try again.");
+                setLoading(false);
+                return;
+            }
+
             // Hash password before sending — plain text must never appear in network requests
             const hashedPassword = await hashPassword(password);
 
@@ -64,7 +81,7 @@ const ResetPage = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ ForgotPasswordID, password: hashedPassword }),
+                body: JSON.stringify({ ForgotPasswordID, password: hashedPassword, recaptchaToken }),
             });
 
             const data = await response.json();

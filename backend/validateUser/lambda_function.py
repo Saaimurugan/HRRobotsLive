@@ -1,6 +1,7 @@
 import boto3
 import json
 import datetime
+from recaptcha_utils import verify_recaptcha
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
@@ -33,6 +34,12 @@ def lambda_handler(event, context):
                 "statusCode": 400,
                 "body": json.dumps({"message": "Email and token are required"})
             }
+
+        # ── reCAPTCHA verification ────────────────────────────────────────────
+        ok, err = verify_recaptcha(body.get("recaptchaToken", ""), action="verify_email")
+        if not ok:
+            return err
+        # ─────────────────────────────────────────────────────────────────────
         
         # Normalize email to lowercase for case-insensitive comparison
 

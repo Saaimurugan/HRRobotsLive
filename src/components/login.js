@@ -70,27 +70,25 @@ const LoginPage = () => {
             return;
         }
         
-        // Execute reCAPTCHA v3 if required (after 3 failed attempts)
-        if (requireCaptcha) {
-            if (!executeRecaptcha) {
-                setMessageType("error");
-                setMessage("reCAPTCHA not ready. Please try again.");
-                return;
-            }
-            
-            try {
-                const token = await executeRecaptcha('login');
-                if (!token) {
-                    setMessageType("error");
-                    setMessage("reCAPTCHA verification failed. Please try again.");
-                    return;
-                }
-                //console.log("reCAPTCHA token obtained for login");
-            } catch (error) {
+        // Execute reCAPTCHA v3 — always required (not just after failed attempts)
+        if (!executeRecaptcha) {
+            setMessageType("error");
+            setMessage("reCAPTCHA not ready. Please try again.");
+            return;
+        }
+
+        let recaptchaToken = "";
+        try {
+            recaptchaToken = await executeRecaptcha('login');
+            if (!recaptchaToken) {
                 setMessageType("error");
                 setMessage("reCAPTCHA verification failed. Please try again.");
                 return;
             }
+        } catch (error) {
+            setMessageType("error");
+            setMessage("reCAPTCHA verification failed. Please try again.");
+            return;
         }
         
         setLoading(true);
@@ -104,7 +102,7 @@ const LoginPage = () => {
                 headers: {
                     "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email, password: hashedPassword }),
+                body: JSON.stringify({ email, password: hashedPassword, recaptchaToken }),
             });
 
             const data = await response.json();
@@ -180,7 +178,7 @@ const LoginPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [loading, requireCaptcha, executeRecaptcha, email, password, eulaAccepted, setGlobalValue, setJWTValue, getAndClearRedirectPath, navigate]);
+    }, [loading, executeRecaptcha, email, password, eulaAccepted, setGlobalValue, setJWTValue, getAndClearRedirectPath, navigate]);
 
     return (
         <div className="login-page" role="main">

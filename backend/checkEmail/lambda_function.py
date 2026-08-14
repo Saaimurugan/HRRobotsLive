@@ -2,9 +2,18 @@ import json
 import boto3
 from botocore.exceptions import ClientError
 
+# ── reCAPTCHA (recaptcha_utils.py is deployed alongside this file) ────────────
+from recaptcha_utils import verify_recaptcha
+
 def lambda_handler(event, context):
     # Get the email from the event
     email = event.get("email")
+
+    # ── reCAPTCHA verification ────────────────────────────────────────────────
+    ok, err = verify_recaptcha(event.get("recaptchaToken", ""), action="check_email")
+    if not ok:
+        return err
+    # ─────────────────────────────────────────────────────────────────────────
 
     if not email:
         return {

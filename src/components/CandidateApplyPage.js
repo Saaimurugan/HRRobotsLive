@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import '../candidateApply.css';
 
 const API = 'https://jn1y00ejmj.execute-api.us-east-1.amazonaws.com/dev/candidateApply';
@@ -13,6 +14,7 @@ const STEP_SUCCESS = 'success';  // Step 3: submitted successfully
 const CandidateApplyPage = () => {
   const { templateId } = useParams();
   const fileInputRef = useRef(null);
+  const { executeRecaptcha } = useGoogleReCaptcha();
 
   const [templateInfo, setTemplateInfo] = useState(null);
   const [infoLoading, setInfoLoading]   = useState(true);
@@ -124,10 +126,17 @@ const CandidateApplyPage = () => {
 
     try {
       const textToSend = resumeText || '';
+
+      // Get reCAPTCHA token to protect the public parse endpoint
+      let recaptchaToken = '';
+      if (executeRecaptcha) {
+        try { recaptchaToken = await executeRecaptcha('apply'); } catch { /* fail open */ }
+      }
+
       const res = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'parseResume', resumeText: textToSend }),
+        body: JSON.stringify({ action: 'parseResume', resumeText: textToSend, recaptchaToken }),
       });
       const data = await res.json();
       const parsed = typeof data.body === 'string' ? JSON.parse(data.body) : data.body || data;
@@ -249,6 +258,12 @@ const CandidateApplyPage = () => {
       const candidateEmail = (parsedData.email      || form.email).trim().toLowerCase();
       const candidatePhone = (parsedData.phone      || form.phone).trim();
 
+      // Get a fresh reCAPTCHA token for the submit call (tokens are single-use)
+      let recaptchaToken = '';
+      if (executeRecaptcha) {
+        try { recaptchaToken = await executeRecaptcha('apply'); } catch { /* fail open */ }
+      }
+
       const res = await fetch(API, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -258,8 +273,9 @@ const CandidateApplyPage = () => {
           candidateName,
           candidateEmail,
           candidatePhone,
-          resumeText:    resumeText.slice(0, 15000), // cap at ~15KB to stay under DynamoDB 400KB item limit
-          parsedResume:  parsedData,  // Save full structured data to DynamoDB
+          resumeText:    resumeText.slice(0, 15000),
+          parsedResume:  parsedData,
+          recaptchaToken,
         }),
       });
       const data   = await res.json();

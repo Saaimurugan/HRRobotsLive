@@ -1,6 +1,7 @@
 import json
 import boto3
 from boto3.dynamodb.conditions import Attr
+from recaptcha_utils import verify_recaptcha
 
 # Initialize DynamoDB resource
 dynamodb = boto3.resource('dynamodb')
@@ -34,10 +35,18 @@ def lambda_handler(event, context):
                     'Access-Control-Allow-Headers': 'Content-Type',
                     'Access-Control-Allow-Methods': 'POST, OPTIONS'
                 },
-                'body': json.dumps({
-                    'error': 'testID is required'
-                })
+                'body': json.dumps({'error': 'testID is required'})
             }
+
+        # ── reCAPTCHA verification ────────────────────────────────────────────
+        if 'body' in event and event['body']:
+            recaptcha_token = body.get('recaptchaToken', '')
+        else:
+            recaptcha_token = event.get('recaptchaToken', '')
+        ok, err = verify_recaptcha(recaptcha_token, action="start_test")
+        if not ok:
+            return err
+        # ─────────────────────────────────────────────────────────────────────
 
         # Fetch test record for the given testID
         response = template_test_table.scan(

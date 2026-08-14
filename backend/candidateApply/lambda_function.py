@@ -2,7 +2,12 @@ import boto3
 import json
 import uuid
 import base64
+import os
+import sys
 from datetime import datetime
+
+# ── reCAPTCHA (recaptcha_utils.py is deployed alongside this file) ────────────
+from recaptcha_utils import verify_recaptcha
 
 dynamodb = boto3.resource('dynamodb')
 lambda_client = boto3.client('lambda')
@@ -332,6 +337,11 @@ def lambda_handler(event, context):
 
         # ── PARSE resume with Amazon Nova (step before submission) ──────────
         if action == 'parseResume':
+            # reCAPTCHA: protect public-facing parse step
+            ok, err = verify_recaptcha(body.get("recaptchaToken", ""), action="apply")
+            if not ok:
+                return err
+
             resume_text = body.get('resumeText', '').strip()
             if not resume_text:
                 return {
@@ -530,6 +540,11 @@ def lambda_handler(event, context):
                 return {'statusCode': 500, 'headers': CORS_HEADERS, 'body': json.dumps({'error': str(e)})}
 
         # ── SUBMIT application ────────────────────────────────────────────────
+        # reCAPTCHA: protect public-facing submission
+        ok, err = verify_recaptcha(body.get("recaptchaToken", ""), action="apply")
+        if not ok:
+            return err
+
         candidate_name = body.get('candidateName', '').strip()
         candidate_email = body.get('candidateEmail', '').strip().lower()
         candidate_phone = body.get('candidatePhone', '').strip()

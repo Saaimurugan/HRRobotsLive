@@ -12,6 +12,7 @@ import TestSetupWizard from "./TestSetupWizard.js";
 import useAudioDetection from "./useAudioDetection.js";
 import ProctorWarningModal from "./ProctorWarningModal.js";
 import FaceDetectionPreloader from "./FaceDetectionPreloader.js";
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 // Toast Component for notifications
 const Toast = ({ toasts, removeToast }) => {
@@ -93,6 +94,7 @@ const handlePreventDefault = (event) => {
 const TestPage = () => {
   const [userUniqueID, setUserUniqueID] = useState('');
   const [userUniqueIDPresent, setUserUniqueIDPresent] = useState(false);
+  const { executeRecaptcha } = useGoogleReCaptcha();
   const [photoCaptured, setPhotoCaptured] = useState(false); // New state
 /*   const [confidence, setConfidence] = useState(0);
  */
@@ -199,6 +201,12 @@ const TestPage = () => {
 
     const checkTestStatus = async () => {
       try {
+        // Get reCAPTCHA token to protect the test-start gate
+        let recaptchaToken = '';
+        if (executeRecaptcha) {
+          try { recaptchaToken = await executeRecaptcha('start_test'); } catch { /* fail open */ }
+        }
+
         const response = await fetch(
           "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/checkTestStatus",
           {
@@ -206,7 +214,7 @@ const TestPage = () => {
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ testID: userUniqueID }),
+            body: JSON.stringify({ testID: userUniqueID, recaptchaToken }),
           }
         );
 
@@ -247,7 +255,7 @@ const TestPage = () => {
     };
 
     checkTestStatus();
-  }, [userUniqueID, statusChecked]);
+  }, [userUniqueID, statusChecked, executeRecaptcha]);
 
   // Countdown and redirect for invalid test status
   useEffect(() => {

@@ -7,8 +7,10 @@ import FeedbackForm from "./FeedbackForm.js";
 import html2canvas from 'html2canvas';
 import answerQueue from '../services/answerQueue.js';
 import CodeEditor from './CodeEditor.js';
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 
 const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, navigateToQuestionRef, numberOfQuestions = 50, onSubmit, onSubmitComplete, submitTestRef }) => {
+  const { executeRecaptcha } = useGoogleReCaptcha();
   // State for questions and answers
   const [questions, setQuestions] = useState([]);
   const [groupedQuestions, setGroupedQuestions] = useState({}); // Group questions by topic
@@ -52,13 +54,19 @@ const TestComponent = ({ testID, userID, candidateName, onProgressUpdate, naviga
 
     try {
       //console.log('Loading questions for testID:', testID, 'candidateName:', candidateName);
+
+      // Get reCAPTCHA token to protect the question-load endpoint
+      let recaptchaToken = '';
+      if (executeRecaptcha) {
+        try { recaptchaToken = await executeRecaptcha('load_test'); } catch { /* fail open */ }
+      }
       
       const response = await fetch(
         "https://1p3uymdf7g.execute-api.us-east-1.amazonaws.com/dev/getAllQuestionsForTest",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ testID, candidateName }),
+          body: JSON.stringify({ testID, candidateName, recaptchaToken }),
         }
       );
 

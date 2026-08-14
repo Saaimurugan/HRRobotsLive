@@ -1,6 +1,11 @@
 import boto3
 import json
-import uuid   
+import uuid
+import os
+import sys
+
+# ── reCAPTCHA (recaptcha_utils.py is deployed alongside this file) ────────────
+from recaptcha_utils import verify_recaptcha
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
@@ -42,6 +47,13 @@ def lambda_handler(event, context):
         # Parse the event body to extract the email
         JSONData = str(event)
         body = json.loads(JSONData.replace("'", '"'))
+
+        # ── reCAPTCHA verification ────────────────────────────────────────────
+        ok, err = verify_recaptcha(body.get("recaptchaToken", ""), action="forgot_password")
+        if not ok:
+            return err
+        # ─────────────────────────────────────────────────────────────────────
+
         email = body["recipient_email"].lower().strip()
 
         checkUser = checkUserRegistered(email)

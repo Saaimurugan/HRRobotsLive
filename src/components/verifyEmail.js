@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
 import "../login.css";
 
 const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
-    const [status, setStatus] = useState("verifying"); // verifying, success, error
+    const [status, setStatus] = useState("verifying");
     const [message, setMessage] = useState("Verifying your email...");
     const navigate = useNavigate();
+    const { executeRecaptcha } = useGoogleReCaptcha();
 
     useEffect(() => {
         const verifyEmail = async () => {
@@ -19,11 +21,17 @@ const VerifyEmail = () => {
                 return;
             }
 
+            // Get reCAPTCHA token — fail open so a Google outage doesn't block verification
+            let recaptchaToken = '';
+            if (executeRecaptcha) {
+                try { recaptchaToken = await executeRecaptcha('verify_email'); } catch { /* fail open */ }
+            }
+
             try {
                 const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/validateUser", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ email, token }),
+                    body: JSON.stringify({ email, token, recaptchaToken }),
                 });
 
                 const data = await response.json();
@@ -43,7 +51,7 @@ const VerifyEmail = () => {
         };
 
         verifyEmail();
-    }, [searchParams]);
+    }, [searchParams, executeRecaptcha]);
 
     return (
         <div className="login-page">

@@ -2,6 +2,7 @@ import json
 import boto3
 import random
 from datetime import datetime
+from recaptcha_utils import verify_recaptcha
 import dateutil.tz
 from boto3.dynamodb.conditions import Attr, Key
 from concurrent.futures import ThreadPoolExecutor
@@ -240,6 +241,12 @@ def lambda_handler(event, context):
                 'statusCode': 400,
                 'body': json.dumps('candidateName is required')
             }
+
+        # ── reCAPTCHA verification ────────────────────────────────────────────
+        ok, err = verify_recaptcha(event.get('recaptchaToken', ''), action="load_test")
+        if not ok:
+            return err
+        # ─────────────────────────────────────────────────────────────────────
 
         # Fetch template IDs for the given testID
         response = template_test_table.scan(

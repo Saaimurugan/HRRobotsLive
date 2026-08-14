@@ -50,14 +50,14 @@ const ForgotPasswordPage = () => {
             return;
         }
         
+        let recaptchaToken = "";
         try {
-            const token = await executeRecaptcha('forgot_password');
-            if (!token) {
+            recaptchaToken = await executeRecaptcha('forgot_password');
+            if (!recaptchaToken) {
                 setMessageType("error");
                 setMessage("reCAPTCHA verification failed. Please try again.");
                 return;
             }
-            //console.log("reCAPTCHA token obtained for forgot password");
         } catch (error) {
             setMessageType("error");
             setMessage("reCAPTCHA verification failed. Please try again.");
@@ -71,7 +71,7 @@ const ForgotPasswordPage = () => {
             const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/forgotPassword", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ recipient_email: email }),
+                body: JSON.stringify({ recipient_email: email, recaptchaToken }),
             });
 
             const data = await response.json();
