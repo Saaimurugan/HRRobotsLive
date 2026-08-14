@@ -5,6 +5,10 @@ import hashlib
 import os
 import uuid
 import datetime
+import sys
+
+# ── reCAPTCHA (recaptcha_utils.py is deployed alongside this file) ────────────
+from recaptcha_utils import verify_recaptcha
 
 # Initialize DynamoDB client
 dynamodb = boto3.resource('dynamodb')
@@ -175,6 +179,13 @@ def lambda_handler(event, context):
     try:
         JSONData = str(event)
         body = json.loads(JSONData.replace("'",'"'))
+
+        # ── reCAPTCHA verification ────────────────────────────────────────────
+        ok, err = verify_recaptcha(body.get("recaptchaToken", ""), action="register")
+        if not ok:
+            return err
+        # ─────────────────────────────────────────────────────────────────────
+
         email = body["email"].lower().strip()
         password = body["password"]
 
