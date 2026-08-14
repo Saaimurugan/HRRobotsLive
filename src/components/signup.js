@@ -59,14 +59,14 @@ const SignUp = () => {
             return;
         }
         
+        let recaptchaToken = "";
         try {
-            const token = await executeRecaptcha('signup');
-            if (!token) {
+            recaptchaToken = await executeRecaptcha('signup');
+            if (!recaptchaToken) {
                 setMessageType("error");
                 setMessage("reCAPTCHA verification failed. Please try again.");
                 return;
             }
-            //console.log("reCAPTCHA token obtained for signup");
         } catch (error) {
             setMessageType("error");
             setMessage("reCAPTCHA verification failed. Please try again.");
@@ -80,7 +80,7 @@ const SignUp = () => {
             const checkEmailResponse = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/checkEmail", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email }),
+                body: JSON.stringify({ email, recaptchaToken }),
             });
 
             const data = await checkEmailResponse.json();
@@ -119,10 +119,13 @@ const SignUp = () => {
             // Hash password before sending — plain text must never appear in network requests
             const hashedPassword = await hashPassword(password);
 
+            // Get a fresh token for the create-user call (tokens are single-use)
+            const createToken = await executeRecaptcha('register');
+
             const response = await fetch("https://7ryecn2i2k.execute-api.us-east-1.amazonaws.com/dev/userDetailsCURD", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password: hashedPassword }),
+                body: JSON.stringify({ email, password: hashedPassword, recaptchaToken: createToken }),
             });
 
             const data = await response.json();
